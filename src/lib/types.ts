@@ -75,3 +75,24 @@ export interface MetricItem {
   changeType: 'increase' | 'decrease' | 'no-change';
   icon?: React.ComponentType<any>;
 }
+
+// Field mapping interfaces for CSV import
+export interface CSVField {
+  name: string;
+  description: string;
+  required: boolean;
+  example?: string;
+  synonyms?: string[]; // Alternative field names
+  validator?: (value: string) => boolean;
+  formatter?: (value: string) => any;
+}
+
+export interface FieldMapping {
+  csvHeader: string;
+  mappedTo: string;
+  confidence: number; // 0-1 score of mapping confidence
+  description?: string;
+  sample?: string;
+  isCustomField?: boolean;
+  dataType?: 'text' | 'email' | 'phone' | 'url' | 'boolean' | 'date' | 'number' | 'unknown';
+}

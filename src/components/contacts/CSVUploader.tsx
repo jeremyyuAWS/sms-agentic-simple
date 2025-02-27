@@ -1,9 +1,9 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Upload, AlertCircle, CheckCircle2, FileText, X, Info } from 'lucide-react';
+import { Upload, AlertCircle, CheckCircle2, FileText, X, Info, ArrowRight, Edit, PencilLine, RotateCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Contact } from '@/lib/types';
+import { Contact, CSVField, FieldMapping } from '@/lib/types';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -20,16 +20,27 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 
 interface CSVUploaderProps {
   onContactsUploaded: (contacts: Contact[]) => void;
-}
-
-interface CSVField {
-  name: string;
-  description: string;
-  required: boolean;
-  example?: string;
 }
 
 const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
@@ -42,15 +53,170 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const [fieldMappings, setFieldMappings] = useState<FieldMapping[]>([]);
+  const [showMappingDialog, setShowMappingDialog] = useState(false);
+  const [sampleData, setSampleData] = useState<string[][]>([]);
+  const [editingField, setEditingField] = useState<FieldMapping | null>(null);
 
-  // Required fields for the CSV
+  // Required fields for the CSV with synonyms for smart mapping
   const requiredFields: CSVField[] = [
-    { name: 'name', description: 'Full name of the contact', required: true, example: 'John Doe' },
-    { name: 'phoneNumber', description: 'Phone number (E.164 format preferred)', required: true, example: '+15551234567' },
-    { name: 'email', description: 'Email address', required: false, example: 'john@example.com' },
-    { name: 'linkedinUrl', description: 'LinkedIn profile URL', required: false, example: 'https://linkedin.com/in/johndoe' },
-    { name: 'attendingConference', description: 'Is the contact attending a conference (Yes/No)', required: false, example: 'Yes' }
+    { 
+      name: 'name', 
+      description: 'Full name of the contact', 
+      required: true, 
+      example: 'John Doe', 
+      synonyms: ['full name', 'contact name', 'first name', 'first and last name', 'customer name', 'client name'],
+      validator: (value) => value.trim().length > 0
+    },
+    { 
+      name: 'phoneNumber', 
+      description: 'Phone number (E.164 format preferred)', 
+      required: true, 
+      example: '+15551234567', 
+      synonyms: ['phone', 'mobile', 'cell', 'telephone', 'contact number', 'mobile number', 'cell phone', 'phone no', 'tel'],
+      validator: (value) => /^(\+\d{1,3})?[\s.-]?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$/.test(value.trim())
+    },
+    { 
+      name: 'email', 
+      description: 'Email address', 
+      required: false, 
+      example: 'john@example.com', 
+      synonyms: ['e-mail', 'mail', 'email address', 'contact email', 'work email', 'personal email'],
+      validator: (value) => !value || /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(value.trim())
+    },
+    { 
+      name: 'linkedinUrl', 
+      description: 'LinkedIn profile URL', 
+      required: false, 
+      example: 'https://linkedin.com/in/johndoe', 
+      synonyms: ['linkedin', 'linkedin profile', 'linkedin url', 'linkedin link', 'social media', 'social profile'],
+      validator: (value) => !value || value.includes('linkedin.com/')
+    },
+    { 
+      name: 'attendingConference', 
+      description: 'Is the contact attending a conference (Yes/No)', 
+      required: false, 
+      example: 'Yes', 
+      synonyms: ['attending', 'conference', 'will attend', 'rsvp', 'confirmed', 'attending status', 'attendance'],
+      validator: (value) => !value || ['yes', 'no', 'true', 'false', 'y', 'n', '1', '0'].includes(value.toLowerCase()),
+      formatter: (value) => ['true', 'yes', 'y', '1'].includes(value.toLowerCase())
+    },
+    { 
+      name: 'company', 
+      description: 'Company or organization name', 
+      required: false, 
+      example: 'Acme Inc.', 
+      synonyms: ['organization', 'org', 'employer', 'workplace', 'business', 'firm', 'corporation'],
+      validator: (value) => !value || value.trim().length > 0
+    },
+    { 
+      name: 'position', 
+      description: 'Job title or position', 
+      required: false, 
+      example: 'Marketing Manager', 
+      synonyms: ['job title', 'title', 'role', 'job role', 'designation', 'job position', 'occupation'],
+      validator: (value) => !value || value.trim().length > 0
+    }
   ];
+
+  // Function to detect data type based on content
+  const detectDataType = (values: string[]): string => {
+    // Take a sample of non-empty values
+    const sampleValues = values.filter(v => v.trim()).slice(0, 10);
+    
+    if (sampleValues.length === 0) return 'unknown';
+    
+    // Email detection
+    if (sampleValues.every(v => /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(v))) {
+      return 'email';
+    }
+    
+    // Phone number detection (simple pattern)
+    if (sampleValues.every(v => /^(\+\d{1,3})?[\s.-]?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$/.test(v))) {
+      return 'phone';
+    }
+    
+    // URL detection
+    if (sampleValues.every(v => v.startsWith('http') || v.includes('www.') || v.includes('.com/'))) {
+      return 'url';
+    }
+    
+    // Boolean detection
+    if (sampleValues.every(v => ['yes', 'no', 'true', 'false', 'y', 'n', '1', '0'].includes(v.toLowerCase()))) {
+      return 'boolean';
+    }
+    
+    // Number detection
+    if (sampleValues.every(v => !isNaN(Number(v)))) {
+      return 'number';
+    }
+    
+    // Date detection (simple check)
+    if (sampleValues.every(v => !isNaN(Date.parse(v)))) {
+      return 'date';
+    }
+    
+    return 'text';
+  };
+
+  // Function to perform smart field mapping
+  const performSmartMapping = (csvHeaders: string[], data: string[][]): FieldMapping[] => {
+    const mappings: FieldMapping[] = [];
+    
+    // Create a sample of data for analysis (up to 5 rows)
+    const dataSample = data.slice(0, 5);
+    setSampleData(dataSample);
+    
+    csvHeaders.forEach((header, index) => {
+      const headerLower = header.toLowerCase();
+      let bestMatch: CSVField | null = null;
+      let highestConfidence = 0;
+      
+      // Get column values for data type detection
+      const columnValues = data.map(row => row[index] || '');
+      const detectedType = detectDataType(columnValues);
+      
+      // Check if the header exactly matches or is a synonym of any required field
+      for (const field of requiredFields) {
+        let confidence = 0;
+        
+        // Exact match gets highest confidence
+        if (field.name.toLowerCase() === headerLower) {
+          confidence = 1;
+        } 
+        // Check synonyms for partial matches
+        else if (field.synonyms && field.synonyms.some(s => headerLower.includes(s.toLowerCase()))) {
+          const synonym = field.synonyms.find(s => headerLower.includes(s.toLowerCase()));
+          confidence = synonym ? 0.9 : 0;
+        }
+        // Content-based matching as a fallback
+        else if ((field.name === 'email' && detectedType === 'email') ||
+                (field.name === 'phoneNumber' && detectedType === 'phone') ||
+                (field.name === 'linkedinUrl' && detectedType === 'url')) {
+          confidence = 0.8;
+        }
+        
+        if (confidence > highestConfidence) {
+          highestConfidence = confidence;
+          bestMatch = field;
+        }
+      }
+      
+      // Create mapping
+      const mapping: FieldMapping = {
+        csvHeader: header,
+        mappedTo: bestMatch ? bestMatch.name : header,
+        confidence: highestConfidence,
+        sample: dataSample.length > 0 ? dataSample[0][index] : '',
+        isCustomField: !bestMatch,
+        dataType: detectedType as any
+      };
+      
+      mappings.push(mapping);
+    });
+    
+    return mappings;
+  };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -108,13 +274,27 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
         }
         
         // Get headers and normalize them
-        const headers = rows[0].split(',').map(header => header.trim().toLowerCase());
+        const headers = rows[0].split(',').map(header => header.trim());
         setHeaders(headers);
         
-        // Check if required fields exist
+        // Parse data rows for smart mapping
+        const dataRows: string[][] = [];
+        for (let i = 1; i < rows.length; i++) {
+          if (!rows[i].trim()) continue;
+          const values = parseCSVLine(rows[i]);
+          if (values.length === headers.length) {
+            dataRows.push(values);
+          }
+        }
+        
+        // Perform smart field mapping
+        const mappings = performSmartMapping(headers, dataRows);
+        setFieldMappings(mappings);
+        
+        // Check if any required fields are missing after mapping
         const missingFields = requiredFields
           .filter(field => field.required)
-          .filter(field => !headers.includes(field.name.toLowerCase()));
+          .filter(field => !mappings.some(m => m.mappedTo === field.name));
         
         if (missingFields.length > 0) {
           setError(`Missing required field(s): ${missingFields.map(f => f.name).join(', ')}`);
@@ -123,51 +303,13 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
             description: `Your CSV is missing these required fields: ${missingFields.map(f => f.name).join(', ')}`,
             variant: "destructive"
           });
-          setIsProcessing(false);
-          return;
+          setShowMappingDialog(true);
+        } else if (mappings.some(m => m.confidence < 1)) {
+          // If we have any uncertain mappings, show the dialog
+          setShowMappingDialog(true);
         }
         
-        // Parse the contacts
-        const parsedContacts: Contact[] = [];
-        for (let i = 1; i < rows.length; i++) {
-          if (!rows[i].trim()) continue;
-          
-          // Use a CSV parser that handles quoted values with commas
-          const values = parseCSVLine(rows[i]);
-          
-          if (values.length !== headers.length) {
-            setError(`Row ${i} has ${values.length} columns, expected ${headers.length}.`);
-            toast({
-              title: "CSV Format Error",
-              description: `Row ${i} has ${values.length} columns, expected ${headers.length}.`,
-              variant: "destructive"
-            });
-            setIsProcessing(false);
-            return;
-          }
-          
-          const contact: any = { id: `temp-${i}` };
-          for (let j = 0; j < headers.length; j++) {
-            const field = headers[j];
-            const value = values[j].trim();
-            
-            if (field === 'attendingconference' || field === 'attending conference') {
-              contact[field] = ['true', 'yes', 'y', '1'].includes(value.toLowerCase());
-            } else {
-              contact[field] = value;
-            }
-          }
-          
-          parsedContacts.push(contact as Contact);
-        }
-        
-        setContacts(parsedContacts);
         setIsProcessing(false);
-        
-        toast({
-          title: "CSV Processed Successfully",
-          description: `Found ${parsedContacts.length} contacts in your CSV file.`,
-        });
       } catch (err) {
         console.error(err);
         setError('An error occurred while parsing the CSV file.');
@@ -216,6 +358,86 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
     return result;
   };
 
+  const processContactsWithMapping = () => {
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const content = e.target?.result as string;
+        const rows = content.split('\n');
+        
+        // Parse the contacts using our mapping
+        const parsedContacts: Contact[] = [];
+        for (let i = 1; i < rows.length; i++) {
+          if (!rows[i].trim()) continue;
+          
+          const values = parseCSVLine(rows[i]);
+          
+          if (values.length !== headers.length) {
+            continue; // Skip malformed rows
+          }
+          
+          const contact: any = { id: `temp-${i}` };
+          let isValid = true;
+          
+          // Apply field mappings
+          fieldMappings.forEach((mapping, index) => {
+            const value = values[index].trim();
+            
+            // Skip empty values for required fields
+            if (mapping.mappedTo === 'name' || mapping.mappedTo === 'phoneNumber') {
+              if (!value) {
+                isValid = false;
+              }
+            }
+            
+            // Find the field definition to apply validation and formatting
+            const fieldDef = requiredFields.find(f => f.name === mapping.mappedTo);
+            
+            if (fieldDef && fieldDef.validator && !fieldDef.validator(value)) {
+              // Skip invalid values based on validator
+              isValid = false;
+            } else if (fieldDef && fieldDef.formatter) {
+              // Apply formatter if available
+              contact[mapping.mappedTo] = fieldDef.formatter(value);
+            } else {
+              // Store the value as is
+              contact[mapping.mappedTo] = value;
+            }
+          });
+          
+          if (isValid) {
+            parsedContacts.push(contact as Contact);
+          }
+        }
+        
+        setContacts(parsedContacts);
+        
+        toast({
+          title: "CSV Processed Successfully",
+          description: `Found ${parsedContacts.length} valid contacts in your CSV file.`,
+        });
+        
+        setShowMappingDialog(false);
+      } catch (err) {
+        console.error(err);
+        toast({
+          title: "Processing Error",
+          description: "An error occurred while processing contacts with the mapping.",
+          variant: "destructive"
+        });
+      }
+    };
+    
+    reader.readAsText(file);
+  };
+
+  const getFieldDescription = (fieldName: string): string => {
+    const field = requiredFields.find(f => f.name === fieldName);
+    return field ? field.description : "Custom field";
+  };
+
   const handleUpload = () => {
     if (contacts.length === 0) {
       setError('No contacts to upload.');
@@ -243,6 +465,7 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
       setFile(null);
       setContacts([]);
       setHeaders([]);
+      setFieldMappings([]);
     }, 1000);
   };
 
@@ -255,9 +478,60 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
     setContacts([]);
     setHeaders([]);
     setError(null);
+    setFieldMappings([]);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+  };
+
+  const updateFieldMapping = (index: number, newMappedTo: string, description?: string) => {
+    setFieldMappings(prev => {
+      const updated = [...prev];
+      updated[index] = {
+        ...updated[index],
+        mappedTo: newMappedTo,
+        description: description || updated[index].description,
+        confidence: 1 // User manually set it
+      };
+      return updated;
+    });
+  };
+
+  const openEditFieldDialog = (field: FieldMapping) => {
+    setEditingField(field);
+  };
+
+  const saveFieldDescription = (description: string) => {
+    if (!editingField) return;
+    
+    setFieldMappings(prev => {
+      return prev.map(field => 
+        field.csvHeader === editingField.csvHeader 
+          ? { ...field, description: description }
+          : field
+      );
+    });
+    
+    setEditingField(null);
+  };
+
+  const getDataTypeBadge = (type: string) => {
+    const colors: Record<string, string> = {
+      email: 'bg-blue-100 text-blue-800',
+      phone: 'bg-green-100 text-green-800',
+      url: 'bg-purple-100 text-purple-800',
+      boolean: 'bg-yellow-100 text-yellow-800',
+      number: 'bg-pink-100 text-pink-800',
+      date: 'bg-indigo-100 text-indigo-800',
+      text: 'bg-gray-100 text-gray-800',
+      unknown: 'bg-gray-100 text-gray-800'
+    };
+    
+    return (
+      <span className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full ${colors[type] || colors.unknown}`}>
+        {type}
+      </span>
+    );
   };
 
   return (
@@ -291,6 +565,9 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
             ))}
           </TableBody>
         </Table>
+        <p className="text-sm text-muted-foreground mt-3">
+          Our smart field mapping will automatically detect and map your CSV columns to the appropriate fields.
+        </p>
       </Card>
 
       {/* File Upload Area */}
@@ -348,6 +625,18 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
                   <span>{contacts.length} contacts detected</span>
                 </div>
               ) : null}
+              
+              {fieldMappings.length > 0 && !isProcessing && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="mt-2"
+                  onClick={() => setShowMappingDialog(true)}
+                >
+                  <Edit className="mr-2 h-4 w-4" />
+                  Review Field Mapping
+                </Button>
+              )}
             </>
           ) : (
             <>
@@ -372,6 +661,179 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
         </div>
       )}
       
+      {/* Field Mapping Dialog */}
+      <Dialog open={showMappingDialog} onOpenChange={setShowMappingDialog}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Smart Field Mapping</DialogTitle>
+            <DialogDescription>
+              We've analyzed your CSV and mapped the columns to our contact fields. Please review and adjust if needed.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>CSV Column</TableHead>
+                  <TableHead>Detected Type</TableHead>
+                  <TableHead>Sample Data</TableHead>
+                  <TableHead>Maps To</TableHead>
+                  <TableHead>Confidence</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {fieldMappings.map((mapping, index) => (
+                  <TableRow key={index}>
+                    <TableCell className="font-medium">{mapping.csvHeader}</TableCell>
+                    <TableCell>{getDataTypeBadge(mapping.dataType || 'unknown')}</TableCell>
+                    <TableCell className="max-w-[150px] truncate">{mapping.sample}</TableCell>
+                    <TableCell>
+                      <Select 
+                        defaultValue={mapping.mappedTo} 
+                        onValueChange={(value) => updateFieldMapping(index, value)}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select field" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {requiredFields.map((field) => (
+                            <SelectItem key={field.name} value={field.name}>
+                              {field.name} {field.required && <span className="text-red-500">*</span>}
+                            </SelectItem>
+                          ))}
+                          <SelectItem value={mapping.csvHeader}>
+                            Custom: {mapping.csvHeader}
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell>
+                      {mapping.confidence === 1 ? (
+                        <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
+                          High
+                        </Badge>
+                      ) : mapping.confidence >= 0.8 ? (
+                        <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200">
+                          Medium
+                        </Badge>
+                      ) : (
+                        <Badge className="bg-red-100 text-red-800 hover:bg-red-200">
+                          Low
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => openEditFieldDialog(mapping)}
+                      >
+                        <PencilLine className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowMappingDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={processContactsWithMapping}>
+              <CheckCircle2 className="mr-2 h-4 w-4" />
+              Apply Mapping
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Edit Field Description Dialog */}
+      <Dialog open={!!editingField} onOpenChange={(open) => !open && setEditingField(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Field</DialogTitle>
+            <DialogDescription>
+              Add a description for this field or change its mapping.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {editingField && (
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="fieldName">CSV Column Name</Label>
+                <Input id="fieldName" value={editingField.csvHeader} readOnly disabled />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="mappedField">Maps To</Label>
+                <Select 
+                  defaultValue={editingField.mappedTo} 
+                  onValueChange={(value) => {
+                    if (editingField) {
+                      const index = fieldMappings.findIndex(m => m.csvHeader === editingField.csvHeader);
+                      if (index !== -1) {
+                        updateFieldMapping(index, value);
+                      }
+                    }
+                  }}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select field" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {requiredFields.map((field) => (
+                      <SelectItem key={field.name} value={field.name}>
+                        {field.name} {field.required && <span className="text-red-500">*</span>}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value={editingField.csvHeader}>
+                      Custom: {editingField.csvHeader}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="description">Field Description</Label>
+                <Input 
+                  id="description" 
+                  placeholder="Enter a description for this field" 
+                  defaultValue={editingField.description || getFieldDescription(editingField.mappedTo)}
+                  onChange={(e) => {
+                    if (editingField) {
+                      setEditingField({
+                        ...editingField,
+                        description: e.target.value
+                      });
+                    }
+                  }}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Sample Data</Label>
+                <div className="p-2 bg-muted rounded text-sm">
+                  {editingField.sample || 'No sample data available'}
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingField(null)}>
+              Cancel
+            </Button>
+            <Button onClick={() => saveFieldDescription(editingField?.description || '')}>
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
       {/* Contact Preview */}
       {file && headers.length > 0 && contacts.length > 0 && !error && (
         <Card className="overflow-hidden">
@@ -386,10 +848,12 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  {headers.map((header, index) => (
+                  {fieldMappings
+                    .filter(m => !m.isCustomField || requiredFields.some(rf => rf.name === m.mappedTo))
+                    .map((mapping, index) => (
                     <TableHead key={index} className="whitespace-nowrap">
                       <div className="flex items-center gap-1">
-                        {header}
+                        {mapping.mappedTo}
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
@@ -397,7 +861,7 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
                             </TooltipTrigger>
                             <TooltipContent>
                               <p>
-                                {requiredFields.find(f => f.name.toLowerCase() === header.toLowerCase())?.description || `Custom field: ${header}`}
+                                {mapping.description || getFieldDescription(mapping.mappedTo)}
                               </p>
                             </TooltipContent>
                           </Tooltip>
@@ -410,9 +874,15 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
               <TableBody>
                 {contacts.slice(0, 5).map((contact, index) => (
                   <TableRow key={index}>
-                    {headers.map((header, headerIndex) => (
+                    {fieldMappings
+                      .filter(m => !m.isCustomField || requiredFields.some(rf => rf.name === m.mappedTo))
+                      .map((mapping, headerIndex) => (
                       <TableCell key={headerIndex} className="whitespace-nowrap">
-                        {(contact as any)[header]}
+                        {contact[mapping.mappedTo] !== undefined ? 
+                          typeof contact[mapping.mappedTo] === 'boolean' 
+                            ? contact[mapping.mappedTo] ? 'Yes' : 'No'
+                            : contact[mapping.mappedTo]
+                          : ''}
                       </TableCell>
                     ))}
                   </TableRow>
