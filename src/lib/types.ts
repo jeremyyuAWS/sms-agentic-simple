@@ -1,4 +1,6 @@
 
+import { LucideIcon } from 'lucide-react';
+
 export interface Contact {
   id: string;
   name: string;
@@ -72,7 +74,7 @@ export interface MetricItem {
   previousValue?: number | string;
   change?: number;
   changeType?: 'increase' | 'decrease' | 'neutral';
-  icon?: React.ComponentType;
+  icon?: LucideIcon;
 }
 
 export interface HeaderTab {
