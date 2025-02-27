@@ -1,12 +1,10 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Upload, MessageSquare, Send, Users } from 'lucide-react';
 
 const Index = () => {
-  const navigate = useNavigate();
-
   return (
     <div className="min-h-screen flex flex-col">
       <main className="flex-grow flex flex-col items-center justify-center p-6">
@@ -53,11 +51,13 @@ const Index = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button
               size="lg"
-              onClick={() => navigate('/contacts')}
+              asChild
               className="gap-2"
             >
-              <Users className="h-4 w-4" />
-              Start Managing Contacts
+              <Link to="/contacts">
+                <Users className="h-4 w-4" />
+                Start Managing Contacts
+              </Link>
             </Button>
           </div>
         </div>
