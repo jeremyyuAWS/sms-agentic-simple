@@ -1,27 +1,37 @@
+
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import "./App.css";
 import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import Contacts from "./pages/Contacts";
+import { createContext, useState } from "react";
 
-const queryClient = new QueryClient();
+// Create AppContext
+export const AppContext = createContext<any>(null);
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
+function App() {
+  const [contacts, setContacts] = useState<any[]>([]);
+
+  // Context value
+  const appContextValue = {
+    contacts,
+    setContacts,
+    // Add other state and functions as needed
+  };
+
+  return (
+    <AppContext.Provider value={appContextValue}>
+      <Router>
         <Routes>
           <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="/contacts" element={<Contacts />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+        <Toaster />
+      </Router>
+    </AppContext.Provider>
+  );
+}
 
 export default App;
