@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-import { TimeIcon, CalendarIcon } from 'lucide-react';
+import { Clock, CalendarIcon } from 'lucide-react';
 import { Campaign } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
@@ -188,7 +188,7 @@ const CampaignCreator: React.FC = () => {
               <div>
                 <Label htmlFor="startTime">Start Time</Label>
                 <div className="relative mt-1.5">
-                  <TimeIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="startTime"
                     name="startTime"
@@ -203,7 +203,7 @@ const CampaignCreator: React.FC = () => {
               <div>
                 <Label htmlFor="endTime">End Time</Label>
                 <div className="relative mt-1.5">
-                  <TimeIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="endTime"
                     name="endTime"
