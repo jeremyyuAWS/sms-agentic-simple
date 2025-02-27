@@ -9,7 +9,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Campaign } from "@/lib/types";
 import { useApp } from "@/contexts/AppContext";
 import { PlusCircle, Clock } from "lucide-react";
-import { TimePickerDemo } from "@/components/ui/time-picker-demo";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";

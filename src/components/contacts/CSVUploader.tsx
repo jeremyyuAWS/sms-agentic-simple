@@ -663,7 +663,7 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
       
       {/* Field Mapping Dialog */}
       <Dialog open={showMappingDialog} onOpenChange={setShowMappingDialog}>
-        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Smart Field Mapping</DialogTitle>
             <DialogDescription>
@@ -739,7 +739,7 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
             </Table>
           </div>
           
-          <DialogFooter>
+          <DialogFooter className="mt-6 pt-4 border-t">
             <Button variant="outline" onClick={() => setShowMappingDialog(false)}>
               Cancel
             </Button>
