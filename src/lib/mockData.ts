@@ -13,7 +13,7 @@ export const templates: Template[] = [
   {
     id: '1',
     name: 'Initial Outreach',
-    body: 'Hi {name}, I'm Alex from Taikis. Do you have 5 minutes to discuss our Mediterranean franchise opportunity?',
+    body: 'Hi {name}, I\'m Alex from Taikis. Do you have 5 minutes to discuss our Mediterranean franchise opportunity?',
     createdAt: new Date('2023-09-15'),
     updatedAt: new Date('2023-09-15'),
     variables: ['name']
@@ -130,7 +130,7 @@ export const messages: Message[] = [
     id: '1',
     contactId: '1',
     campaignId: '1',
-    body: 'Hi John, I'm Alex from Taikis. Do you have 5 minutes to discuss our Mediterranean franchise opportunity?',
+    body: 'Hi John, I\'m Alex from Taikis. Do you have 5 minutes to discuss our Mediterranean franchise opportunity?',
     sentAt: new Date('2023-10-16T10:30:00'),
     status: 'delivered',
     type: 'outbound'
@@ -139,7 +139,7 @@ export const messages: Message[] = [
     id: '2',
     contactId: '1',
     campaignId: '1',
-    body: 'Sure, I'd be interested in learning more. What's the best way to connect?',
+    body: 'Sure, I\'d be interested in learning more. What\'s the best way to connect?',
     sentAt: new Date('2023-10-16T10:45:00'),
     status: 'received',
     type: 'inbound'
@@ -148,7 +148,7 @@ export const messages: Message[] = [
     id: '3',
     contactId: '1',
     campaignId: '1',
-    body: 'Great! Here's a link to my calendar: calendly.com/alex-taikis. Looking forward to speaking with you!',
+    body: 'Great! Here\'s a link to my calendar: calendly.com/alex-taikis. Looking forward to speaking with you!',
     sentAt: new Date('2023-10-16T10:47:00'),
     status: 'delivered',
     type: 'outbound'
@@ -157,7 +157,7 @@ export const messages: Message[] = [
     id: '4',
     contactId: '2',
     campaignId: '1',
-    body: 'Hi Sarah, I'm Alex from Taikis. Do you have 5 minutes to discuss our Mediterranean franchise opportunity?',
+    body: 'Hi Sarah, I\'m Alex from Taikis. Do you have 5 minutes to discuss our Mediterranean franchise opportunity?',
     sentAt: new Date('2023-10-16T11:15:00'),
     status: 'delivered',
     type: 'outbound'
@@ -175,7 +175,7 @@ export const messages: Message[] = [
     id: '6',
     contactId: '3',
     campaignId: '1',
-    body: 'Hi Michael, I'm Alex from Taikis. Do you have 5 minutes to discuss our Mediterranean franchise opportunity?',
+    body: 'Hi Michael, I\'m Alex from Taikis. Do you have 5 minutes to discuss our Mediterranean franchise opportunity?',
     sentAt: new Date('2023-10-16T12:00:00'),
     status: 'delivered',
     type: 'outbound'
@@ -190,7 +190,7 @@ export const conversations: Conversation[] = [
     contactName: 'John Smith',
     contactPhone: '+1 (555) 123-4567',
     lastMessageAt: new Date('2023-10-16T10:47:00'),
-    lastMessagePreview: 'Great! Here's a link to my calendar: calendly.com/alex-taikis. Looking forward to speaking with you!',
+    lastMessagePreview: 'Great! Here\'s a link to my calendar: calendly.com/alex-taikis. Looking forward to speaking with you!',
     status: 'interested',
     unreadCount: 0,
     messages: [messages[0], messages[1], messages[2]]
@@ -212,7 +212,7 @@ export const conversations: Conversation[] = [
     contactName: 'Michael Chen',
     contactPhone: '+1 (555) 456-7890',
     lastMessageAt: new Date('2023-10-16T12:00:00'),
-    lastMessagePreview: 'Hi Michael, I'm Alex from Taikis. Do you have 5 minutes to discuss our Mediterranean franchise opportunity?',
+    lastMessagePreview: 'Hi Michael, I\'m Alex from Taikis. Do you have 5 minutes to discuss our Mediterranean franchise opportunity?',
     status: 'new',
     unreadCount: 0,
     messages: [messages[5]]
