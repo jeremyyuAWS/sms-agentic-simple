@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import CSVUploader from '@/components/contacts/CSVUploader';
+import CSVUploader from '../components/contacts/CSVUploader';
 import { Contact } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
