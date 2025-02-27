@@ -6,23 +6,11 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Contacts from "./pages/Contacts";
 import Templates from "./pages/Templates";
-import { createContext, useState } from "react";
-
-// Create AppContext
-export const AppContext = createContext<any>(null);
+import { AppProvider } from "./contexts/AppContext";
 
 function App() {
-  const [contacts, setContacts] = useState<any[]>([]);
-
-  // Context value
-  const appContextValue = {
-    contacts,
-    setContacts,
-    // Add other state and functions as needed
-  };
-
   return (
-    <AppContext.Provider value={appContextValue}>
+    <AppProvider>
       <Router>
         <Routes>
           <Route path="/" element={<Index />} />
@@ -32,7 +20,7 @@ function App() {
         </Routes>
         <Toaster />
       </Router>
-    </AppContext.Provider>
+    </AppProvider>
   );
 }
 
