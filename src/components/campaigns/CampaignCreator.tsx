@@ -6,12 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Campaign } from "@/lib/types";
+import { Campaign, TimeWindowOption } from "@/lib/types";
 import { useApp } from "@/contexts/AppContext";
-import { PlusCircle, Clock } from "lucide-react";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Switch } from "@/components/ui/switch";
+import { PlusCircle, AlertCircle } from "lucide-react";
+import TimeZoneSelector from "./TimeZoneSelector";
+import TimeWindowSelector from "./TimeWindowSelector";
 
 export default function CampaignCreator() {
   const { createCampaign, templates } = useApp();
@@ -20,36 +19,12 @@ export default function CampaignCreator() {
   const [description, setDescription] = useState("");
   const [templateId, setTemplateId] = useState("");
   const [timeZone, setTimeZone] = useState("America/New_York");
-  const [startTime, setStartTime] = useState("09:00");
-  const [endTime, setEndTime] = useState("17:00");
-  const [selectedDays, setSelectedDays] = useState<number[]>([1, 2, 3, 4, 5]);
-
-  const timeZones = [
-    { value: "America/New_York", label: "Eastern Time (ET)" },
-    { value: "America/Chicago", label: "Central Time (CT)" },
-    { value: "America/Denver", label: "Mountain Time (MT)" },
-    { value: "America/Los_Angeles", label: "Pacific Time (PT)" },
-    { value: "Europe/London", label: "Greenwich Mean Time (GMT)" },
-    { value: "Europe/Paris", label: "Central European Time (CET)" }
-  ];
-
-  const weekdays = [
-    { value: 0, label: "Sunday" },
-    { value: 1, label: "Monday" },
-    { value: 2, label: "Tuesday" },
-    { value: 3, label: "Wednesday" },
-    { value: 4, label: "Thursday" },
-    { value: 5, label: "Friday" },
-    { value: 6, label: "Saturday" }
-  ];
-
-  const handleDayToggle = (day: number) => {
-    setSelectedDays(current => 
-      current.includes(day) 
-        ? current.filter(d => d !== day) 
-        : [...current, day]
-    );
-  };
+  const [timeWindow, setTimeWindow] = useState<TimeWindowOption>({
+    startTime: "09:00",
+    endTime: "17:00",
+    daysOfWeek: [1, 2, 3, 4, 5]
+  });
+  const [advancedOptionsOpen, setAdvancedOptionsOpen] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,9 +40,9 @@ export default function CampaignCreator() {
       templateId,
       timeZone,
       sendingWindow: {
-        startTime,
-        endTime,
-        daysOfWeek: selectedDays
+        startTime: timeWindow.startTime,
+        endTime: timeWindow.endTime,
+        daysOfWeek: timeWindow.daysOfWeek
       }
     };
     
@@ -81,9 +56,12 @@ export default function CampaignCreator() {
     setDescription("");
     setTemplateId("");
     setTimeZone("America/New_York");
-    setStartTime("09:00");
-    setEndTime("17:00");
-    setSelectedDays([1, 2, 3, 4, 5]);
+    setTimeWindow({
+      startTime: "09:00",
+      endTime: "17:00",
+      daysOfWeek: [1, 2, 3, 4, 5]
+    });
+    setAdvancedOptionsOpen(false);
   };
 
   return (
@@ -127,99 +105,68 @@ export default function CampaignCreator() {
             
             <div className="space-y-2">
               <Label htmlFor="template">Message Template</Label>
-              <Select value={templateId} onValueChange={setTemplateId} required>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a template" />
-                </SelectTrigger>
-                <SelectContent>
-                  {templates.map(template => (
-                    <SelectItem key={template.id} value={template.id}>
-                      {template.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-4 pt-4">
-              <h3 className="text-sm font-medium">Sending Window Settings</h3>
-              
-              <div className="space-y-2">
-                <Label htmlFor="timezone">Time Zone</Label>
-                <Select value={timeZone} onValueChange={setTimeZone}>
+              {templates.length === 0 ? (
+                <div className="rounded-md border p-3 bg-yellow-50 text-yellow-700 flex items-start gap-2">
+                  <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-medium">No templates available</p>
+                    <p className="text-sm">
+                      You need to create at least one template before you can create a campaign.
+                      <a href="/templates" className="underline ml-1">Create a template</a>
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <Select value={templateId} onValueChange={setTemplateId} required>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select time zone" />
+                    <SelectValue placeholder="Select a template" />
                   </SelectTrigger>
                   <SelectContent>
-                    {timeZones.map(zone => (
-                      <SelectItem key={zone.value} value={zone.value}>
-                        {zone.label}
+                    {templates.map(template => (
+                      <SelectItem key={template.id} value={template.id}>
+                        {template.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-muted-foreground">
-                  Messages will be sent according to the recipient's local time
-                </p>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Start Time</Label>
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                    <Input 
-                      type="time" 
-                      value={startTime} 
-                      onChange={(e) => setStartTime(e.target.value)}
-                    />
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label>End Time</Label>
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                    <Input 
-                      type="time" 
-                      value={endTime} 
-                      onChange={(e) => setEndTime(e.target.value)}
-                    />
-                  </div>
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label>Active Days</Label>
-                <div className="flex flex-wrap gap-2">
-                  {weekdays.map(day => (
-                    <div key={day.value} className="flex items-center space-x-2">
-                      <Checkbox 
-                        id={`day-${day.value}`} 
-                        checked={selectedDays.includes(day.value)}
-                        onCheckedChange={() => handleDayToggle(day.value)}
-                      />
-                      <label
-                        htmlFor={`day-${day.value}`}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                      >
-                        {day.label.slice(0, 3)}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Select the days of the week when messages can be sent
-                </p>
-              </div>
+              )}
             </div>
+            
+            <div className="pt-4">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setAdvancedOptionsOpen(!advancedOptionsOpen)}
+              >
+                {advancedOptionsOpen ? "Hide" : "Show"} Advanced Options
+              </Button>
+            </div>
+            
+            {advancedOptionsOpen && (
+              <div className="space-y-6 border-t pt-4 mt-4">
+                <h3 className="text-sm font-medium">Time Zone & Sending Window</h3>
+                
+                <TimeZoneSelector 
+                  value={timeZone} 
+                  onChange={setTimeZone} 
+                  className="mb-6"
+                />
+                
+                <TimeWindowSelector 
+                  value={timeWindow} 
+                  onChange={setTimeWindow} 
+                />
+              </div>
+            )}
           </div>
           
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit">Create Campaign</Button>
+            <Button type="submit" disabled={templates.length === 0}>
+              Create Campaign
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

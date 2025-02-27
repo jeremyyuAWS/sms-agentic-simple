@@ -96,3 +96,18 @@ export interface FieldMapping {
   isCustomField?: boolean;
   dataType?: 'text' | 'email' | 'phone' | 'url' | 'boolean' | 'date' | 'number' | 'unknown';
 }
+
+// Time Zone related types
+export interface TimeZoneOption {
+  value: string;
+  label: string;
+  offset: string;
+  abbr?: string;
+}
+
+export interface TimeWindowOption {
+  startTime: string;
+  endTime: string;
+  daysOfWeek: number[];
+  label?: string;
+}

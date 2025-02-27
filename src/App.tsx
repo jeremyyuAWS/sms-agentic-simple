@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Contacts from "./pages/Contacts";
+import Templates from "./pages/Templates";
 import { createContext, useState } from "react";
 
 // Create AppContext
@@ -26,6 +27,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/contacts" element={<Contacts />} />
+          <Route path="/templates" element={<Templates />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <Toaster />

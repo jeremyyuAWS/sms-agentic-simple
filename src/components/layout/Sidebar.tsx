@@ -1,87 +1,106 @@
 
 import React from 'react';
-import { NavLink } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { useApp } from '@/contexts/AppContext';
+import { Button } from '@/components/ui/button';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
-  Home, 
+  LayoutDashboard, 
+  BarChart2, 
+  Users, 
   MessageSquare, 
-  Send, 
-  FileText,
-  Settings,
-  ChevronLeft,
-  ChevronRight
+  Settings, 
+  Tag
 } from 'lucide-react';
+import { useApp } from '@/contexts/AppContext';
 
-const Sidebar: React.FC = () => {
-  const { sidebarOpen, toggleSidebar } = useApp();
+interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {}
+
+export function Sidebar({ className }: SidebarProps) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { sidebarOpen } = useApp();
   
-  const navItems = [
-    { icon: Home, label: 'Dashboard', path: '/' },
-    { icon: MessageSquare, label: 'Conversations', path: '/conversations' },
-    { icon: Send, label: 'Campaigns', path: '/campaigns' },
-    { icon: FileText, label: 'Templates', path: '/templates' },
-    { icon: Settings, label: 'Settings', path: '/settings' }
+  const routes = [
+    {
+      label: 'Dashboard',
+      icon: LayoutDashboard,
+      href: '/',
+      active: location.pathname === '/',
+    },
+    {
+      label: 'Campaigns',
+      icon: BarChart2,
+      href: '/campaigns',
+      active: location.pathname === '/campaigns',
+    },
+    {
+      label: 'Contacts',
+      icon: Users,
+      href: '/contacts',
+      active: location.pathname === '/contacts',
+    },
+    {
+      label: 'Conversations',
+      icon: MessageSquare,
+      href: '/conversations',
+      active: location.pathname === '/conversations',
+    },
+    {
+      label: 'Templates',
+      icon: Tag,
+      href: '/templates',
+      active: location.pathname === '/templates',
+    },
+    {
+      label: 'Settings',
+      icon: Settings,
+      href: '/settings',
+      active: location.pathname === '/settings',
+    },
   ];
 
   return (
     <div className={cn(
-      'h-screen border-r border-border/50 bg-card transition-all duration-300 ease-in-out flex flex-col z-30',
-      sidebarOpen ? 'w-64' : 'w-16'
+      "flex flex-col h-full bg-background border-r",
+      sidebarOpen ? "w-64" : "w-[70px]",
+      className
     )}>
-      <div className="flex items-center justify-between p-4 h-16 border-b border-border/50">
-        <div className={cn(
-          'font-semibold text-xl flex items-center gap-2 transition-all duration-300 overflow-hidden',
-          !sidebarOpen && 'opacity-0'
-        )}>
-          <span className="text-primary">SMS</span>
-          <span>Agent</span>
-        </div>
-        
-        <button 
-          onClick={toggleSidebar}
-          className="p-1.5 rounded-full hover:bg-muted/80 transition-colors duration-300"
-        >
-          {sidebarOpen ? (
-            <ChevronLeft className="h-4 w-4" />
-          ) : (
-            <ChevronRight className="h-4 w-4" />
-          )}
-        </button>
-      </div>
-      
-      <nav className="flex-1 p-3 space-y-1">
-        {navItems.map((item) => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            className={({ isActive }) => cn(
-              'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-300',
-              isActive ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted/80',
-              !sidebarOpen && 'justify-center'
-            )}
-          >
-            <item.icon className="h-5 w-5" />
-            <span className={cn(
-              'transition-all duration-300',
-              sidebarOpen ? 'opacity-100' : 'opacity-0 w-0 overflow-hidden'
-            )}>
-              {item.label}
-            </span>
-          </NavLink>
-        ))}
-      </nav>
-      
-      <div className={cn(
-        'p-4 border-t border-border/50 transition-all duration-300',
-        sidebarOpen ? 'opacity-100' : 'opacity-0'
-      )}>
-        <div className="text-xs text-muted-foreground">
-          © 2023 SMS Agent
+      <div className="py-4 flex-1">
+        <div className="px-3 py-2">
+          <h2 className={cn(
+            "text-lg font-semibold transition-all overflow-hidden",
+            sidebarOpen ? "opacity-100 mb-6" : "opacity-0 h-0"
+          )}>
+            Text Campaigns
+          </h2>
+          <div className="space-y-1">
+            {routes.map((route) => (
+              <Button
+                key={route.href}
+                variant={route.active ? 'secondary' : 'ghost'}
+                className={cn(
+                  'w-full justify-start',
+                  !sidebarOpen && 'justify-center',
+                )}
+                onClick={() => navigate(route.href)}
+              >
+                <route.icon className={cn(
+                  'h-5 w-5',
+                  sidebarOpen ? 'mr-3' : 'mr-0'
+                )} />
+                <span className={cn(
+                  'transition-all overflow-hidden',
+                  sidebarOpen ? 'opacity-100 w-auto' : 'opacity-0 w-0'
+                )}>
+                  {route.label}
+                </span>
+              </Button>
+            ))}
+          </div>
         </div>
       </div>
     </div>
   );
-};
+}
 
 export default Sidebar;
