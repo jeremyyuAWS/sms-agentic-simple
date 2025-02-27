@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Upload, AlertCircle, CheckCircle2, FileText, X, Info, ArrowRight, Edit, PencilLine, RotateCw } from 'lucide-react';
@@ -70,11 +69,15 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
     },
     { 
       name: 'phoneNumber', 
-      description: 'Phone number (E.164 format preferred)', 
+      description: 'Phone number (format: 555-111-1212 or +15551111212)', 
       required: true, 
-      example: '+15551234567', 
+      example: '555-111-1212', 
       synonyms: ['phone', 'mobile', 'cell', 'telephone', 'contact number', 'mobile number', 'cell phone', 'phone no', 'tel'],
-      validator: (value) => /^(\+\d{1,3})?[\s.-]?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$/.test(value.trim())
+      validator: (value) => {
+        // Accept multiple formats: 555-111-1212, (555) 111-1212, 5551111212, +15551111212
+        const cleanedNumber = value.replace(/[\s\(\)\-\.]/g, '');
+        return /^\+?\d{10,15}$/.test(cleanedNumber);
+      }
     },
     { 
       name: 'email', 
@@ -131,8 +134,11 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
       return 'email';
     }
     
-    // Phone number detection (simple pattern)
-    if (sampleValues.every(v => /^(\+\d{1,3})?[\s.-]?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$/.test(v))) {
+    // Phone number detection (updated pattern to include 555-111-1212 format)
+    if (sampleValues.every(v => {
+      const cleaned = v.replace(/[\s\(\)\-\.]/g, '');
+      return /^\+?\d{10,15}$/.test(cleaned);
+    })) {
       return 'phone';
     }
     
