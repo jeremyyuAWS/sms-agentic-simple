@@ -32,7 +32,7 @@ const MetricCard: React.FC<MetricCardProps> = ({
     >
       <div className="flex justify-between items-start">
         <div className="text-sm font-medium text-muted-foreground">{label}</div>
-        {Icon && <Icon className="text-primary/80 h-5 w-5" />}
+        {Icon && React.createElement(Icon, { className: "text-primary/80 h-5 w-5" })}
       </div>
       
       <div className="mt-4">
