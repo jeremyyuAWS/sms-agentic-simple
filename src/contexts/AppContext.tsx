@@ -68,6 +68,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
       id: messageId,
       contactId,
       campaignId: campaignId || '1', // Default to first campaign if not specified
+      content: messageBody,
       body: messageBody,
       sentAt: new Date(),
       status: 'sent',
@@ -83,9 +84,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
         // Update existing conversation
         updated[conversationIndex] = {
           ...updated[conversationIndex],
+          lastMessage: newMessage.content,
           lastMessageAt: newMessage.sentAt,
-          lastMessagePreview: newMessage.body,
-          messages: [...updated[conversationIndex].messages, newMessage]
+          lastMessagePreview: newMessage.content,
+          messages: [...(updated[conversationIndex].messages || []), newMessage]
         };
       } else {
         // Create new conversation
@@ -96,8 +98,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
             contactId,
             contactName: contact.name,
             contactPhone: contact.phoneNumber,
+            lastMessage: newMessage.content,
             lastMessageAt: newMessage.sentAt,
-            lastMessagePreview: newMessage.body,
+            lastMessagePreview: newMessage.content,
             status: 'new',
             unreadCount: 0,
             messages: [newMessage]
@@ -114,9 +117,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
         if (!prev) return null;
         return {
           ...prev,
+          lastMessage: newMessage.content,
           lastMessageAt: newMessage.sentAt,
-          lastMessagePreview: newMessage.body,
-          messages: [...prev.messages, newMessage]
+          lastMessagePreview: newMessage.content,
+          messages: [...(prev.messages || []), newMessage]
         };
       });
     }
@@ -144,10 +148,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   };
   
   const createCampaign = (campaignData: Omit<Campaign, 'id' | 'createdAt'>) => {
+    const now = new Date();
     const newCampaign: Campaign = {
       ...campaignData,
       id: `campaign-${Date.now()}`,
-      createdAt: new Date(),
+      createdAt: now,
+      updatedAt: campaignData.updatedAt || now
     };
     
     setCampaigns(prev => [...prev, newCampaign]);
@@ -161,6 +167,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   };
   
   const updateCampaignStatus = (campaignId: string, status: Campaign['status']) => {
+    const now = new Date();
+    
     setCampaigns(prev => {
       const updated = [...prev];
       const campaignIndex = updated.findIndex(c => c.id === campaignId);
@@ -169,8 +177,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
         updated[campaignIndex] = {
           ...updated[campaignIndex],
           status,
-          ...(status === 'active' && { startedAt: new Date() }),
-          ...(status === 'completed' && { completedAt: new Date() })
+          updatedAt: now,
+          ...(status === 'active' && { startedAt: now }),
+          ...(status === 'completed' && { completedAt: now })
         };
       }
       
