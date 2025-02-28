@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useCallback, memo } from 'react';
 import { Campaign } from '@/lib/types';
 import AnimatedCard from '@/components/ui/AnimatedCard';
 import { Button } from '@/components/ui/button';
@@ -15,58 +15,55 @@ import {
   Trash2
 } from 'lucide-react';
 import { formatDistance } from 'date-fns';
+import StatusBadge from './StatusBadge';
 
 interface CampaignListProps {
   campaigns: Campaign[];
   onSelect: (campaignId: string) => void;
   onUpdateStatus: (campaignId: string, status: Campaign['status']) => void;
-  onEdit?: (campaignId: string) => void; // Added as optional
-  onDelete?: (campaignId: string) => void; // Added as optional
+  onEdit?: (campaignId: string) => void;
+  onDelete?: (campaignId: string) => void;
 }
 
-const CampaignList: React.FC<CampaignListProps> = ({ 
-  campaigns, 
-  onSelect, 
+// Memoized campaign card component to improve performance for large lists
+const CampaignCard = memo(({ 
+  campaign, 
+  index,
+  onSelect,
   onUpdateStatus,
   onEdit,
   onDelete
+}: { 
+  campaign: Campaign; 
+  index: number;
+  onSelect: (campaignId: string) => void;
+  onUpdateStatus: (campaignId: string, status: Campaign['status']) => void;
+  onEdit?: (campaignId: string) => void;
+  onDelete?: (campaignId: string) => void;
 }) => {
-  const handleStatusChange = (e: React.MouseEvent, campaign: Campaign, status: Campaign['status']) => {
+  // Use callbacks to prevent recreation of these functions on every render
+  const handleStatusChange = useCallback((e: React.MouseEvent, status: Campaign['status']) => {
     e.stopPropagation();
     onUpdateStatus(campaign.id, status);
-  };
+  }, [campaign.id, onUpdateStatus]);
 
-  const handleEdit = (e: React.MouseEvent, campaignId: string) => {
+  const handleEdit = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     if (onEdit) {
-      onEdit(campaignId);
+      onEdit(campaign.id);
     } else {
-      // If no onEdit is provided, fall back to onSelect
-      onSelect(campaignId);
+      onSelect(campaign.id);
     }
-  };
+  }, [campaign.id, onEdit, onSelect]);
 
-  const handleDelete = (e: React.MouseEvent, campaignId: string) => {
+  const handleDelete = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     if (onDelete) {
-      onDelete(campaignId);
+      onDelete(campaign.id);
     }
-  };
+  }, [campaign.id, onDelete]);
 
-  const getStatusBadge = (status: Campaign['status']) => {
-    switch (status) {
-      case 'active':
-        return <div className="px-2 py-1 rounded-full bg-green-100 text-green-800 text-xs font-medium">Active</div>;
-      case 'paused':
-        return <div className="px-2 py-1 rounded-full bg-yellow-100 text-yellow-800 text-xs font-medium">Paused</div>;
-      case 'completed':
-        return <div className="px-2 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-medium">Completed</div>;
-      default:
-        return <div className="px-2 py-1 rounded-full bg-gray-100 text-gray-800 text-xs font-medium">Draft</div>;
-    }
-  };
-
-  const getStatusActions = (campaign: Campaign) => {
+  const getStatusActions = () => {
     switch (campaign.status) {
       case 'active':
         return (
@@ -75,7 +72,7 @@ const CampaignList: React.FC<CampaignListProps> = ({
               variant="outline"
               size="sm"
               className="h-8"
-              onClick={(e) => handleStatusChange(e, campaign, 'paused')}
+              onClick={(e) => handleStatusChange(e, 'paused')}
             >
               <Pause className="h-3.5 w-3.5 mr-1" /> Pause
             </Button>
@@ -83,7 +80,7 @@ const CampaignList: React.FC<CampaignListProps> = ({
               variant="outline"
               size="sm"
               className="h-8"
-              onClick={(e) => handleStatusChange(e, campaign, 'completed')}
+              onClick={(e) => handleStatusChange(e, 'completed')}
             >
               <StopCircle className="h-3.5 w-3.5 mr-1" /> Stop
             </Button>
@@ -92,7 +89,7 @@ const CampaignList: React.FC<CampaignListProps> = ({
                 variant="ghost"
                 size="sm"
                 className="h-8"
-                onClick={(e) => handleEdit(e, campaign.id)}
+                onClick={handleEdit}
               >
                 <Edit className="h-3.5 w-3.5 mr-1" /> Edit
               </Button>
@@ -106,7 +103,7 @@ const CampaignList: React.FC<CampaignListProps> = ({
               variant="outline"
               size="sm"
               className="h-8"
-              onClick={(e) => handleStatusChange(e, campaign, 'active')}
+              onClick={(e) => handleStatusChange(e, 'active')}
             >
               <Play className="h-3.5 w-3.5 mr-1" /> Resume
             </Button>
@@ -114,7 +111,7 @@ const CampaignList: React.FC<CampaignListProps> = ({
               variant="outline"
               size="sm"
               className="h-8"
-              onClick={(e) => handleStatusChange(e, campaign, 'completed')}
+              onClick={(e) => handleStatusChange(e, 'completed')}
             >
               <StopCircle className="h-3.5 w-3.5 mr-1" /> Stop
             </Button>
@@ -123,7 +120,7 @@ const CampaignList: React.FC<CampaignListProps> = ({
                 variant="ghost"
                 size="sm"
                 className="h-8"
-                onClick={(e) => handleEdit(e, campaign.id)}
+                onClick={handleEdit}
               >
                 <Edit className="h-3.5 w-3.5 mr-1" /> Edit
               </Button>
@@ -138,7 +135,7 @@ const CampaignList: React.FC<CampaignListProps> = ({
                 variant="outline"
                 size="sm"
                 className="h-8"
-                onClick={(e) => handleEdit(e, campaign.id)}
+                onClick={handleEdit}
               >
                 <Edit className="h-3.5 w-3.5 mr-1" /> Edit
               </Button>
@@ -159,7 +156,7 @@ const CampaignList: React.FC<CampaignListProps> = ({
               variant="outline"
               size="sm"
               className="h-8"
-              onClick={(e) => handleStatusChange(e, campaign, 'active')}
+              onClick={(e) => handleStatusChange(e, 'active')}
             >
               <Play className="h-3.5 w-3.5 mr-1" /> Start
             </Button>
@@ -173,7 +170,7 @@ const CampaignList: React.FC<CampaignListProps> = ({
                 variant="ghost"
                 size="sm"
                 className="h-8"
-                onClick={(e) => handleEdit(e, campaign.id)}
+                onClick={handleEdit}
               >
                 <Edit className="h-3.5 w-3.5 mr-1" /> View
               </Button>
@@ -183,6 +180,76 @@ const CampaignList: React.FC<CampaignListProps> = ({
     }
   };
 
+  return (
+    <AnimatedCard
+      className="cursor-pointer hover:shadow-md transition-shadow"
+      animationDelay={index * 100}
+      onClick={() => onSelect(campaign.id)}
+    >
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="font-medium text-lg">{campaign.name}</h3>
+          <p className="text-sm text-muted-foreground mt-1">{campaign.description}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <StatusBadge status={campaign.status} />
+          {onDelete && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-muted-foreground hover:text-destructive"
+              onClick={handleDelete}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+        <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+          <Calendar className="h-4 w-4" />
+          <span>
+            Created {formatDistance(new Date(campaign.createdAt), new Date(), { addSuffix: true })}
+          </span>
+        </div>
+        <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+          <Users className="h-4 w-4" />
+          <span>{campaign.contactCount || 0} contacts</span>
+        </div>
+        <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+          <Clock className="h-4 w-4" />
+          <span>
+            {campaign.sendingWindow?.startTime || "N/A"} - {campaign.sendingWindow?.endTime || "N/A"}
+          </span>
+        </div>
+      </div>
+
+      {campaign.responseRate && (
+        <div className="mt-4 flex items-center space-x-2">
+          <BarChart3 className="h-4 w-4 text-primary" />
+          <span className="text-sm font-medium">
+            {(campaign.responseRate * 100).toFixed(1)}% response rate
+          </span>
+        </div>
+      )}
+
+      <div className="flex justify-end space-x-2 mt-4">
+        {getStatusActions()}
+      </div>
+    </AnimatedCard>
+  );
+});
+
+CampaignCard.displayName = 'CampaignCard';
+
+const CampaignList: React.FC<CampaignListProps> = ({ 
+  campaigns, 
+  onSelect, 
+  onUpdateStatus,
+  onEdit,
+  onDelete
+}) => {
   // If no campaigns, show a message
   if (campaigns.length === 0) {
     return (
@@ -195,64 +262,15 @@ const CampaignList: React.FC<CampaignListProps> = ({
   return (
     <div className="space-y-4">
       {campaigns.map((campaign, index) => (
-        <AnimatedCard
+        <CampaignCard
           key={campaign.id}
-          className="cursor-pointer"
-          animationDelay={index * 100}
-          onClick={() => onSelect(campaign.id)}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-medium text-lg">{campaign.name}</h3>
-              <p className="text-sm text-muted-foreground mt-1">{campaign.description}</p>
-            </div>
-            <div className="flex items-center gap-2">
-              {getStatusBadge(campaign.status)}
-              {onDelete && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                  onClick={(e) => handleDelete(e, campaign.id)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-              <Calendar className="h-4 w-4" />
-              <span>
-                Created {formatDistance(new Date(campaign.createdAt), new Date(), { addSuffix: true })}
-              </span>
-            </div>
-            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-              <Users className="h-4 w-4" />
-              <span>{campaign.contactCount || 0} contacts</span>
-            </div>
-            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-              <Clock className="h-4 w-4" />
-              <span>
-                {campaign.sendingWindow?.startTime || "N/A"} - {campaign.sendingWindow?.endTime || "N/A"}
-              </span>
-            </div>
-          </div>
-
-          {campaign.responseRate && (
-            <div className="mt-4 flex items-center space-x-2">
-              <BarChart3 className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium">
-                {(campaign.responseRate * 100).toFixed(1)}% response rate
-              </span>
-            </div>
-          )}
-
-          <div className="flex justify-end space-x-2 mt-4">
-            {getStatusActions(campaign)}
-          </div>
-        </AnimatedCard>
+          campaign={campaign}
+          index={index}
+          onSelect={onSelect}
+          onUpdateStatus={onUpdateStatus}
+          onEdit={onEdit}
+          onDelete={onDelete}
+        />
       ))}
     </div>
   );

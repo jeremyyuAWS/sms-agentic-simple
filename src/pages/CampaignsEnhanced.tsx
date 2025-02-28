@@ -1,16 +1,20 @@
 
-import React, { useState } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { useApp } from '@/contexts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Undo2, Filter, CheckCircle, Calendar, ListFilter } from 'lucide-react';
+import { Plus, Undo2, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Badge } from '@/components/ui/badge';
 import CampaignList from '@/components/campaigns/CampaignList';
 import CampaignCreator from '@/components/campaigns/CampaignCreator';
 import CampaignDetailView from '@/components/campaigns/CampaignDetailView';
 import NavigationButtons from '@/components/ui/navigation-buttons';
+import CampaignFilters from '@/components/campaigns/CampaignFilters';
+import { Campaign } from '@/lib/types';
+
+type CampaignView = 'list' | 'create' | 'detail';
+type StatusFilter = 'all' | 'active' | 'draft' | 'paused' | 'completed';
+type SortOption = 'newest' | 'oldest' | 'response' | 'contacts';
 
 const CampaignsEnhanced: React.FC = () => {
   const { 
@@ -27,26 +31,49 @@ const CampaignsEnhanced: React.FC = () => {
   
   const { toast } = useToast();
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
-  const [selectedView, setSelectedView] = useState<'list' | 'create' | 'detail'>('list');
-  const [activeStatus, setActiveStatus] = useState<'all' | 'active' | 'draft' | 'completed'>('all');
+  const [selectedView, setSelectedView] = useState<CampaignView>('list');
+  const [activeStatus, setActiveStatus] = useState<StatusFilter>('all');
+  const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [isLoading, setIsLoading] = useState(false);
 
-  const selectedCampaign = selectedCampaignId 
-    ? campaigns.find(c => c.id === selectedCampaignId) 
-    : null;
+  // Get the selected campaign
+  const selectedCampaign = useMemo(() => 
+    selectedCampaignId ? campaigns.find(c => c.id === selectedCampaignId) : null, 
+    [selectedCampaignId, campaigns]
+  );
 
-  // Filter campaigns based on active status
-  const filteredCampaigns = activeStatus === 'all' 
-    ? campaigns 
-    : campaigns.filter(c => {
-        if (activeStatus === 'completed') return c.status === 'completed' || c.status === 'paused';
-        return c.status === activeStatus;
-      });
+  // Filter and sort campaigns
+  const filteredCampaigns = useMemo(() => {
+    // First filter by status
+    let filtered = activeStatus === 'all' 
+      ? campaigns 
+      : campaigns.filter(c => {
+          if (activeStatus === 'completed') return c.status === 'completed';
+          if (activeStatus === 'paused') return c.status === 'paused';
+          return c.status === activeStatus;
+        });
+    
+    // Then sort
+    return [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case 'oldest':
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        case 'response':
+          return (b.responseRate || 0) - (a.responseRate || 0);
+        case 'contacts':
+          return (b.contactCount || 0) - (a.contactCount || 0);
+        case 'newest':
+        default:
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      }
+    });
+  }, [campaigns, activeStatus, sortBy]);
 
-  const handleCreateCampaign = (campaignData: any) => {
+  // Event handlers - use useCallback to prevent recreating functions on each render
+  const handleCreateCampaign = useCallback((campaignData: Partial<Omit<Campaign, 'id' | 'createdAt'>>) => {
     setIsLoading(true);
     try {
-      const newCampaign = createCampaign(campaignData);
+      const newCampaign = createCampaign(campaignData as any);
       toast({
         title: "Campaign Created!",
         description: `Campaign "${campaignData.name}" has been created successfully.`,
@@ -64,15 +91,15 @@ const CampaignsEnhanced: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [createCampaign, toast]);
 
-  const handleUpdateCampaign = (campaignId: string, campaignData: any) => {
+  const handleUpdateCampaign = useCallback((campaignId: string, campaignData: Partial<Omit<Campaign, 'id' | 'createdAt'>>) => {
     setIsLoading(true);
     try {
       updateCampaign(campaignId, campaignData);
       toast({
         title: "Campaign Updated!",
-        description: `Campaign "${campaignData.name}" has been updated successfully.`,
+        description: `Campaign has been updated successfully.`,
         variant: "default",
       });
       setSelectedView('detail');
@@ -85,24 +112,24 @@ const CampaignsEnhanced: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [updateCampaign, toast]);
 
-  const handleNewCampaign = () => {
+  const handleNewCampaign = useCallback(() => {
     setSelectedCampaignId(null);
     setSelectedView('create');
-  };
+  }, []);
 
-  const handleViewCampaign = (campaignId: string) => {
+  const handleViewCampaign = useCallback((campaignId: string) => {
     setSelectedCampaignId(campaignId);
     setSelectedView('detail');
-  };
+  }, []);
 
-  const handleEditCampaign = (campaignId: string) => {
+  const handleEditCampaign = useCallback((campaignId: string) => {
     setSelectedCampaignId(campaignId);
     setSelectedView('create');
-  };
+  }, []);
 
-  const handleDeleteCampaign = (campaignId: string) => {
+  const handleDeleteCampaign = useCallback((campaignId: string) => {
     try {
       deleteCampaign(campaignId);
       toast({
@@ -122,11 +149,89 @@ const CampaignsEnhanced: React.FC = () => {
         variant: "destructive"
       });
     }
-  };
+  }, [deleteCampaign, toast, selectedCampaignId]);
 
-  const handleBackToList = () => {
+  const handleBackToList = useCallback(() => {
     setSelectedCampaignId(null);
     setSelectedView('list');
+  }, []);
+
+  const handleStatusChange = useCallback((status: string) => {
+    setActiveStatus(status as StatusFilter);
+  }, []);
+
+  const handleSortChange = useCallback((sort: string) => {
+    setSortBy(sort as SortOption);
+  }, []);
+
+  // Render the appropriate view
+  const renderContent = () => {
+    if (selectedView === 'create') {
+      return (
+        <CampaignCreator
+          onCreateCampaign={handleCreateCampaign}
+          onUpdateCampaign={handleUpdateCampaign}
+          onCancel={handleBackToList}
+          isSubmitting={isLoading}
+          campaign={selectedCampaign || undefined}
+          contacts={contacts}
+          contactLists={contactLists}
+          templates={templates}
+          knowledgeBases={knowledgeBases}
+        />
+      );
+    }
+    
+    if (selectedView === 'detail' && selectedCampaign) {
+      return (
+        <CampaignDetailView
+          campaign={selectedCampaign}
+          onClose={handleBackToList}
+          onStatusChange={updateCampaignStatus}
+          onEdit={handleEditCampaign}
+        />
+      );
+    }
+    
+    // Default to list view
+    if (campaigns.length === 0) {
+      return (
+        <Card className="border-dashed border-2">
+          <CardContent className="py-10">
+            <div className="text-center space-y-4">
+              <Calendar className="h-12 w-12 text-muted-foreground mx-auto" />
+              <CardTitle>No campaigns yet</CardTitle>
+              <CardDescription className="mx-auto max-w-lg">
+                Create your first campaign to start reaching out to your contacts. Campaigns allow you to send personalized messages and follow-ups automatically.
+              </CardDescription>
+              <Button onClick={handleNewCampaign} className="mt-4 bg-[#8B5CF6] hover:bg-[#7E69AB]">
+                <Plus className="mr-2 h-4 w-4" />
+                Create Your First Campaign
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      );
+    }
+    
+    return (
+      <>
+        <CampaignFilters 
+          activeStatus={activeStatus}
+          onStatusChange={handleStatusChange}
+          onSortChange={handleSortChange}
+          totalCount={campaigns.length}
+        />
+        
+        <CampaignList 
+          campaigns={filteredCampaigns}
+          onSelect={handleViewCampaign}
+          onUpdateStatus={updateCampaignStatus}
+          onEdit={handleEditCampaign}
+          onDelete={handleDeleteCampaign}
+        />
+      </>
+    );
   };
 
   return (
@@ -157,124 +262,7 @@ const CampaignsEnhanced: React.FC = () => {
         )}
       </div>
 
-      {selectedView === 'list' && (
-        <>
-          {campaigns.length === 0 ? (
-            <Card className="border-dashed border-2">
-              <CardContent className="py-10">
-                <div className="text-center space-y-4">
-                  <Calendar className="h-12 w-12 text-muted-foreground mx-auto" />
-                  <CardTitle>No campaigns yet</CardTitle>
-                  <CardDescription className="mx-auto max-w-lg">
-                    Create your first campaign to start reaching out to your contacts. Campaigns allow you to send personalized messages and follow-ups automatically.
-                  </CardDescription>
-                  <Button onClick={handleNewCampaign} className="mt-4 bg-[#8B5CF6] hover:bg-[#7E69AB]">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Create Your First Campaign
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <>
-              <div className="flex justify-between items-center mb-4">
-                <Tabs
-                  defaultValue="all"
-                  value={activeStatus}
-                  onValueChange={(value) => setActiveStatus(value as 'all' | 'active' | 'draft' | 'completed')}
-                  className="w-full"
-                >
-                  <div className="flex justify-between items-center">
-                    <TabsList>
-                      <TabsTrigger value="all">All Campaigns</TabsTrigger>
-                      <TabsTrigger value="active" className="flex items-center gap-1">
-                        <span className="h-2 w-2 rounded-full bg-green-500"></span>
-                        Active
-                      </TabsTrigger>
-                      <TabsTrigger value="draft" className="flex items-center gap-1">
-                        <span className="h-2 w-2 rounded-full bg-amber-500"></span>
-                        Drafts
-                      </TabsTrigger>
-                      <TabsTrigger value="completed" className="flex items-center gap-1">
-                        <span className="h-2 w-2 rounded-full bg-gray-400"></span>
-                        Completed
-                      </TabsTrigger>
-                    </TabsList>
-                    
-                    <Button variant="outline" size="sm" className="ml-auto">
-                      <ListFilter className="h-4 w-4 mr-2" />
-                      Filter
-                    </Button>
-                  </div>
-                  
-                  <TabsContent value="all" className="mt-4">
-                    <CampaignList 
-                      campaigns={filteredCampaigns}
-                      onSelect={handleViewCampaign}
-                      onUpdateStatus={updateCampaignStatus}
-                      onEdit={handleEditCampaign}
-                      onDelete={handleDeleteCampaign}
-                    />
-                  </TabsContent>
-                  
-                  <TabsContent value="active" className="mt-4">
-                    <CampaignList 
-                      campaigns={filteredCampaigns}
-                      onSelect={handleViewCampaign}
-                      onUpdateStatus={updateCampaignStatus}
-                      onEdit={handleEditCampaign}
-                      onDelete={handleDeleteCampaign}
-                    />
-                  </TabsContent>
-                  
-                  <TabsContent value="draft" className="mt-4">
-                    <CampaignList 
-                      campaigns={filteredCampaigns}
-                      onSelect={handleViewCampaign}
-                      onUpdateStatus={updateCampaignStatus}
-                      onEdit={handleEditCampaign}
-                      onDelete={handleDeleteCampaign}
-                    />
-                  </TabsContent>
-                  
-                  <TabsContent value="completed" className="mt-4">
-                    <CampaignList 
-                      campaigns={filteredCampaigns}
-                      onSelect={handleViewCampaign}
-                      onUpdateStatus={updateCampaignStatus}
-                      onEdit={handleEditCampaign}
-                      onDelete={handleDeleteCampaign}
-                    />
-                  </TabsContent>
-                </Tabs>
-              </div>
-            </>
-          )}
-        </>
-      )}
-      
-      {selectedView === 'create' && (
-        <CampaignCreator
-          onCreateCampaign={handleCreateCampaign}
-          onUpdateCampaign={handleUpdateCampaign}
-          onCancel={handleBackToList}
-          isSubmitting={isLoading}
-          campaign={selectedCampaign || undefined}
-          contacts={contacts}
-          contactLists={contactLists}
-          templates={templates}
-          knowledgeBases={knowledgeBases}
-        />
-      )}
-      
-      {selectedView === 'detail' && selectedCampaign && (
-        <CampaignDetailView
-          campaign={selectedCampaign}
-          onClose={handleBackToList}
-          onStatusChange={updateCampaignStatus}
-          onEdit={handleEditCampaign}
-        />
-      )}
+      {renderContent()}
       
       {/* Navigation Buttons */}
       <NavigationButtons currentPage="campaigns" />
