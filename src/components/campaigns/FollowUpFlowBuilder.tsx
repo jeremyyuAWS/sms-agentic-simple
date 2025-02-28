@@ -16,7 +16,7 @@ interface FollowUpFlowBuilderProps {
   initialTemplateId: string;
   followUps: FollowUp[];
   templates: Template[];
-  onUpdate: (followUps: FollowUp[]) => void;
+  onUpdate: (followUps: any[]) => void; // Changed from onChange to onUpdate
 }
 
 const FollowUpFlowBuilder: React.FC<FollowUpFlowBuilderProps> = ({

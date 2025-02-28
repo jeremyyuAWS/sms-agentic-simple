@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { v4 as uuidv4 } from 'uuid';
+// Remove uuid import as it's not installed and not needed
 import { useApp } from '@/contexts';
 import { 
   Campaign, 
@@ -74,8 +75,9 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
     setSelectedTemplateId(template.id);
   };
 
-  const handleKnowledgeBaseSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setKnowledgeBaseId(e.target.value);
+  // Fix knowledgeBaseSelect to use onValueChange
+  const handleKnowledgeBaseSelect = (value: string) => {
+    setKnowledgeBaseId(value);
   };
 
   const handleScheduleChange = (date: Date) => {
@@ -111,6 +113,8 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
   };
 
   const handleSubmit = () => {
+    // Add required fields for Campaign type
+    const now = new Date();
     const campaignData = {
       name,
       description,
@@ -123,7 +127,9 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
       contactListId,
       segmentId,
       followUps: isFollowUpsEnabled ? followUps : [],
-      status: 'draft'
+      status: 'draft' as 'draft' | 'active' | 'paused' | 'completed', // Explicitly cast status
+      updatedAt: now,
+      contactCount: selectedContactIds.length || 0
     };
 
     if (campaign) {
@@ -226,7 +232,10 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="knowledgeBase">Knowledge Base (Optional)</Label>
-                <Select onValueChange={handleKnowledgeBaseSelect} defaultValue={knowledgeBaseId}>
+                <Select 
+                  value={knowledgeBaseId} 
+                  onValueChange={handleKnowledgeBaseSelect}
+                >
                   <SelectTrigger id="knowledgeBase">
                     <SelectValue placeholder="Select a knowledge base" />
                   </SelectTrigger>
@@ -284,9 +293,10 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
               </div>
               {isFollowUpsEnabled && (
                 <FollowUpFlowBuilder
-                  templates={templates}
+                  initialTemplateId={selectedTemplateId || templates[0]?.id || ""}
                   followUps={followUps}
-                  onChange={handleFollowUpsChange}
+                  templates={templates}
+                  onUpdate={handleFollowUpsChange}
                 />
               )}
             </div>

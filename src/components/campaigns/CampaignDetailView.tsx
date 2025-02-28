@@ -1,38 +1,28 @@
 
 import React, { useState } from 'react';
 import { useApp } from '@/contexts';
-import { Campaign, Template, FollowUp, Contact, KnowledgeBase, TimeWindow } from '@/lib/types';
+import { Campaign } from '@/lib/types';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { CalendarClock, CheckCircle, Clock, Edit, MoreVertical, PauseCircle, PlayCircle, User } from 'lucide-react';
 import { format } from 'date-fns';
-import { 
-  Check, 
-  Clock, 
-  Edit, 
-  Trash2, 
-  RefreshCw, 
-  CalendarClock, 
-  BarChart3, 
-  Calendar, 
-  GlobeIcon,
-  ChevronUp,
-  ChevronDown
-} from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
-import FollowUpFlowBuilder from './FollowUpFlowBuilder';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Separator } from '@/components/ui/separator';
 import CampaignAnalytics from './CampaignAnalytics';
-import TimeWindowSelector from './TimeWindowSelector';
-import TimeZoneSelector from './TimeZoneSelector';
-import { Switch } from '@/components/ui/switch';
 
 interface CampaignDetailViewProps {
   campaign: Campaign;
   onClose: () => void;
   onStatusChange: (campaignId: string, status: Campaign['status']) => void;
-  onEdit?: (campaignId: string) => void;
+  onEdit: (campaignId: string) => void;
+  // onDelete prop removed as it's not in the interface
 }
 
 const CampaignDetailView: React.FC<CampaignDetailViewProps> = ({
@@ -41,471 +31,326 @@ const CampaignDetailView: React.FC<CampaignDetailViewProps> = ({
   onStatusChange,
   onEdit
 }) => {
-  const { 
-    templates, 
-    contacts, 
-    knowledgeBases, 
-    updateFollowUp, 
-    conversations 
-  } = useApp();
-  const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState<string>('overview');
-  const [timeWindow, setTimeWindow] = useState<TimeWindow | undefined>(campaign.sendingWindow);
-  const [timeZone, setTimeZone] = useState<string | undefined>(campaign.timeZone);
-  const [followUpEnabled, setFollowUpEnabled] = useState<boolean>(true);
+  const { contacts, templates, contactLists } = useApp();
+  const [activeTab, setActiveTab] = useState('overview');
   
-  // Get all messages related to this campaign
-  const campaignMessages = conversations
-    .flatMap(conv => conv.messages || [])
-    .filter(msg => msg.campaignId === campaign.id);
+  const handleStatusChange = (status: Campaign['status']) => {
+    onStatusChange(campaign.id, status);
+  };
   
-  // Function to get template by ID
-  const getTemplateById = (templateId: string): Template | undefined => {
-    return templates.find(t => t.id === templateId);
-  };
-
-  // Function to get contact by ID
-  const getContactById = (contactId: string): Contact | undefined => {
-    return contacts.find(c => c.id === contactId);
-  };
-
-  // Function to get knowledge base by ID
-  const getKnowledgeBaseById = (knowledgeBaseId: string): KnowledgeBase | undefined => {
-    return knowledgeBases.find(kb => kb.id === knowledgeBaseId);
-  };
-
-  // Function to handle follow-up updates from flow builder
-  const handleFollowUpsUpdate = (updatedFollowUps: FollowUp[]) => {
-    // Update campaign's follow-ups in context
-    campaign.followUps = updatedFollowUps;
-    
-    toast({
-      title: "Follow-up Flow Updated",
-      description: "Your campaign follow-up sequence has been updated."
-    });
-  };
-
-  // Function to handle time window updates
-  const handleTimeWindowUpdate = (newTimeWindow: TimeWindow | undefined) => {
-    setTimeWindow(newTimeWindow);
-    campaign.sendingWindow = newTimeWindow;
-    
-    toast({
-      title: "Sending Window Updated",
-      description: newTimeWindow 
-        ? "Your campaign sending window has been updated." 
-        : "Sending window has been removed. Messages will be sent at any time."
-    });
-  };
-
-  // Function to handle time zone updates
-  const handleTimeZoneUpdate = (newTimeZone: string) => {
-    setTimeZone(newTimeZone);
-    campaign.timeZone = newTimeZone;
-    
-    toast({
-      title: "Time Zone Updated",
-      description: `Your campaign time zone has been set to ${newTimeZone.replace('_', ' ')}.`
-    });
-  };
-
-  // Function to get the color class based on campaign status
-  const getStatusColorClass = (status: Campaign['status']) => {
+  const getStatusBadge = (status: Campaign['status']) => {
     switch (status) {
-      case 'draft':
-        return 'bg-gray-100 text-gray-800 border-gray-300';
       case 'active':
-        return 'bg-green-100 text-green-800 border-green-300';
-      case 'paused':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-300';
-      case 'completed':
-        return 'bg-blue-100 text-blue-800 border-blue-300';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-300';
-    }
-  };
-
-  // Function to get icon based on campaign status
-  const getStatusIcon = (status: Campaign['status']) => {
-    switch (status) {
+        return <Badge className="bg-green-500">Active</Badge>;
       case 'draft':
-        return <Edit className="h-4 w-4 mr-1" />;
-      case 'active':
-        return <Check className="h-4 w-4 mr-1" />;
+        return <Badge className="bg-amber-500">Draft</Badge>;
       case 'paused':
-        return <Clock className="h-4 w-4 mr-1" />;
+        return <Badge className="bg-gray-500">Paused</Badge>;
       case 'completed':
-        return <Check className="h-4 w-4 mr-1" />;
+        return <Badge className="bg-blue-500">Completed</Badge>;
       default:
         return null;
     }
   };
-
+  
+  const getTemplate = () => {
+    if (!campaign.templateId) return 'No template selected';
+    const template = templates.find(t => t.id === campaign.templateId);
+    return template ? template.name : 'Unknown template';
+  };
+  
+  const getContacts = () => {
+    if (campaign.contactIds && campaign.contactIds.length > 0) {
+      return `${campaign.contactIds.length} individual contacts`;
+    } else if (campaign.contactListId) {
+      const list = contactLists.find(l => l.id === campaign.contactListId);
+      return list ? `List: ${list.name} (${list.contactIds.length} contacts)` : 'Unknown list';
+    } else if (campaign.segmentId) {
+      return `Segment: ${campaign.segmentId}`;
+    }
+    return 'No contacts selected';
+  };
+  
+  const formatDate = (date?: Date) => {
+    if (!date) return 'Not scheduled';
+    return format(new Date(date), 'MMM d, yyyy h:mm a');
+  };
+  
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold">{campaign.name}</h2>
-          <p className="text-muted-foreground mt-1">
-            {campaign.description || 'No description provided.'}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Badge variant="outline" className={getStatusColorClass(campaign.status)}>
-            {getStatusIcon(campaign.status)}
-            {campaign.status}
-          </Badge>
+      <Card>
+        <CardHeader className="flex flex-row items-start justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-2xl">{campaign.name}</CardTitle>
+              {getStatusBadge(campaign.status)}
+            </div>
+            <CardDescription className="mt-2">{campaign.description || 'No description provided'}</CardDescription>
+          </div>
           
-          {campaign.status === 'draft' && onEdit && (
-            <Button 
-              size="sm" 
-              variant="outline" 
-              className="flex items-center gap-1"
-              onClick={() => onEdit(campaign.id)}
-            >
-              <Edit className="h-4 w-4" />
-              Edit Draft
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => onEdit(campaign.id)}>
+              <Edit className="h-4 w-4 mr-1" />
+              Edit
             </Button>
-          )}
-        </div>
-      </div>
-
-      <Tabs
-        value={activeTab}
-        onValueChange={setActiveTab}
-        className="w-full space-y-4"
-      >
-        <TabsList className="w-full grid grid-cols-4">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="follow-ups">Follow-up Sequence</TabsTrigger>
-          <TabsTrigger value="analytics">
-            <div className="flex items-center gap-1">
-              <BarChart3 className="h-4 w-4" />
-              <span>Analytics</span>
-            </div>
-          </TabsTrigger>
-          <TabsTrigger value="settings">
-            <div className="flex items-center gap-1">
-              <Clock className="h-4 w-4" />
-              <span>Timing</span>
-            </div>
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="space-y-4">
-          {/* Campaign Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Card>
-              <CardContent className="p-4">
-                <p className="text-xs text-muted-foreground mb-1">Contacts</p>
-                <p className="text-lg font-semibold">{campaign.contactCount}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <p className="text-xs text-muted-foreground mb-1">Messages Sent</p>
-                <p className="text-lg font-semibold">{campaign.messagesSent || 0}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <p className="text-xs text-muted-foreground mb-1">Response Rate</p>
-                <p className="text-lg font-semibold">
-                  {campaign.responseRate ? `${campaign.responseRate}%` : 'N/A'}
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <p className="text-xs text-muted-foreground mb-1">Created</p>
-                <p className="text-lg font-semibold">
-                  {format(new Date(campaign.createdAt), 'MMM d, yyyy')}
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Initial Message */}
-          <div className="space-y-3">
-            <h3 className="text-lg font-semibold">Initial Message</h3>
-            {campaign.templateId ? (
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <p className="font-medium">
-                      {getTemplateById(campaign.templateId)?.name || 'Unknown Template'}
-                    </p>
-                    <Badge variant="outline" className="bg-primary/10">Day 0</Badge>
-                  </div>
-                  <div className="text-sm bg-muted/30 p-3 rounded-md">
-                    {getTemplateById(campaign.templateId)?.body ||
-                      'Template content not available'}
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card className="bg-muted/30">
-                <CardContent className="p-4 text-center text-muted-foreground">
-                  No initial message template selected.
-                </CardContent>
-              </Card>
-            )}
-          </div>
-
-          {/* Timing & Schedule */}
-          <div className="space-y-3">
-            <h3 className="text-lg font-semibold">Timing & Schedule</h3>
-            <Card>
-              <CardContent className="p-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm font-medium mb-1">Start Date</p>
-                    <div className="flex items-center">
-                      <CalendarClock className="h-4 w-4 mr-2 text-muted-foreground" />
-                      <p className="text-sm">
-                        {campaign.scheduledStartDate
-                          ? format(new Date(campaign.scheduledStartDate), 'PPP')
-                          : 'Not scheduled'}
-                      </p>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium mb-1">Time Zone</p>
-                    <div className="flex items-center">
-                      <GlobeIcon className="h-4 w-4 mr-2 text-muted-foreground" />
-                      <p className="text-sm">
-                        {campaign.timeZone ? campaign.timeZone.replace('_', ' ') : 'Default (Local)'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                
-                {campaign.sendingWindow && (
-                  <div className="mt-3 border-t pt-3">
-                    <p className="text-sm font-medium mb-1">Sending Window</p>
-                    <div className="flex items-center">
-                      <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
-                      <p className="text-sm">
-                        {campaign.sendingWindow.startTime} - {campaign.sendingWindow.endTime}
-                        {campaign.sendingWindow.daysOfWeek.length > 0 && (
-                          <span className="ml-2">
-                            on{' '}
-                            {campaign.sendingWindow.daysOfWeek
-                              .map(day => 
-                                ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][day]
-                              )
-                              .join(', ')}
-                          </span>
-                        )}
-                      </p>
-                    </div>
-                  </div>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {campaign.status === 'active' && (
+                  <DropdownMenuItem onClick={() => handleStatusChange('paused')}>
+                    <PauseCircle className="h-4 w-4 mr-2" />
+                    Pause Campaign
+                  </DropdownMenuItem>
                 )}
-              </CardContent>
-            </Card>
+                
+                {campaign.status === 'paused' && (
+                  <DropdownMenuItem onClick={() => handleStatusChange('active')}>
+                    <PlayCircle className="h-4 w-4 mr-2" />
+                    Resume Campaign
+                  </DropdownMenuItem>
+                )}
+                
+                {campaign.status === 'draft' && (
+                  <DropdownMenuItem onClick={() => handleStatusChange('active')}>
+                    <PlayCircle className="h-4 w-4 mr-2" />
+                    Start Campaign
+                  </DropdownMenuItem>
+                )}
+                
+                {(campaign.status === 'active' || campaign.status === 'paused') && (
+                  <DropdownMenuItem onClick={() => handleStatusChange('completed')}>
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Complete Campaign
+                  </DropdownMenuItem>
+                )}
+                
+                {/* We'd normally have a delete option here, but it's been removed since onDelete isn't in the interface */}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-        </TabsContent>
-
-        <TabsContent value="follow-ups" className="space-y-4">
-          <div className="flex justify-between items-center mb-2">
-            <h3 className="text-lg font-semibold">Follow-up Sequence</h3>
-            <div className="flex items-center space-x-2">
-              <Switch 
-                id="followup-toggle" 
-                checked={followUpEnabled}
-                onCheckedChange={setFollowUpEnabled}
-              />
-              <label htmlFor="followup-toggle" className="text-sm cursor-pointer">
-                {followUpEnabled ? 'Enabled' : 'Disabled'}
-              </label>
-            </div>
-          </div>
-          
-          {followUpEnabled ? (
-            campaign.templateId ? (
-              <FollowUpFlowBuilder
-                initialTemplateId={campaign.templateId}
-                followUps={campaign.followUps || []}
-                templates={templates}
-                onUpdate={handleFollowUpsUpdate}
-              />
-            ) : (
-              <Card className="bg-muted/30">
-                <CardContent className="p-6 text-center">
-                  <p className="text-muted-foreground mb-3">
-                    Please select an initial message template first.
-                  </p>
-                  <Button variant="outline" size="sm" onClick={() => setActiveTab('overview')}>
-                    Go to Overview
-                  </Button>
+        </CardHeader>
+        
+        <CardContent>
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="mb-4">
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="analytics">Analytics</TabsTrigger>
+              <TabsTrigger value="contacts">Contacts</TabsTrigger>
+              <TabsTrigger value="followups">Follow-ups</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="overview" className="space-y-6">
+              <div className="grid gap-4 md:grid-cols-2">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium flex items-center">
+                      <CalendarClock className="h-4 w-4 mr-2 text-muted-foreground" />
+                      Schedule
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <dl className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <dt className="text-muted-foreground">Start Date:</dt>
+                        <dd className="font-medium">{formatDate(campaign.scheduledStartDate)}</dd>
+                      </div>
+                      <div className="flex justify-between">
+                        <dt className="text-muted-foreground">Status:</dt>
+                        <dd>{getStatusBadge(campaign.status)}</dd>
+                      </div>
+                      {campaign.startedAt && (
+                        <div className="flex justify-between">
+                          <dt className="text-muted-foreground">Started:</dt>
+                          <dd className="font-medium">{formatDate(campaign.startedAt)}</dd>
+                        </div>
+                      )}
+                      {campaign.completedAt && (
+                        <div className="flex justify-between">
+                          <dt className="text-muted-foreground">Completed:</dt>
+                          <dd className="font-medium">{formatDate(campaign.completedAt)}</dd>
+                        </div>
+                      )}
+                      <div className="flex justify-between">
+                        <dt className="text-muted-foreground">Time Zone:</dt>
+                        <dd className="font-medium">{campaign.timeZone || 'Default'}</dd>
+                      </div>
+                    </dl>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium flex items-center">
+                      <User className="h-4 w-4 mr-2 text-muted-foreground" />
+                      Audience
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <dl className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <dt className="text-muted-foreground">Recipients:</dt>
+                        <dd className="font-medium">{getContacts()}</dd>
+                      </div>
+                      <div className="flex justify-between">
+                        <dt className="text-muted-foreground">Template:</dt>
+                        <dd className="font-medium">{getTemplate()}</dd>
+                      </div>
+                      <div className="flex justify-between">
+                        <dt className="text-muted-foreground">Follow-ups:</dt>
+                        <dd className="font-medium">{campaign.followUps?.length || 0} configured</dd>
+                      </div>
+                    </dl>
+                  </CardContent>
+                </Card>
+              </div>
+              
+              {campaign.status === 'active' && (
+                <Card className="bg-blue-50 border-blue-200">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-blue-800">Campaign Progress</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-sm text-blue-700">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <Clock className="h-4 w-4 mr-2" />
+                        <span>Campaign is running</span>
+                      </div>
+                      <Button size="sm" variant="outline" 
+                              className="bg-white border-blue-300 text-blue-700 hover:bg-blue-100"
+                              onClick={() => handleStatusChange('paused')}>
+                        Pause Campaign
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+              
+              {campaign.status === 'draft' && (
+                <Card className="bg-amber-50 border-amber-200">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-amber-800">Campaign Draft</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-sm text-amber-700">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <Clock className="h-4 w-4 mr-2" />
+                        <span>Campaign is in draft mode</span>
+                      </div>
+                      <Button size="sm" 
+                              className="bg-amber-500 hover:bg-amber-600 text-white"
+                              onClick={() => handleStatusChange('active')}>
+                        Start Campaign
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+              
+              {campaign.status === 'paused' && (
+                <Card className="bg-gray-100 border-gray-200">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-gray-800">Campaign Paused</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-sm text-gray-700">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <PauseCircle className="h-4 w-4 mr-2" />
+                        <span>Campaign is currently paused</span>
+                      </div>
+                      <Button size="sm" 
+                              className="bg-gray-600 hover:bg-gray-700 text-white"
+                              onClick={() => handleStatusChange('active')}>
+                        Resume Campaign
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+              
+              {campaign.status === 'completed' && (
+                <Card className="bg-green-50 border-green-200">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-green-800">Campaign Completed</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-sm text-green-700">
+                    <div className="flex items-center">
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      <span>Campaign has been completed</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+            
+            <TabsContent value="analytics">
+              <CampaignAnalytics campaign={campaign} />
+            </TabsContent>
+            
+            <TabsContent value="contacts">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Campaign Contacts</CardTitle>
+                  <CardDescription>
+                    {getContacts()}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {/* Contact list would go here */}
+                  <p className="text-muted-foreground">Contact list details...</p>
                 </CardContent>
               </Card>
-            )
-          ) : (
-            <Card className="bg-muted/30">
-              <CardContent className="p-6 text-center">
-                <p className="text-muted-foreground">
-                  Follow-up sequence is currently disabled. Toggle the switch above to enable it.
-                </p>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-
-        <TabsContent value="analytics" className="space-y-4">
-          <CampaignAnalytics 
-            campaign={campaign}
-            messages={campaignMessages}
-          />
-        </TabsContent>
-
-        <TabsContent value="settings" className="space-y-4">
-          <div className="grid gap-6">
-            {/* Time Zone */}
-            <Card>
-              <CardContent className="p-6">
-                <TimeZoneSelector 
-                  value={timeZone} 
-                  onChange={handleTimeZoneUpdate}
-                />
-              </CardContent>
-            </Card>
+            </TabsContent>
             
-            {/* Sending Window */}
-            <Card>
-              <CardContent className="p-6">
-                <TimeWindowSelector 
-                  value={timeWindow}
-                  onChange={handleTimeWindowUpdate}
-                />
-              </CardContent>
-            </Card>
-            
-            {/* Date Selection (Future Enhancement) */}
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-2 mb-3">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <h3 className="text-sm font-medium">Campaign Schedule</h3>
-                </div>
-                
-                <div className="bg-muted/20 rounded-md p-4 text-center text-muted-foreground">
-                  <p className="mb-2">Date scheduling will be available in a future update.</p>
-                  <p className="text-xs">This feature will allow you to set specific start and end dates for your campaign.</p>
-                </div>
-              </CardContent>
-            </Card>
-            
-            {/* Follow-ups settings */}
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <RefreshCw className="h-4 w-4 text-muted-foreground" />
-                    <h3 className="text-sm font-medium">Follow-up Sequence Settings</h3>
-                  </div>
-                </div>
-                
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <label htmlFor="enable-followups" className="text-sm">
-                      Enable follow-up sequence
-                    </label>
-                    <Switch 
-                      id="enable-followups" 
-                      checked={followUpEnabled}
-                      onCheckedChange={(checked) => {
-                        setFollowUpEnabled(checked);
-                        if (checked) {
-                          toast({
-                            title: "Follow-ups Enabled",
-                            description: "Your campaign will now use the follow-up sequence you've configured."
-                          });
-                        } else {
-                          toast({
-                            title: "Follow-ups Disabled",
-                            description: "Your campaign will only send the initial message without follow-ups."
-                          });
-                        }
-                      }}
-                    />
-                  </div>
-                  
-                  <p className="text-sm text-muted-foreground">
-                    When disabled, only the initial message will be sent without any follow-ups.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-            
-            {/* Blackout Dates (Future Enhancement) */}
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <Trash2 className="h-4 w-4 text-muted-foreground" />
-                    <h3 className="text-sm font-medium">Blackout Dates</h3>
-                  </div>
-                </div>
-                
-                <div className="bg-muted/20 rounded-md p-4 text-center text-muted-foreground">
-                  <p className="mb-2">Blackout dates will be available in a future update.</p>
-                  <p className="text-xs">This feature will allow you to exclude specific dates from your campaign sending schedule, such as holidays or weekends.</p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-      </Tabs>
-
-      <div className="border-t pt-4 flex justify-between">
-        <div>
-          <p className="text-sm text-muted-foreground">
-            Created: {format(new Date(campaign.createdAt), 'MMM d, yyyy')}
-            {campaign.status === 'active' && campaign.startedAt && (
-              <> • Started: {format(new Date(campaign.startedAt), 'MMM d, yyyy')}</>
-            )}
-            {campaign.status === 'completed' && campaign.completedAt && (
-              <> • Completed: {format(new Date(campaign.completedAt), 'MMM d, yyyy')}</>
-            )}
-          </p>
-        </div>
-        <div className="flex gap-2">
-          {campaign.status === 'draft' && (
-            <Button
-              onClick={() => onStatusChange(campaign.id, 'active')}
-            >
-              Activate Campaign
-            </Button>
-          )}
-          {campaign.status === 'active' && (
-            <Button 
-              variant="outline"
-              onClick={() => onStatusChange(campaign.id, 'paused')}
-            >
-              Pause Campaign
-            </Button>
-          )}
-          {campaign.status === 'paused' && (
-            <Button
-              onClick={() => onStatusChange(campaign.id, 'active')}
-            >
-              Resume Campaign
-            </Button>
-          )}
-          {(campaign.status === 'active' || campaign.status === 'paused') && (
-            <Button 
-              variant="outline"
-              onClick={() => onStatusChange(campaign.id, 'completed')}
-            >
-              Mark as Completed
-            </Button>
-          )}
+            <TabsContent value="followups">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Follow-up Messages</CardTitle>
+                  <CardDescription>
+                    {campaign.followUps && campaign.followUps.length > 0 
+                      ? `${campaign.followUps.length} follow-ups configured` 
+                      : 'No follow-ups configured'}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {campaign.followUps && campaign.followUps.length > 0 ? (
+                    <div className="space-y-4">
+                      {campaign.followUps.map((followUp, index) => (
+                        <div key={followUp.id} className="p-4 border rounded">
+                          <div className="flex items-center justify-between">
+                            <div className="font-medium">Follow-up {index + 1}</div>
+                            <Badge variant="outline">
+                              {followUp.delayDays} days after
+                            </Badge>
+                          </div>
+                          <Separator className="my-2" />
+                          <div className="text-sm text-muted-foreground">
+                            {followUp.condition === 'no-response' 
+                              ? 'Sent only if no response received' 
+                              : 'Sent to all contacts'}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground">No follow-up messages configured for this campaign.</p>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+        
+        <CardFooter>
           <Button variant="outline" onClick={onClose}>
-            Close
+            Back to Campaigns
           </Button>
-        </div>
-      </div>
+        </CardFooter>
+      </Card>
     </div>
   );
 };

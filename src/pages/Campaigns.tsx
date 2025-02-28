@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Undo2, ListFilter, CheckCircle, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge'; // Added missing Badge import
 import CampaignList from '@/components/campaigns/CampaignList';
 import CampaignCreator from '@/components/campaigns/CampaignCreator';
 import CampaignDetailView from '@/components/campaigns/CampaignDetailView';
@@ -20,8 +21,8 @@ const Campaigns: React.FC = () => {
     contactLists,
     templates,
     knowledgeBases,
-    updateCampaign, // Note: Using the available method from context
-    deleteCampaign // Note: Using the available method from context
+    updateCampaign,
+    deleteCampaign
   } = useApp();
   
   const { toast } = useToast();
@@ -292,7 +293,6 @@ const Campaigns: React.FC = () => {
           onClose={handleBackToList}
           onStatusChange={updateCampaignStatus}
           onEdit={handleEditCampaign}
-          onDelete={handleDeleteCampaign}
         />
       )}
 
