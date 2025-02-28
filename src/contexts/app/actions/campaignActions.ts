@@ -1,3 +1,4 @@
+
 import { Campaign, KnowledgeBase, FollowUp, FollowUpCondition, Message, TimeWindow, TemplateVariant, Template } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
@@ -538,16 +539,9 @@ export const createCampaignActions = (
     });
   };
 
-  // New function to check if a follow-up should be sent based on enhanced conditions
+  // Enhanced function to check if a follow-up should be sent based on sophisticated conditions
   const shouldSendFollowUp = (followUp: FollowUp, message: Message | null, lastResponseDate: Date | null): boolean => {
-    // Legacy condition check
-    if (followUp.condition) {
-      if (followUp.condition === 'all') return true;
-      if (followUp.condition === 'no-response' && !lastResponseDate) return true;
-      return false;
-    }
-    
-    // Enhanced conditions check
+    // If there are enhanced conditions
     if (followUp.conditions && followUp.conditions.length > 0) {
       return followUp.conditions.some(condition => {
         switch (condition.type) {
@@ -570,7 +564,14 @@ export const createCampaignActions = (
       });
     }
     
-    // Default to legacy behavior if no conditions specified
+    // Legacy condition check (backwards compatibility)
+    if (followUp.condition) {
+      if (followUp.condition === 'all') return true;
+      if (followUp.condition === 'no-response' && !lastResponseDate) return true;
+      return false;
+    }
+    
+    // Default fallback behavior
     return !lastResponseDate;
   };
 

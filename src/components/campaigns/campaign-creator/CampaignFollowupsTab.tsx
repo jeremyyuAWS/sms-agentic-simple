@@ -3,9 +3,9 @@ import React, { useState, useEffect } from 'react';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import FollowUpFlowBuilder from '../FollowUpFlowBuilder';
-import { Template, KnowledgeBase } from '@/lib/types';
+import { Template, KnowledgeBase, FollowUpCondition } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { Sparkles, AlertCircle } from 'lucide-react';
+import { Sparkles, AlertCircle, MessageSquare, ThumbsUp, ThumbsDown, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { 
   Tooltip,
@@ -57,14 +57,19 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
             templateId: selectedTemplateId,
             delayDays: 3,
             enabled: true,
-            condition: 'no-response'
+            condition: 'no-response',
+            conditions: [{ type: 'no-response' as FollowUpCondition['type'] }]
           },
           {
             id: `followup-${Date.now()}-2`,
             templateId: templates.length > 1 ? templates[1].id : selectedTemplateId,
             delayDays: 7,
             enabled: true,
-            condition: 'no-response'
+            condition: 'no-response',
+            conditions: [
+              { type: 'no-response' as FollowUpCondition['type'] },
+              { type: 'negative-response' as FollowUpCondition['type'] }
+            ]
           }
         ];
         
@@ -72,7 +77,7 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
         
         toast({
           title: "Follow-up sequence generated",
-          description: `Created 2 follow-up messages based on "${selectedKnowledgeBase.title}"`,
+          description: `Created a smart follow-up sequence based on "${selectedKnowledgeBase.title}"`,
         });
       } else {
         toast({
@@ -92,7 +97,7 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
         <div>
           <Label htmlFor="followups-enabled" className="text-base font-medium">Enable Follow-ups</Label>
           <p className="text-sm text-muted-foreground mt-1">
-            Automatically send follow-up messages to contacts who haven't responded.
+            Automatically send follow-up messages triggered by various response types.
           </p>
         </div>
         <Switch
@@ -106,8 +111,9 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
         <>
           {selectedKnowledgeBase && (
             <div className="flex justify-between items-center mb-2">
-              <div className="text-sm">
-                Using knowledge base: <span className="font-medium">{selectedKnowledgeBase.title}</span>
+              <div className="text-sm flex items-center gap-2">
+                <MessageSquare className="h-4 w-4 text-primary" />
+                <span>Using knowledge base: <span className="font-medium">{selectedKnowledgeBase.title}</span></span>
               </div>
               <TooltipProvider>
                 <Tooltip>
@@ -125,7 +131,7 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
                   </TooltipTrigger>
                   <TooltipContent>
                     <p className="max-w-xs">
-                      Generate a recommended follow-up sequence based on your knowledge base content
+                      Generate a multi-stage follow-up sequence optimized for your knowledge base content
                     </p>
                   </TooltipContent>
                 </Tooltip>
@@ -139,6 +145,39 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
               <span>No knowledge base selected. Adding one improves follow-up suggestions.</span>
             </div>
           )}
+
+          <div className="border rounded-lg p-4 mb-4 bg-blue-50 text-blue-800">
+            <h3 className="font-semibold mb-2">Follow-up Trigger Types</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div className="flex items-start gap-2">
+                <div className="bg-white rounded-full p-1 mt-0.5">
+                  <ThumbsDown className="h-4 w-4 text-red-500" />
+                </div>
+                <div>
+                  <p className="font-medium text-sm">Negative Response</p>
+                  <p className="text-xs text-blue-700">When contacts express objections or decline</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <div className="bg-white rounded-full p-1 mt-0.5">
+                  <ThumbsUp className="h-4 w-4 text-green-500" />
+                </div>
+                <div>
+                  <p className="font-medium text-sm">Positive Response</p>
+                  <p className="text-xs text-blue-700">When contacts express interest or agree</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <div className="bg-white rounded-full p-1 mt-0.5">
+                  <Search className="h-4 w-4 text-purple-500" />
+                </div>
+                <div>
+                  <p className="font-medium text-sm">Keyword Response</p>
+                  <p className="text-xs text-blue-700">When contacts mention specific keywords</p>
+                </div>
+              </div>
+            </div>
+          </div>
           
           <FollowUpFlowBuilder
             initialTemplateId={selectedTemplateId || templates[0]?.id || ""}

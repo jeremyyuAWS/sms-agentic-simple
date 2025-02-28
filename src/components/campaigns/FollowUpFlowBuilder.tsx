@@ -2,8 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FollowUp, Template, KnowledgeBase } from '@/lib/types';
-import { Plus, ArrowDownCircle, MessageSquare, Clock, CheckCircle, ArrowRight, MoreHorizontal, X, GitBranch } from 'lucide-react';
+import { FollowUp, Template, KnowledgeBase, FollowUpCondition } from '@/lib/types';
+import { Plus, ArrowDownCircle, MessageSquare, Clock, CheckCircle, ArrowRight, MoreHorizontal, X, GitBranch, ThumbsUp, ThumbsDown, Search } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -11,6 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 interface FollowUpFlowBuilderProps {
   initialTemplateId: string;
@@ -44,7 +45,8 @@ const FollowUpFlowBuilder: React.FC<FollowUpFlowBuilderProps> = ({
       templateId: initialTemplateId,
       delayDays: 3,
       enabled: true,
-      condition: 'no-response'
+      condition: 'no-response',
+      conditions: [{ type: 'no-response' }] // Initialize enhanced conditions
     };
     
     const updatedFollowUps = [...localFollowUps, newFollowUp];
@@ -66,6 +68,105 @@ const FollowUpFlowBuilder: React.FC<FollowUpFlowBuilderProps> = ({
     );
     setLocalFollowUps(updatedFollowUps);
     onUpdate(updatedFollowUps);
+  };
+
+  // Add a condition to a follow-up
+  const handleAddCondition = (followUpId: string, conditionType: FollowUpCondition['type']) => {
+    const followUp = localFollowUps.find(fu => fu.id === followUpId);
+    if (!followUp) return;
+
+    const newCondition: FollowUpCondition = { type: conditionType };
+    if (conditionType === 'keyword') {
+      newCondition.keywords = [''];
+    }
+
+    const updatedConditions = followUp.conditions ? [...followUp.conditions, newCondition] : [newCondition];
+    
+    handleUpdateFollowUp(followUpId, { 
+      conditions: updatedConditions,
+      // Update legacy condition field to maintain backward compatibility
+      condition: updatedConditions.some(c => c.type === 'no-response') ? 'no-response' : 'all'
+    });
+  };
+
+  // Remove a condition from a follow-up
+  const handleRemoveCondition = (followUpId: string, index: number) => {
+    const followUp = localFollowUps.find(fu => fu.id === followUpId);
+    if (!followUp || !followUp.conditions) return;
+
+    const updatedConditions = [...followUp.conditions];
+    updatedConditions.splice(index, 1);
+    
+    // If we removed all conditions, add a default one
+    if (updatedConditions.length === 0) {
+      updatedConditions.push({ type: 'no-response' });
+    }
+
+    handleUpdateFollowUp(followUpId, { 
+      conditions: updatedConditions,
+      // Update legacy condition field to maintain backward compatibility
+      condition: updatedConditions.some(c => c.type === 'no-response') ? 'no-response' : 'all'
+    });
+  };
+
+  // Update a specific condition in a follow-up
+  const handleUpdateCondition = (followUpId: string, index: number, updates: Partial<FollowUpCondition>) => {
+    const followUp = localFollowUps.find(fu => fu.id === followUpId);
+    if (!followUp || !followUp.conditions) return;
+
+    const updatedConditions = [...followUp.conditions];
+    updatedConditions[index] = { ...updatedConditions[index], ...updates };
+    
+    handleUpdateFollowUp(followUpId, { 
+      conditions: updatedConditions,
+      // Update legacy condition field to maintain backward compatibility
+      condition: updatedConditions.some(c => c.type === 'no-response') ? 'no-response' : 'all'
+    });
+  };
+
+  // Add a keyword to a condition
+  const handleAddKeyword = (followUpId: string, conditionIndex: number) => {
+    const followUp = localFollowUps.find(fu => fu.id === followUpId);
+    if (!followUp || !followUp.conditions) return;
+
+    const condition = followUp.conditions[conditionIndex];
+    if (condition.type !== 'keyword' || !condition.keywords) return;
+
+    const updatedKeywords = [...condition.keywords, ''];
+    handleUpdateCondition(followUpId, conditionIndex, { keywords: updatedKeywords });
+  };
+
+  // Remove a keyword from a condition
+  const handleRemoveKeyword = (followUpId: string, conditionIndex: number, keywordIndex: number) => {
+    const followUp = localFollowUps.find(fu => fu.id === followUpId);
+    if (!followUp || !followUp.conditions) return;
+
+    const condition = followUp.conditions[conditionIndex];
+    if (condition.type !== 'keyword' || !condition.keywords) return;
+
+    const updatedKeywords = [...condition.keywords];
+    updatedKeywords.splice(keywordIndex, 1);
+    
+    // If we removed all keywords, add a default empty one
+    if (updatedKeywords.length === 0) {
+      updatedKeywords.push('');
+    }
+
+    handleUpdateCondition(followUpId, conditionIndex, { keywords: updatedKeywords });
+  };
+
+  // Update a keyword in a condition
+  const handleUpdateKeyword = (followUpId: string, conditionIndex: number, keywordIndex: number, value: string) => {
+    const followUp = localFollowUps.find(fu => fu.id === followUpId);
+    if (!followUp || !followUp.conditions) return;
+
+    const condition = followUp.conditions[conditionIndex];
+    if (condition.type !== 'keyword' || !condition.keywords) return;
+
+    const updatedKeywords = [...condition.keywords];
+    updatedKeywords[keywordIndex] = value;
+
+    handleUpdateCondition(followUpId, conditionIndex, { keywords: updatedKeywords });
   };
   
   // Connect follow-ups (for the flow builder)
@@ -103,6 +204,42 @@ const FollowUpFlowBuilder: React.FC<FollowUpFlowBuilderProps> = ({
     }
     
     return undefined;
+  };
+
+  // Render condition icon based on type
+  const renderConditionIcon = (type: FollowUpCondition['type']) => {
+    switch (type) {
+      case 'no-response':
+        return <ArrowDownCircle className="h-4 w-4" />;
+      case 'positive-response':
+        return <ThumbsUp className="h-4 w-4" />;
+      case 'negative-response':
+        return <ThumbsDown className="h-4 w-4" />;
+      case 'keyword':
+        return <Search className="h-4 w-4" />;
+      case 'all':
+        return <CheckCircle className="h-4 w-4" />;
+      default:
+        return <MessageSquare className="h-4 w-4" />;
+    }
+  };
+
+  // Render condition label based on type
+  const getConditionLabel = (type: FollowUpCondition['type']) => {
+    switch (type) {
+      case 'no-response':
+        return 'No response received';
+      case 'positive-response':
+        return 'Positive response';
+      case 'negative-response':
+        return 'Negative response';
+      case 'keyword':
+        return 'Message contains keywords';
+      case 'all':
+        return 'All contacts';
+      default:
+        return 'Unknown condition';
+    }
   };
   
   return (
@@ -265,19 +402,128 @@ const FollowUpFlowBuilder: React.FC<FollowUpFlowBuilderProps> = ({
                         </div>
                         
                         <div className="space-y-1">
-                          <label className="text-muted-foreground">Condition</label>
-                          <Select 
-                            value={followUp.condition}
-                            onValueChange={(value) => handleUpdateFollowUp(followUp.id, { condition: value as 'no-response' | 'all' })}
-                          >
-                            <SelectTrigger className="h-8">
-                              <SelectValue placeholder="Select condition" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="no-response">No Response</SelectItem>
-                              <SelectItem value="all">Send to All</SelectItem>
-                            </SelectContent>
-                          </Select>
+                          <div className="flex justify-between items-center">
+                            <label className="text-muted-foreground">Conditions</label>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button variant="ghost" size="sm" className="h-5 w-5 p-0">
+                                  <Plus className="h-3 w-3" />
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-56 p-0" align="end">
+                                <div className="p-2">
+                                  <p className="text-xs text-muted-foreground mb-2">Add condition</p>
+                                  <div className="space-y-1">
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      className="w-full justify-start text-left"
+                                      onClick={() => handleAddCondition(followUp.id, 'no-response')}
+                                    >
+                                      <ArrowDownCircle className="h-3.5 w-3.5 mr-2" />
+                                      No response
+                                    </Button>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      className="w-full justify-start text-left"
+                                      onClick={() => handleAddCondition(followUp.id, 'positive-response')}
+                                    >
+                                      <ThumbsUp className="h-3.5 w-3.5 mr-2" />
+                                      Positive response
+                                    </Button>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      className="w-full justify-start text-left"
+                                      onClick={() => handleAddCondition(followUp.id, 'negative-response')}
+                                    >
+                                      <ThumbsDown className="h-3.5 w-3.5 mr-2" />
+                                      Negative response
+                                    </Button>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      className="w-full justify-start text-left"
+                                      onClick={() => handleAddCondition(followUp.id, 'keyword')}
+                                    >
+                                      <Search className="h-3.5 w-3.5 mr-2" />
+                                      Contains keywords
+                                    </Button>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      className="w-full justify-start text-left"
+                                      onClick={() => handleAddCondition(followUp.id, 'all')}
+                                    >
+                                      <CheckCircle className="h-3.5 w-3.5 mr-2" />
+                                      All contacts
+                                    </Button>
+                                  </div>
+                                </div>
+                              </PopoverContent>
+                            </Popover>
+                          </div>
+                          
+                          <div className="space-y-2 mt-2">
+                            {followUp.conditions && followUp.conditions.length > 0 ? (
+                              followUp.conditions.map((condition, conditionIndex) => (
+                                <div key={conditionIndex} className="flex items-start gap-1 border rounded-md p-2">
+                                  <div className="pt-0.5">
+                                    {renderConditionIcon(condition.type)}
+                                  </div>
+                                  <div className="flex-grow">
+                                    <div className="flex justify-between items-center mb-1">
+                                      <span className="text-xs">{getConditionLabel(condition.type)}</span>
+                                      <Button 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        className="h-5 w-5 p-0"
+                                        onClick={() => handleRemoveCondition(followUp.id, conditionIndex)}
+                                      >
+                                        <X className="h-3 w-3" />
+                                      </Button>
+                                    </div>
+                                    
+                                    {condition.type === 'keyword' && condition.keywords && (
+                                      <div className="space-y-2 mt-1">
+                                        {condition.keywords.map((keyword, keywordIndex) => (
+                                          <div key={keywordIndex} className="flex items-center gap-1">
+                                            <Input 
+                                              value={keyword}
+                                              onChange={(e) => handleUpdateKeyword(followUp.id, conditionIndex, keywordIndex, e.target.value)}
+                                              className="h-6 text-xs"
+                                              placeholder="Enter keyword"
+                                            />
+                                            <Button 
+                                              variant="ghost" 
+                                              size="sm" 
+                                              className="h-6 w-6 p-0"
+                                              onClick={() => handleRemoveKeyword(followUp.id, conditionIndex, keywordIndex)}
+                                            >
+                                              <X className="h-3 w-3" />
+                                            </Button>
+                                          </div>
+                                        ))}
+                                        <Button 
+                                          variant="ghost" 
+                                          size="sm" 
+                                          className="h-6 text-xs w-full"
+                                          onClick={() => handleAddKeyword(followUp.id, conditionIndex)}
+                                        >
+                                          <Plus className="h-3 w-3 mr-1" /> Add keyword
+                                        </Button>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              ))
+                            ) : (
+                              <div className="text-xs text-muted-foreground border rounded p-2">
+                                No conditions set
+                              </div>
+                            )}
+                          </div>
                         </div>
                         
                         <div className="space-y-1">
@@ -429,7 +675,7 @@ const FollowUpFlowBuilder: React.FC<FollowUpFlowBuilderProps> = ({
                 </li>
                 <li className="flex items-start">
                   <span className="mr-2 text-lg">🔄</span>
-                  <span>Choose when to send: after no response or to all contacts</span>
+                  <span>Choose conditions: no response, positive/negative responses, or keywords</span>
                 </li>
                 <li className="flex items-start">
                   <span className="mr-2 text-lg">🔀</span>
@@ -481,9 +727,29 @@ const FollowUpFlowBuilder: React.FC<FollowUpFlowBuilderProps> = ({
                                 <Clock className="h-3 w-3" />
                                 {followUp.delayDays} days after
                               </Badge>
-                              <Badge variant="secondary">
-                                {followUp.condition === 'no-response' ? 'If no response' : 'Send to all'}
-                              </Badge>
+
+                              {/* Display condition badges based on enhanced conditions */}
+                              {followUp.conditions && followUp.conditions.length > 0 && (
+                                <div className="flex flex-wrap gap-1">
+                                  {followUp.conditions.map((condition, idx) => (
+                                    <Badge key={idx} variant="secondary" className="flex items-center gap-1">
+                                      {renderConditionIcon(condition.type)}
+                                      <span className="text-xs">
+                                        {condition.type === 'keyword' 
+                                          ? `Keywords (${condition.keywords?.length || 0})` 
+                                          : condition.type.split('-').join(' ')}
+                                      </span>
+                                    </Badge>
+                                  ))}
+                                </div>
+                              )}
+
+                              {/* Legacy condition display as fallback */}
+                              {(!followUp.conditions || followUp.conditions.length === 0) && (
+                                <Badge variant="secondary">
+                                  {followUp.condition === 'no-response' ? 'If no response' : 'Send to all'}
+                                </Badge>
+                              )}
                             </div>
                           </div>
                           
@@ -515,7 +781,7 @@ const FollowUpFlowBuilder: React.FC<FollowUpFlowBuilderProps> = ({
                             </div>
                           </div>
                           
-                          <div className="flex items-center justify-between">
+                          <div className="flex flex-col space-y-4">
                             <div className="grid grid-cols-2 gap-3">
                               <div>
                                 <label className="text-sm text-muted-foreground">Send after</label>
@@ -533,29 +799,162 @@ const FollowUpFlowBuilder: React.FC<FollowUpFlowBuilderProps> = ({
                               </div>
                               
                               <div>
-                                <label className="text-sm text-muted-foreground">Condition</label>
-                                <Select 
-                                  value={followUp.condition}
-                                  onValueChange={(value) => handleUpdateFollowUp(followUp.id, { condition: value as 'no-response' | 'all' })}
-                                >
-                                  <SelectTrigger className="h-8">
-                                    <SelectValue placeholder="Select condition" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="no-response">No Response</SelectItem>
-                                    <SelectItem value="all">Send to All</SelectItem>
-                                  </SelectContent>
-                                </Select>
+                                <div className="flex items-center justify-between">
+                                  <label className="text-sm text-muted-foreground">Conditions</label>
+                                  <Popover>
+                                    <PopoverTrigger asChild>
+                                      <Button variant="ghost" size="sm" className="h-5 w-5 p-0">
+                                        <Plus className="h-3 w-3" />
+                                      </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-56 p-0" align="end">
+                                      <div className="p-2">
+                                        <p className="text-xs text-muted-foreground mb-2">Add condition</p>
+                                        <div className="space-y-1">
+                                          <Button 
+                                            variant="ghost" 
+                                            size="sm" 
+                                            className="w-full justify-start text-left"
+                                            onClick={() => handleAddCondition(followUp.id, 'no-response')}
+                                          >
+                                            <ArrowDownCircle className="h-3.5 w-3.5 mr-2" />
+                                            No response
+                                          </Button>
+                                          <Button 
+                                            variant="ghost" 
+                                            size="sm" 
+                                            className="w-full justify-start text-left"
+                                            onClick={() => handleAddCondition(followUp.id, 'positive-response')}
+                                          >
+                                            <ThumbsUp className="h-3.5 w-3.5 mr-2" />
+                                            Positive response
+                                          </Button>
+                                          <Button 
+                                            variant="ghost" 
+                                            size="sm" 
+                                            className="w-full justify-start text-left"
+                                            onClick={() => handleAddCondition(followUp.id, 'negative-response')}
+                                          >
+                                            <ThumbsDown className="h-3.5 w-3.5 mr-2" />
+                                            Negative response
+                                          </Button>
+                                          <Button 
+                                            variant="ghost" 
+                                            size="sm" 
+                                            className="w-full justify-start text-left"
+                                            onClick={() => handleAddCondition(followUp.id, 'keyword')}
+                                          >
+                                            <Search className="h-3.5 w-3.5 mr-2" />
+                                            Contains keywords
+                                          </Button>
+                                          <Button 
+                                            variant="ghost" 
+                                            size="sm" 
+                                            className="w-full justify-start text-left"
+                                            onClick={() => handleAddCondition(followUp.id, 'all')}
+                                          >
+                                            <CheckCircle className="h-3.5 w-3.5 mr-2" />
+                                            All contacts
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    </PopoverContent>
+                                  </Popover>
+                                </div>
+
+                                {/* Condition list */}
+                                <div className="mt-1 space-y-2">
+                                  {followUp.conditions && followUp.conditions.length > 0 ? (
+                                    <div className="grid gap-1">
+                                      {followUp.conditions.map((condition, conditionIndex) => (
+                                        <div key={conditionIndex} className="flex items-center gap-1 border rounded-md p-1.5 text-xs">
+                                          {renderConditionIcon(condition.type)}
+                                          <span className="flex-grow">{getConditionLabel(condition.type)}</span>
+                                          <Button 
+                                            variant="ghost" 
+                                            size="sm" 
+                                            className="h-5 w-5 p-0"
+                                            onClick={() => handleRemoveCondition(followUp.id, conditionIndex)}
+                                          >
+                                            <X className="h-3 w-3" />
+                                          </Button>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    // Legacy condition support
+                                    <Select 
+                                      value={followUp.condition}
+                                      onValueChange={(value) => {
+                                        handleUpdateFollowUp(followUp.id, { 
+                                          condition: value as 'no-response' | 'all',
+                                          conditions: [{ type: value as 'no-response' | 'all' }]
+                                        });
+                                      }}
+                                    >
+                                      <SelectTrigger className="h-8">
+                                        <SelectValue placeholder="Select condition" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="no-response">No Response</SelectItem>
+                                        <SelectItem value="all">Send to All</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  )}
+                                </div>
+
+                                {/* Keyword editor for keyword conditions */}
+                                {followUp.conditions && followUp.conditions.some(c => c.type === 'keyword') && (
+                                  <div className="mt-2 space-y-2 border-t pt-2">
+                                    <label className="text-xs text-muted-foreground">Keywords to match:</label>
+                                    {followUp.conditions.map((condition, conditionIndex) => {
+                                      if (condition.type !== 'keyword' || !condition.keywords) return null;
+                                      
+                                      return (
+                                        <div key={conditionIndex} className="space-y-1">
+                                          {condition.keywords.map((keyword, keywordIndex) => (
+                                            <div key={keywordIndex} className="flex items-center gap-1">
+                                              <Input 
+                                                value={keyword}
+                                                onChange={(e) => handleUpdateKeyword(followUp.id, conditionIndex, keywordIndex, e.target.value)}
+                                                className="h-6 text-xs"
+                                                placeholder="Enter keyword"
+                                              />
+                                              <Button 
+                                                variant="ghost" 
+                                                size="sm" 
+                                                className="h-6 w-6 p-0"
+                                                onClick={() => handleRemoveKeyword(followUp.id, conditionIndex, keywordIndex)}
+                                              >
+                                                <X className="h-3 w-3" />
+                                              </Button>
+                                            </div>
+                                          ))}
+                                          <Button 
+                                            variant="ghost" 
+                                            size="sm" 
+                                            className="h-6 text-xs w-full"
+                                            onClick={() => handleAddKeyword(followUp.id, conditionIndex)}
+                                          >
+                                            <Plus className="h-3 w-3 mr-1" /> Add keyword
+                                          </Button>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
                               </div>
                             </div>
                             
-                            <Button 
-                              variant="ghost" 
-                              size="icon"
-                              onClick={() => handleRemoveFollowUp(followUp.id)}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
+                            <div className="flex justify-end">
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                onClick={() => handleRemoveFollowUp(followUp.id)}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -622,4 +1021,3 @@ const FollowUpFlowBuilder: React.FC<FollowUpFlowBuilderProps> = ({
 };
 
 export default FollowUpFlowBuilder;
-
