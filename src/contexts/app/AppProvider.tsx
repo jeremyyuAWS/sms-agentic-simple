@@ -7,7 +7,9 @@ import {
   Conversation, 
   Template, 
   MetricItem,
-  KnowledgeBase
+  KnowledgeBase,
+  ContactTag,
+  ContactSegment
 } from '@/lib/types';
 import { AppContext } from './AppContext';
 import { createMessageActions } from './actions/messageActions';
@@ -26,6 +28,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   const [templatesState, setTemplates] = useState<Template[]>(templates);
   const [metricsState, setMetrics] = useState<MetricItem[]>(metrics);
   const [knowledgeBasesState, setKnowledgeBases] = useState<KnowledgeBase[]>([]);
+  const [contactTagsState, setContactTags] = useState<ContactTag[]>([]);
+  const [contactSegmentsState, setContactSegments] = useState<ContactSegment[]>([]);
   
   const [activeCampaign, setActiveCampaign] = useState<Campaign | null>(null);
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
@@ -45,7 +49,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     setActiveConversation
   );
   
-  const contactActions = createContactActions(setContacts);
+  const contactActions = createContactActions(
+    setContacts,
+    setContactTags,
+    setContactSegments
+  );
   
   const knowledgeBaseActions = createKnowledgeBaseActions(
     setKnowledgeBases,
@@ -69,6 +77,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
         templates: templatesState,
         metrics: metricsState,
         knowledgeBases: knowledgeBasesState,
+        contactTags: contactTagsState,
+        contactSegments: contactSegmentsState,
         activeCampaign,
         activeConversation,
         activeTemplate,
@@ -82,6 +92,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
         setTemplates,
         setMetrics,
         setKnowledgeBases,
+        setContactTags,
+        setContactSegments,
         setActiveCampaign,
         setActiveConversation,
         setActiveTemplate,

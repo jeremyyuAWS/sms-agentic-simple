@@ -9,7 +9,32 @@ export interface Contact {
   attendingConference?: boolean;
   company?: string;
   position?: string;
+  tags?: string[]; // Added for contact tagging
   [key: string]: any; // Allow for flexible fields
+}
+
+export interface ContactTag {
+  id: string;
+  name: string;
+  color: string;
+  count: number;
+}
+
+export interface ContactSegment {
+  id: string;
+  name: string;
+  description?: string;
+  filter: ContactFilter;
+  count: number;
+  createdAt: Date;
+}
+
+export interface ContactFilter {
+  field: string;
+  operator: 'equals' | 'contains' | 'startsWith' | 'endsWith' | 'greaterThan' | 'lessThan' | 'in' | 'notIn' | 'exists' | 'notExists';
+  value: any;
+  logic?: 'and' | 'or';
+  children?: ContactFilter[];
 }
 
 export interface FollowUp {
@@ -42,6 +67,9 @@ export interface Campaign {
   };
   scheduledStartDate?: Date; // When to start sending the initial messages
   followUps?: FollowUp[]; // List of follow-up messages
+  contactIds?: string[]; // Specific contact IDs to include
+  segmentId?: string; // Reference to a saved segment
+  customFilter?: ContactFilter; // Custom filter criteria
 }
 
 export interface Message {

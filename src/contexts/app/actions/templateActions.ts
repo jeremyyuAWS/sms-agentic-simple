@@ -26,7 +26,38 @@ export const createTemplateActions = (
     return newTemplate;
   };
 
+  const updateTemplate = (id: string, updates: Partial<Omit<Template, 'id' | 'createdAt'>>) => {
+    const now = new Date();
+    
+    setTemplates(prev => prev.map(template => {
+      if (template.id === id) {
+        return {
+          ...template,
+          ...updates,
+          updatedAt: now
+        };
+      }
+      return template;
+    }));
+    
+    toast({
+      title: "Template Updated",
+      description: "Template has been updated successfully."
+    });
+  };
+
+  const deleteTemplate = (id: string) => {
+    setTemplates(prev => prev.filter(template => template.id !== id));
+    
+    toast({
+      title: "Template Deleted",
+      description: "Template has been deleted successfully."
+    });
+  };
+
   return {
-    createTemplate
+    createTemplate,
+    updateTemplate,
+    deleteTemplate
   };
 };

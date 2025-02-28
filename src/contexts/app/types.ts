@@ -7,7 +7,10 @@ import {
   MetricItem,
   Message,
   KnowledgeBase,
-  FollowUp
+  FollowUp,
+  ContactFilter,
+  ContactTag,
+  ContactSegment
 } from '@/lib/types';
 import React from 'react';
 
@@ -19,6 +22,8 @@ export interface AppContextProps {
   templates: Template[];
   metrics: MetricItem[];
   knowledgeBases: KnowledgeBase[];
+  contactTags: ContactTag[];
+  contactSegments: ContactSegment[];
   activeCampaign: Campaign | null;
   activeConversation: Conversation | null;
   activeTemplate: Template | null;
@@ -32,6 +37,8 @@ export interface AppContextProps {
   setTemplates: React.Dispatch<React.SetStateAction<Template[]>>;
   setMetrics: React.Dispatch<React.SetStateAction<MetricItem[]>>;
   setKnowledgeBases: React.Dispatch<React.SetStateAction<KnowledgeBase[]>>;
+  setContactTags: React.Dispatch<React.SetStateAction<ContactTag[]>>;
+  setContactSegments: React.Dispatch<React.SetStateAction<ContactSegment[]>>;
   setActiveCampaign: (campaign: Campaign | null) => void;
   setActiveConversation: (conversation: Conversation | null) => void;
   setActiveTemplate: (template: Template | null) => void;
@@ -48,4 +55,10 @@ export interface AppContextProps {
   removeFollowUp: (campaignId: string, followUpId: string) => void;
   updateCampaignSchedule: (campaignId: string, scheduledStartDate: Date) => void;
   createTemplate: (template: Omit<Template, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  createContactTag: (tag: Omit<ContactTag, 'id' | 'count'>) => void;
+  assignTagToContacts: (tagId: string, contactIds: string[]) => void;
+  removeTagFromContacts: (tagId: string, contactIds: string[]) => void;
+  createContactSegment: (segment: Omit<ContactSegment, 'id' | 'count' | 'createdAt'>) => void;
+  updateContactSegment: (id: string, updates: Partial<Omit<ContactSegment, 'id' | 'count' | 'createdAt'>>) => void;
+  deleteContactSegment: (id: string) => void;
 }
