@@ -5,7 +5,7 @@ import { Switch } from '@/components/ui/switch';
 import FollowUpFlowBuilder from '../FollowUpFlowBuilder';
 import { Template, FollowUpCondition } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { Sparkles, AlertCircle, MessageSquare, ThumbsUp, ThumbsDown, Search, Clock, Calendar, ArrowRight, CheckCircle } from 'lucide-react';
+import { Sparkles, AlertCircle, MessageSquare, Clock, Calendar, ArrowRight, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { 
   Tooltip,
@@ -119,16 +119,8 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
       {isFollowUpsEnabled && (
         <>
           <div className="text-sm space-y-2 mt-2 mb-4">
-            <p className="font-medium">Pre-configured follow-up sequence:</p>
-            <p>This campaign includes a strategic 3-step messaging sequence optimized for maximum engagement and response rates:</p>
-            <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
-              <li><strong>Initial message:</strong> Sent immediately when the campaign starts</li>
-              <li><strong>Follow-up #1:</strong> Sent 3 days after initial message if no response</li>
-              <li><strong>Follow-up #2:</strong> Sent 7 days after initial message if no response or negative response</li>
-            </ul>
-            <p className="text-sm mt-2">
-              <span className="font-medium">Why this approach works:</span> Research shows that 80% of sales require 5+ follow-ups, yet 44% of salespeople give up after just one attempt. This strategic sequence ensures you maintain contact through the critical decision-making window.
-            </p>
+            <p className="font-medium">Your Message Sequence</p>
+            <p>This campaign includes a strategic messaging sequence designed to maximize engagement. You can customize each message or timing while maintaining proven communication patterns.</p>
           </div>
 
           <Tabs defaultValue="visual" className="mb-4" onValueChange={setSelectedView}>
@@ -138,11 +130,6 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
             </TabsList>
             <TabsContent value="visual" className="mt-4">
               <div className="border rounded-lg p-4">
-                <h3 className="font-semibold mb-3">Your Message Sequence</h3>
-                <p className="text-sm mb-4">
-                  This campaign includes a strategic messaging sequence designed to maximize engagement. You can customize each message or timing while maintaining proven communication patterns.
-                </p>
-                
                 <div className="space-y-6">
                   {/* Initial message */}
                   <div className="relative">
