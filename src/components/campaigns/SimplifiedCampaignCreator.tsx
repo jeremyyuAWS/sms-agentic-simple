@@ -4,7 +4,7 @@ import { useApp } from '@/contexts';
 import { Button } from '@/components/ui/button';
 import CampaignCreator from './CampaignCreator';
 import CampaignTypeSelector, { CampaignType } from './CampaignTypeSelector';
-import { Campaign, TimeWindow } from '@/lib/types';
+import { Campaign, TimeWindow, FollowUp } from '@/lib/types';
 import { format } from 'date-fns';
 
 interface SimplifiedCampaignCreatorProps {
@@ -22,7 +22,6 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
     contacts, 
     contactLists, 
     templates, 
-    knowledgeBases, 
     createCampaign, 
     updateCampaign 
   } = useApp();
@@ -141,6 +140,141 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
     return tomorrow;
   };
 
+  // Create pre-configured follow-ups for specific campaign types
+  const getDefaultFollowUps = (type: CampaignType, templateId: string): FollowUp[] => {
+    const now = Date.now();
+    
+    // Default follow-up configurations by campaign type
+    const followUpConfigs: Record<CampaignType, FollowUp[]> = {
+      'sales-outreach': [
+        { 
+          id: `followup-${now}-1`,
+          templateId,
+          delayDays: 3,
+          enabled: true,
+          condition: 'no-response'
+        },
+        { 
+          id: `followup-${now}-2`,
+          templateId,
+          delayDays: 7,
+          enabled: true,
+          condition: 'no-response'
+        }
+      ],
+      'follow-up-reminder': [
+        { 
+          id: `followup-${now}-1`,
+          templateId,
+          delayDays: 2,
+          enabled: true,
+          condition: 'no-response'
+        },
+        { 
+          id: `followup-${now}-2`,
+          templateId,
+          delayDays: 5,
+          enabled: true,
+          condition: 'no-response'
+        },
+        { 
+          id: `followup-${now}-3`,
+          templateId,
+          delayDays: 10,
+          enabled: true,
+          condition: 'no-response'
+        }
+      ],
+      'meeting-scheduling': [
+        { 
+          id: `followup-${now}-1`,
+          templateId,
+          delayDays: 2,
+          enabled: true,
+          condition: 'no-response'
+        },
+        { 
+          id: `followup-${now}-2`,
+          templateId,
+          delayDays: 4,
+          enabled: true,
+          condition: 'no-response'
+        }
+      ],
+      'customer-feedback': [
+        { 
+          id: `followup-${now}-1`,
+          templateId,
+          delayDays: 3,
+          enabled: true,
+          condition: 'no-response'
+        },
+        { 
+          id: `followup-${now}-2`,
+          templateId,
+          delayDays: 7,
+          enabled: true,
+          condition: 'no-response'
+        }
+      ],
+      'promotional': [
+        { 
+          id: `followup-${now}-1`,
+          templateId,
+          delayDays: 1,
+          enabled: true,
+          condition: 'no-response'
+        },
+        { 
+          id: `followup-${now}-2`,
+          templateId,
+          delayDays: 3,
+          enabled: true,
+          condition: 'no-response'
+        }
+      ],
+      'survey': [
+        { 
+          id: `followup-${now}-1`,
+          templateId,
+          delayDays: 2,
+          enabled: true,
+          condition: 'no-response'
+        },
+        { 
+          id: `followup-${now}-2`,
+          templateId,
+          delayDays: 5,
+          enabled: true,
+          condition: 'no-response'
+        }
+      ],
+      'webinar-invitation': [
+        { 
+          id: `followup-${now}-1`,
+          templateId,
+          delayDays: 2,
+          enabled: true,
+          condition: 'no-response'
+        },
+        { 
+          id: `followup-${now}-2`,
+          templateId,
+          delayDays: 1,
+          enabled: true,
+          condition: 'no-response'
+        }
+      ],
+      // Default empty follow-ups for other campaign types
+      'event-invitation': [],
+      'announcement': [],
+      'newsletter': [],
+      'seasonal': []
+    };
+    
+    return followUpConfigs[type] || [];
+  };
+
   // Pre-configure campaign based on type
   const getCampaignTemplate = (): Partial<Campaign> => {
     if (!selectedType) return {};
@@ -150,6 +284,7 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
     const defaultTemplateId = getDefaultTemplateId(selectedType);
     const defaultSendingWindow = getDefaultSendingWindow(selectedType);
     const defaultTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const defaultFollowUps = getDefaultFollowUps(selectedType, defaultTemplateId);
     
     // Base templates for different campaign types
     const templates: Record<CampaignType, Partial<Campaign>> = {
@@ -161,7 +296,8 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
         scheduledStartDate: defaultStartDate,
         sendingWindow: defaultSendingWindow,
         timeZone: defaultTimeZone,
-        contactCount: 0
+        contactCount: 0,
+        followUps: defaultFollowUps
       },
       'sales-outreach': {
         name: 'Sales Outreach Campaign',
@@ -171,13 +307,7 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
         scheduledStartDate: defaultStartDate,
         sendingWindow: defaultSendingWindow,
         timeZone: defaultTimeZone,
-        followUps: [{ 
-          id: `followup-${Date.now()}`,
-          templateId: '',
-          delayDays: 3,
-          enabled: true,
-          condition: 'no-response'
-        }],
+        followUps: defaultFollowUps,
         contactCount: 0
       },
       'follow-up-reminder': {
@@ -188,19 +318,7 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
         scheduledStartDate: defaultStartDate,
         sendingWindow: defaultSendingWindow,
         timeZone: defaultTimeZone,
-        followUps: [{ 
-          id: `followup-${Date.now()}`,
-          templateId: '',
-          delayDays: 3,
-          enabled: true,
-          condition: 'no-response'
-        }, { 
-          id: `followup-${Date.now() + 1}`,
-          templateId: '',
-          delayDays: 7,
-          enabled: true,
-          condition: 'no-response'
-        }],
+        followUps: defaultFollowUps,
         contactCount: 0
       },
       'meeting-scheduling': {
@@ -211,13 +329,7 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
         scheduledStartDate: defaultStartDate,
         sendingWindow: defaultSendingWindow,
         timeZone: defaultTimeZone,
-        followUps: [{ 
-          id: `followup-${Date.now()}`,
-          templateId: '',
-          delayDays: 2,
-          enabled: true,
-          condition: 'no-response'
-        }],
+        followUps: defaultFollowUps,
         contactCount: 0
       },
       'announcement': {
@@ -228,6 +340,7 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
         scheduledStartDate: defaultStartDate,
         sendingWindow: defaultSendingWindow,
         timeZone: defaultTimeZone,
+        followUps: defaultFollowUps,
         contactCount: 0
       },
       'customer-feedback': {
@@ -238,13 +351,7 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
         scheduledStartDate: defaultStartDate,
         sendingWindow: defaultSendingWindow,
         timeZone: defaultTimeZone,
-        followUps: [{ 
-          id: `followup-${Date.now()}`,
-          templateId: '',
-          delayDays: 4,
-          enabled: true,
-          condition: 'no-response'
-        }],
+        followUps: defaultFollowUps,
         contactCount: 0
       },
       'newsletter': {
@@ -255,6 +362,7 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
         scheduledStartDate: defaultStartDate,
         sendingWindow: defaultSendingWindow,
         timeZone: defaultTimeZone,
+        followUps: defaultFollowUps,
         contactCount: 0
       },
       'promotional': {
@@ -265,13 +373,7 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
         scheduledStartDate: defaultStartDate,
         sendingWindow: defaultSendingWindow,
         timeZone: defaultTimeZone,
-        followUps: [{ 
-          id: `followup-${Date.now()}`,
-          templateId: '',
-          delayDays: 2,
-          enabled: true,
-          condition: 'no-response'
-        }],
+        followUps: defaultFollowUps,
         contactCount: 0
       },
       'seasonal': {
@@ -282,6 +384,7 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
         scheduledStartDate: defaultStartDate,
         sendingWindow: defaultSendingWindow,
         timeZone: defaultTimeZone,
+        followUps: defaultFollowUps,
         contactCount: 0
       },
       'survey': {
@@ -292,13 +395,7 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
         scheduledStartDate: defaultStartDate,
         sendingWindow: defaultSendingWindow,
         timeZone: defaultTimeZone,
-        followUps: [{ 
-          id: `followup-${Date.now()}`,
-          templateId: '',
-          delayDays: 3,
-          enabled: true,
-          condition: 'no-response'
-        }],
+        followUps: defaultFollowUps,
         contactCount: 0
       },
       'webinar-invitation': {
@@ -309,13 +406,7 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
         scheduledStartDate: defaultStartDate,
         sendingWindow: defaultSendingWindow,
         timeZone: defaultTimeZone,
-        followUps: [{ 
-          id: `followup-${Date.now()}`,
-          templateId: '',
-          delayDays: 1,
-          enabled: true,
-          condition: 'no-response'
-        }],
+        followUps: defaultFollowUps,
         contactCount: 0
       }
     };
@@ -346,7 +437,6 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
       contacts={contacts}
       contactLists={contactLists}
       templates={templates}
-      knowledgeBases={knowledgeBases}
       onCreateCampaign={handleCreateCampaign}
       onUpdateCampaign={handleUpdateCampaign}
       onCancel={handleBack}
