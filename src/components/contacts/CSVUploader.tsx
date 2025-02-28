@@ -9,15 +9,17 @@ import FileUploadZone from './csv/FileUploadZone';
 import FieldMappingForm from './csv/FieldMappingForm';
 import ValidationSummary from './csv/ValidationSummary';
 import ImportForm from './csv/ImportForm';
+import { useToast } from '@/hooks/use-toast';
 
 // Define a basic field mapping type
-type FieldMapping = {
-  csvHeader: string;
-  mappedTo: string; 
-};
+interface FieldMapping {
+  header: string;
+  field: string;
+}
 
 const CSVUploader: React.FC = () => {
   const { uploadContacts } = useApp();
+  const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   // File state
@@ -95,15 +97,15 @@ const CSVUploader: React.FC = () => {
           
           // For simplicity, we'll consider all rows as valid for now
           // In a real implementation, you'd validate each row
-          const parsedContacts = result.contacts;
-          setHeaders(result.headers);
+          const parsedContacts = result.contacts || [];
+          setHeaders(result.headers || []);
           
           // Generate some basic field mappings from headers
-          const suggestedMappings = result.headers.map(header => ({
-            csvHeader: header,
-            mappedTo: header.toLowerCase().includes('email') ? 'email' :
-                     header.toLowerCase().includes('name') ? 'name' :
-                     header.toLowerCase().includes('company') ? 'company' : ''
+          const suggestedMappings = (result.headers || []).map(header => ({
+            header,
+            field: header.toLowerCase().includes('email') ? 'email' :
+                   header.toLowerCase().includes('name') ? 'name' :
+                   header.toLowerCase().includes('company') ? 'company' : ''
           }));
           
           setMappings(suggestedMappings);
@@ -129,13 +131,15 @@ const CSVUploader: React.FC = () => {
           }
           
         } catch (err) {
+          console.error("CSV parsing error:", err);
           setError(`Error parsing CSV: ${err instanceof Error ? err.message : String(err)}`);
         } finally {
           setIsProcessing(false);
         }
       };
       
-      fileReader.onerror = () => {
+      fileReader.onerror = (err) => {
+        console.error("File reading error:", err);
         setError('Error reading file');
         setIsProcessing(false);
       };
@@ -143,6 +147,7 @@ const CSVUploader: React.FC = () => {
       fileReader.readAsText(selectedFile);
       
     } catch (err) {
+      console.error("File processing error:", err);
       setError(`Error processing file: ${err instanceof Error ? err.message : String(err)}`);
       setIsProcessing(false);
     }
@@ -167,7 +172,14 @@ const CSVUploader: React.FC = () => {
   };
   
   const handleUploadToSystem = async () => {
-    if (validContacts.length === 0 || !file) return;
+    if (validContacts.length === 0 || !file) {
+      toast({
+        title: "Upload Error",
+        description: "No valid contacts found to upload",
+        variant: "destructive"
+      });
+      return;
+    }
     
     setIsUploading(true);
     
@@ -204,8 +216,19 @@ const CSVUploader: React.FC = () => {
       });
       
       setIsImported(true);
+      
+      toast({
+        title: "Upload Successful",
+        description: `${contactsToUpload.length} contacts imported successfully`,
+      });
     } catch (err) {
+      console.error("Upload error:", err);
       setError(`Error uploading contacts: ${err instanceof Error ? err.message : String(err)}`);
+      toast({
+        title: "Upload Failed",
+        description: `Error: ${err instanceof Error ? err.message : String(err)}`,
+        variant: "destructive"
+      });
     } finally {
       setIsUploading(false);
     }
@@ -259,16 +282,8 @@ const CSVUploader: React.FC = () => {
                   <>
                     {headers.length > 0 && (
                       <FieldMappingForm
-                        mappings={mappings.map(m => ({
-                          field: m.mappedTo,
-                          header: m.csvHeader,
-                        }))}
-                        onMappingChange={(newMappings) => {
-                          setMappings(newMappings.map(m => ({
-                            csvHeader: m.header,
-                            mappedTo: m.field,
-                          })));
-                        }}
+                        mappings={mappings}
+                        onMappingChange={setMappings}
                       />
                     )}
                     

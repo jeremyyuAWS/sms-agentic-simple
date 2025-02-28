@@ -32,15 +32,17 @@ const ImportForm: React.FC<ImportFormProps> = ({
     startWorkflow();
     
     // Update the workflow with the contact data
-    updateWorkflowData({
-      contactsData: {
-        contactIds: validContactIds,
-        importId: `import-${Date.now()}`
-      }
-    });
-    
-    // Navigate to the template selection page
-    navigate('/templates/select');
+    if (validContactIds) {
+      updateWorkflowData({
+        contactsData: {
+          contactIds: validContactIds,
+          importId: `import-${Date.now()}`
+        }
+      });
+      
+      // Navigate to the template selection page
+      navigate('/templates/select');
+    }
   };
   
   return (
@@ -59,7 +61,11 @@ const ImportForm: React.FC<ImportFormProps> = ({
       </div>
       
       <div className="flex flex-wrap justify-between gap-3">
-        <Button onClick={onUpload} disabled={isUploading || !customImportName.trim()} className="mb-2">
+        <Button 
+          onClick={onUpload} 
+          disabled={isUploading || !customImportName.trim() || contactCount === 0} 
+          className="mb-2"
+        >
           {isUploading ? 'Uploading...' : `Upload ${contactCount} contacts`}
         </Button>
         
