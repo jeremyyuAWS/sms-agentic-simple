@@ -12,18 +12,14 @@ import TimeWindowSelector from './TimeWindowSelector';
 
 interface ScheduleCampaignProps {
   campaign: Campaign;
-  onSchedule: (data: { 
-    scheduledStartDate: Date; 
-    timeZone: string; 
-    sendingWindow?: TimeWindow;
-  }) => void;
-  onBack: () => void;
+  onScheduleUpdate: (scheduledStartDate: Date, timeZone?: string, sendingWindow?: TimeWindow) => void;
+  onClose: () => void;
 }
 
 const ScheduleCampaign: React.FC<ScheduleCampaignProps> = ({
   campaign,
-  onSchedule,
-  onBack
+  onScheduleUpdate,
+  onClose
 }) => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
     campaign.scheduledStartDate ? new Date(campaign.scheduledStartDate) : undefined
@@ -42,11 +38,7 @@ const ScheduleCampaign: React.FC<ScheduleCampaignProps> = ({
       return;
     }
 
-    onSchedule({
-      scheduledStartDate: selectedDate,
-      timeZone: selectedTimeZone,
-      sendingWindow: sendingWindow,
-    });
+    onScheduleUpdate(selectedDate, selectedTimeZone, sendingWindow);
   };
 
   return (
@@ -105,7 +97,7 @@ const ScheduleCampaign: React.FC<ScheduleCampaignProps> = ({
         <Button
           type="button"
           variant="outline"
-          onClick={onBack}
+          onClick={onClose}
         >
           Back
         </Button>
@@ -113,7 +105,7 @@ const ScheduleCampaign: React.FC<ScheduleCampaignProps> = ({
           type="submit"
           disabled={!selectedDate}
         >
-          Continue
+          Schedule Campaign
         </Button>
       </div>
     </form>
