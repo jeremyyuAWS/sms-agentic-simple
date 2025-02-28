@@ -5,7 +5,7 @@ import { Contact, ContactList } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { BookUser, FileText, Import, Info, ListFilter, Users, Plus, Edit, Trash2, List } from 'lucide-react';
+import { BookUser, FileText, Import, Info, ListFilter, Users, Plus, Edit, Trash2, List, Filter, X } from 'lucide-react';
 import CSVUploader from '@/components/contacts/CSVUploader';
 import PDFUploader from '@/components/contacts/PDFUploader';
 import KnowledgeBaseList from '@/components/contacts/KnowledgeBaseList';
@@ -23,7 +23,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 const Contacts: React.FC = () => {
   const { 
@@ -46,6 +54,7 @@ const Contacts: React.FC = () => {
   const [newListDescription, setNewListDescription] = useState('');
   const [selectedContactIds, setSelectedContactIds] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedSourceFilter, setSelectedSourceFilter] = useState<string>('all');
 
   const handleContactsUploaded = (
     newContacts: Contact[], 
@@ -144,6 +153,7 @@ const Contacts: React.FC = () => {
     setSelectedContactIds([]);
     setEditingContactList(null);
     setIsContactListDialogOpen(false);
+    setSelectedSourceFilter('all');
   };
 
   // Handle opening the edit dialog for a contact list
@@ -153,6 +163,7 @@ const Contacts: React.FC = () => {
     setNewListDescription(list.description || '');
     setSelectedContactIds([...list.contactIds]);
     setIsContactListDialogOpen(true);
+    setSelectedSourceFilter('all');
   };
 
   // Handle deleting a contact list
@@ -174,18 +185,33 @@ const Contacts: React.FC = () => {
     setNewListDescription('');
     setSelectedContactIds([]);
     setIsContactListDialogOpen(true);
+    setSelectedSourceFilter('all');
   };
 
-  // Filter contacts based on search query
-  const filteredContacts = searchQuery.trim() 
-    ? contacts.filter(contact => 
+  // Filter contacts based on search query and source filter
+  const filteredContacts = contacts.filter(contact => {
+    // First filter by source if not "all"
+    if (selectedSourceFilter !== 'all') {
+      if (selectedSourceFilter === 'untracked') {
+        if (contact.source) return false;
+      } else {
+        if (!contact.source || contact.source.name !== selectedSourceFilter) return false;
+      }
+    }
+    
+    // Then filter by search query if present
+    if (searchQuery.trim()) {
+      return (
         contact.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         contact.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         contact.phoneNumber.includes(searchQuery) ||
         contact.company?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         contact.position?.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : contacts;
+      );
+    }
+    
+    return true;
+  });
 
   // Toggle contact selection
   const toggleContactSelection = (contactId: string) => {
@@ -203,6 +229,28 @@ const Contacts: React.FC = () => {
     } else {
       setSelectedContactIds(filteredContacts.map(c => c.id));
     }
+  };
+
+  // Auto-suggest list name when selecting a source
+  const handleSourceFilterChange = (sourceKey: string) => {
+    setSelectedSourceFilter(sourceKey);
+    
+    // Only suggest name if creating a new list (not editing) and no name has been entered
+    if (!editingContactList && !newListName.trim() && sourceKey !== 'all' && sourceKey !== 'untracked') {
+      setNewListName(`Contacts from "${sourceKey}"`);
+    }
+    
+    // Clear selections when changing source filter
+    setSelectedContactIds([]);
+  };
+
+  // Count contacts per source for the select dropdown
+  const getSourceCount = (sourceKey: string): number => {
+    if (sourceKey === 'all') return contacts.length;
+    if (sourceKey === 'untracked') {
+      return contacts.filter(c => !c.source).length;
+    }
+    return groupedContacts[sourceKey]?.length || 0;
   };
 
   return (
@@ -287,6 +335,7 @@ const Contacts: React.FC = () => {
                         <TableHead>Source</TableHead>
                         <TableHead>Date</TableHead>
                         <TableHead>Contacts</TableHead>
+                        <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -315,6 +364,19 @@ const Contacts: React.FC = () => {
                           </TableCell>
                           <TableCell>
                             <Badge>{groupContacts.length}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedSourceFilter(groupName);
+                                setNewListName(`Contacts from "${groupName}"`);
+                                setIsContactListDialogOpen(true);
+                              }}
+                            >
+                              Create List
+                            </Button>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -461,31 +523,113 @@ const Contacts: React.FC = () => {
             </div>
             
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
                 <h3 className="text-sm font-medium flex items-center gap-2">
                   <Users className="h-4 w-4 text-primary" />
                   <span>Select Contacts for this List</span>
                 </h3>
                 
-                <div className="flex items-center gap-2">
-                  <Input
-                    placeholder="Search contacts..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-[250px]"
-                  />
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                  {/* Source Filter Dropdown */}
+                  <div className="w-full sm:w-[220px]">
+                    <Select
+                      value={selectedSourceFilter}
+                      onValueChange={handleSourceFilterChange}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Filter by source" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Contacts ({contacts.length})</SelectItem>
+                        {sortedGroups.map(([groupName]) => (
+                          <SelectItem key={groupName} value={groupName}>
+                            {groupName} ({getSourceCount(groupName)})
+                          </SelectItem>
+                        ))}
+                        {contacts.some(c => !c.source) && (
+                          <SelectItem value="untracked">Untracked ({getSourceCount('untracked')})</SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  {/* Search Input */}
+                  <div className="w-full sm:w-[250px] relative">
+                    <Input
+                      placeholder="Search contacts..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full"
+                    />
+                    {searchQuery && (
+                      <button 
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-500"
+                        onClick={() => setSearchQuery('')}
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                  
+                  {/* Select All Button */}
                   <Button 
                     variant="outline" 
                     size="sm"
                     onClick={toggleSelectAllContacts}
+                    className="whitespace-nowrap"
                   >
-                    {selectedContactIds.length === filteredContacts.length
+                    {selectedContactIds.length === filteredContacts.length && filteredContacts.length > 0
                       ? "Deselect All"
                       : "Select All"}
                   </Button>
                 </div>
               </div>
               
+              {/* Active Filters Display */}
+              {(selectedSourceFilter !== 'all' || searchQuery) && (
+                <div className="flex flex-wrap gap-2 p-2 bg-muted/40 rounded-md">
+                  <div className="text-xs text-muted-foreground flex items-center">
+                    <Filter className="h-3 w-3 mr-1" />
+                    Filters:
+                  </div>
+                  
+                  {selectedSourceFilter !== 'all' && (
+                    <Badge variant="outline" className="flex items-center gap-1 bg-primary/5">
+                      Source: {selectedSourceFilter}
+                      <button 
+                        onClick={() => setSelectedSourceFilter('all')}
+                        className="ml-1 rounded-full hover:bg-primary/10 p-0.5"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  )}
+                  
+                  {searchQuery && (
+                    <Badge variant="outline" className="flex items-center gap-1 bg-primary/5">
+                      Search: {searchQuery}
+                      <button 
+                        onClick={() => setSearchQuery('')}
+                        className="ml-1 rounded-full hover:bg-primary/10 p-0.5"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  )}
+                  
+                  <button 
+                    onClick={() => {
+                      setSelectedSourceFilter('all');
+                      setSearchQuery('');
+                    }}
+                    className="text-xs text-primary hover:underline ml-auto"
+                  >
+                    Clear all filters
+                  </button>
+                </div>
+              )}
+              
+              {/* Contact Selection Table */}
               <div className="border rounded-md h-[400px] overflow-y-auto">
                 <Table>
                   <TableHeader className="sticky top-0 bg-background z-10">
@@ -494,21 +638,32 @@ const Contacts: React.FC = () => {
                       <TableHead>Name</TableHead>
                       <TableHead>Email / Phone</TableHead>
                       <TableHead>Company</TableHead>
-                      <TableHead>Position</TableHead>
+                      <TableHead>Source</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredContacts.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={5} className="h-24 text-center">
-                          No contacts found.
+                          <div className="flex flex-col items-center justify-center text-muted-foreground">
+                            <div className="mb-2">No contacts found with the current filters.</div>
+                            {selectedSourceFilter !== 'all' && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setSelectedSourceFilter('all')}
+                              >
+                                Show all contacts
+                              </Button>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     ) : (
                       filteredContacts.map((contact) => (
                         <TableRow 
                           key={contact.id}
-                          className="cursor-pointer"
+                          className="cursor-pointer hover:bg-muted/50"
                           onClick={() => toggleContactSelection(contact.id)}
                         >
                           <TableCell className="align-middle">
@@ -529,7 +684,15 @@ const Contacts: React.FC = () => {
                             {contact.company || '-'}
                           </TableCell>
                           <TableCell>
-                            {contact.position || '-'}
+                            {contact.source ? (
+                              <Badge variant="outline" className="capitalize">
+                                {contact.source.name}
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="bg-gray-100">
+                                Untracked
+                              </Badge>
+                            )}
                           </TableCell>
                         </TableRow>
                       ))
@@ -538,10 +701,22 @@ const Contacts: React.FC = () => {
                 </Table>
               </div>
               
-              <p className="text-sm text-muted-foreground">
-                Selected {selectedContactIds.length} of {filteredContacts.length} contacts
-                {searchQuery && ` (filtered from ${contacts.length} total)`}
-              </p>
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  Selected {selectedContactIds.length} of {filteredContacts.length} contacts
+                  {filteredContacts.length !== contacts.length ? ` (filtered from ${contacts.length} total)` : ''}
+                </p>
+                
+                {selectedContactIds.length > 0 && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setSelectedContactIds([])}
+                  >
+                    Clear selection
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
           
@@ -549,7 +724,7 @@ const Contacts: React.FC = () => {
             <Button variant="outline" onClick={() => setIsContactListDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleCreateContactList}>
+            <Button onClick={handleCreateContactList} disabled={selectedContactIds.length === 0 || !newListName.trim()}>
               {editingContactList ? "Update List" : "Create List"}
             </Button>
           </DialogFooter>
