@@ -2,7 +2,7 @@ import { Contact } from "@/lib/types";
 import { CSVField, ValidationResult, FieldMappingItem, TypeInfo } from "./types";
 import { knownFields } from "./fields-definition";
 
-// Check if a header might be a certain field based on synonyms
+// Check if a header might be a certain field based on synonyms with improved matching
 export const scoreSimilarity = (header: string, field: CSVField): number => {
   const normalizedHeader = header.toLowerCase().trim();
   
@@ -17,23 +17,34 @@ export const scoreSimilarity = (header: string, field: CSVField): number => {
     if (normalizedHeader === synonym.toLowerCase()) return 0.9;
   }
   
-  // Check for contains matches
+  // Check for contains matches (both ways)
   if (field.synonyms.some(syn => normalizedHeader.includes(syn.toLowerCase()))) return 0.7;
+  if (field.synonyms.some(syn => syn.toLowerCase().includes(normalizedHeader))) return 0.6;
+  
   if (normalizedHeader.includes(field.key.toLowerCase())) return 0.7;
   if (normalizedHeader.includes(field.displayName.toLowerCase())) return 0.7;
   
-  // Check if the field synonyms contain the header
-  if (field.synonyms.some(syn => syn.toLowerCase().includes(normalizedHeader))) return 0.5;
+  // Enhanced pattern matching for common fields
+  if (field.key === 'name') {
+    if (/^(full[\s_-]?)?name$/i.test(normalizedHeader)) return 0.85;
+    if (/^(first|last|contact|customer|client|person)[\s_-]?name$/i.test(normalizedHeader)) return 0.8;
+    if (/name|contact|person|client/i.test(normalizedHeader)) return 0.5;
+  }
   
-  // Check for common patterns in column names
-  if (field.key === 'name' && /^(full[\s_-]?)?name$/i.test(normalizedHeader)) return 0.85;
-  if (field.key === 'email' && /^e?mail$/i.test(normalizedHeader)) return 0.85;
-  if (field.key === 'phoneNumber' && /^(mobile|cell|phone|tel)$/i.test(normalizedHeader)) return 0.85;
+  if (field.key === 'email') {
+    if (/^e?mail$/i.test(normalizedHeader)) return 0.85;
+    if (/^(email|e-mail)[\s_-]?(address)?$/i.test(normalizedHeader)) return 0.85;
+  }
+  
+  if (field.key === 'phoneNumber') {
+    if (/^(cell|mobile|phone|tel|telephone|contact)[\s_-]?(number|no|#)?$/i.test(normalizedHeader)) return 0.85;
+    if (/phone|mobile|cell|contact|telephone/i.test(normalizedHeader)) return 0.5;
+  }
   
   return 0;
 };
 
-// Function to automatically guess field mappings
+// Function to automatically guess field mappings with improved accuracy
 export const guessFieldMappings = (headers: string[]): { csvHeader: string; mappedTo: string; confidence: number }[] => {
   return headers.map(header => {
     let bestMatch = { field: '' as string, score: 0 };
@@ -46,15 +57,16 @@ export const guessFieldMappings = (headers: string[]): { csvHeader: string; mapp
       }
     });
     
+    // Lower the threshold to catch more potential matches
     return {
       csvHeader: header,
-      mappedTo: bestMatch.score >= 0.5 ? bestMatch.field : '',
+      mappedTo: bestMatch.score >= 0.4 ? bestMatch.field : '',
       confidence: bestMatch.score
     };
   });
 };
 
-// Function to detect data types from sample data
+// Function to detect data types from sample data with enhanced pattern matching
 export const detectDataTypes = (headers: string[], sampleData: string[][]): TypeInfo[] => {
   return headers.map((header, index) => {
     // Get all non-empty values for this column
@@ -64,48 +76,60 @@ export const detectDataTypes = (headers: string[], sampleData: string[][]): Type
     
     const sampleValue = values[0];
     
-    // Email detection
-    if (values.some(val => /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(val))) {
+    // Email detection - enhanced regex
+    if (values.some(val => /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(val.trim()))) {
       return { csvHeader: header, detectedType: 'email', sampleValue };
     }
     
-    // Phone detection - improved to catch more formats
+    // Phone detection - much more tolerant of formats
     if (values.some(val => {
-      const cleaned = val.replace(/[\s\(\)\-\.]/g, '');
-      return /^\+?[0-9]{7,15}$/.test(cleaned);
+      // Remove all non-numeric characters except + for country code
+      const cleaned = val.replace(/[^0-9+]/g, '');
+      // Check for reasonable phone number length
+      return (cleaned.length >= 7 && cleaned.length <= 15) || 
+             // Also check for various common phone formats
+             /^\+?[0-9]{1,4}[ -.]?(\([0-9]{1,4}\)[ -.]?)?[0-9]{3,10}[ -.]?[0-9]{3,10}$/.test(val);
     })) {
       return { csvHeader: header, detectedType: 'phone', sampleValue };
     }
     
-    // LinkedIn URL detection - improved to catch more formats
-    if (values.some(val => /linkedin\.com\/(in|profile)\/[\w\-\_]+/i.test(val))) {
+    // LinkedIn URL detection - enhanced to catch more formats
+    if (values.some(val => 
+      /linkedin\.com/i.test(val) || 
+      /^(https?:\/\/)?(www\.)?linkedin\.com\/(in\/|profile\/|pub\/|company\/)/i.test(val)
+    )) {
       return { csvHeader: header, detectedType: 'url', sampleValue };
     }
     
     // Boolean detection
-    if (values.every(val => /(yes|no|true|false|y|n|1|0)/i.test(val))) {
+    if (values.every(val => /(yes|no|true|false|y|n|1|0|on|off)/i.test(val.trim()))) {
       return { csvHeader: header, detectedType: 'boolean', sampleValue };
     }
     
-    // Name detection
-    if (header.toLowerCase().includes('name') || 
-        values.some(val => /^[A-Z][a-z]+ [A-Z][a-z]+$/.test(val))) {
+    // Name detection - enhanced to detect more name patterns
+    if (
+      header.toLowerCase().includes('name') || 
+      values.some(val => /^[A-Z][a-z]+( [A-Z][a-z]+)+$/.test(val.trim())) ||
+      header.toLowerCase().match(/(contact|person|customer|client)/i)
+    ) {
       return { csvHeader: header, detectedType: 'name', sampleValue };
     }
     
     // Location detection
-    if (header.toLowerCase().includes('city') || 
-        header.toLowerCase().includes('state') || 
-        header.toLowerCase().includes('country') ||
-        values.some(val => /^[A-Z][a-z]+, [A-Z]{2}$/.test(val))) {
+    if (
+      header.toLowerCase().match(/(city|state|province|country|location|address)/i) || 
+      values.some(val => /^[A-Z][a-z]+,?\s+([A-Z]{2}|[A-Z][a-z]+)$/.test(val.trim()))
+    ) {
       return { csvHeader: header, detectedType: 'location', sampleValue };
     }
     
     // Job title detection
-    if (header.toLowerCase().includes('job') || 
-        header.toLowerCase().includes('title') || 
-        header.toLowerCase().includes('position') ||
-        header.toLowerCase().includes('occupation')) {
+    if (
+      header.toLowerCase().match(/(job|title|position|occupation|role|designation)/i) ||
+      values.some(val => 
+        /(manager|director|executive|specialist|consultant|analyst|coordinator|assistant|officer|lead|head)/i.test(val.trim())
+      )
+    ) {
       return { csvHeader: header, detectedType: 'job', sampleValue };
     }
     
@@ -116,45 +140,65 @@ export const detectDataTypes = (headers: string[], sampleData: string[][]): Type
 
 // Format phone numbers consistently with enhanced recognition
 export const formatPhoneNumber = (phone: string): string => {
-  // Clean the phone number
-  const digits = phone.replace(/\D/g, '');
+  // Clean the phone number - keep only digits and +
+  const cleaned = phone.replace(/[^0-9+]/g, '');
+  
+  // If empty, return as is
+  if (!cleaned) return phone;
   
   // Format based on length
-  if (digits.length === 10) {
-    return `(${digits.substring(0, 3)}) ${digits.substring(3, 6)}-${digits.substring(6)}`;
-  } else if (digits.length === 11 && digits[0] === '1') {
-    return `+1 (${digits.substring(1, 4)}) ${digits.substring(4, 7)}-${digits.substring(7)}`;
-  } else if (digits.length > 10) {
+  if (cleaned.length === 10) {
+    // Standard US number: 1234567890 -> (123) 456-7890
+    return `(${cleaned.substring(0, 3)}) ${cleaned.substring(3, 6)}-${cleaned.substring(6)}`;
+  } else if (cleaned.length === 11 && cleaned[0] === '1') {
+    // US number with country code: 11234567890 -> +1 (123) 456-7890
+    return `+1 (${cleaned.substring(1, 4)}) ${cleaned.substring(4, 7)}-${cleaned.substring(7)}`;
+  } else if (cleaned.startsWith('+1') && cleaned.length === 12) {
+    // US number with + country code: +11234567890 -> +1 (123) 456-7890
+    return `+1 (${cleaned.substring(2, 5)}) ${cleaned.substring(5, 8)}-${cleaned.substring(8)}`;
+  } else if (cleaned.length > 10) {
     // Try to format international numbers
-    // If starts with country code, format accordingly
-    if (digits.startsWith('1')) {
-      const countryCode = digits.substring(0, 1);
-      const areaCode = digits.substring(1, 4);
-      const firstPart = digits.substring(4, 7);
-      const lastPart = digits.substring(7);
-      return `+${countryCode} (${areaCode}) ${firstPart}-${lastPart}`;
-    } else if (digits.length >= 11 && digits.length <= 15) {
-      // Generic international format for other country codes
-      const countryCode = digits.substring(0, 2);
-      const rest = digits.substring(2);
-      return `+${countryCode} ${rest.substring(0, 3)} ${rest.substring(3, 6)} ${rest.substring(6)}`;
+    if (cleaned.startsWith('+')) {
+      // Already has country code with +
+      const countryCodeEnd = Math.min(4, cleaned.length - 7); // Allow country codes up to 3 digits
+      const countryCode = cleaned.substring(0, countryCodeEnd + 1); // Include the +
+      const rest = cleaned.substring(countryCodeEnd + 1);
+      
+      // Format the rest nicely
+      if (rest.length > 6) {
+        return `${countryCode} ${rest.substring(0, 3)} ${rest.substring(3, 6)} ${rest.substring(6)}`;
+      } else {
+        return `${countryCode} ${rest}`;
+      }
+    } else if (cleaned.length >= 11 && cleaned.length <= 15) {
+      // Assume first 1-3 digits are country code
+      const countryCodeEnd = Math.min(3, cleaned.length - 7);
+      const countryCode = cleaned.substring(0, countryCodeEnd);
+      const rest = cleaned.substring(countryCodeEnd);
+      
+      // Format with + and spaces
+      if (rest.length > 6) {
+        return `+${countryCode} ${rest.substring(0, 3)} ${rest.substring(3, 6)} ${rest.substring(6)}`;
+      } else {
+        return `+${countryCode} ${rest}`;
+      }
     }
     
-    // For other international or non-standard formats, add + if missing
-    return digits.length > 10 && !phone.includes('+') ? `+${digits}` : phone;
+    // For other unusual formats, just add + if missing
+    return cleaned.startsWith('+') ? cleaned : `+${cleaned}`;
   } else {
-    // For shorter numbers or unusual formats, keep as is
-    return phone;
+    // For shorter numbers or unusual formats, keep as is but clean
+    return cleaned;
   }
 };
 
-// Function to standardize boolean values
+// Function to standardize boolean values with enhanced recognition
 export const standardizeBoolean = (value: string): boolean => {
   const normalizedValue = value.toLowerCase().trim();
-  return ['yes', 'true', 'y', '1', 'on', 'checked'].includes(normalizedValue);
+  return ['yes', 'true', 'y', '1', 'on', 'checked', 'enabled', 'active'].includes(normalizedValue);
 };
 
-// Enhanced CSV parsing with improved pattern recognition
+// Enhanced CSV parsing with improved pattern recognition and error tolerance
 export const parseCSV = (
   csvText: string, 
   fieldMappings: FieldMappingItem[]
@@ -164,92 +208,140 @@ export const parseCSV = (
   validationResults: ValidationResult[];
   typeInfo: TypeInfo[];
 } => {
-  const lines = csvText.trim().split(/\r?\n/); // Handle different line endings
-  const headers = lines[0].split(',').map(header => header.trim());
-  
-  // Get sample data for type detection (up to 5 rows)
-  const sampleRows = lines.slice(1, Math.min(6, lines.length))
-    .map(line => line.split(',').map(value => value.trim()))
-    .filter(row => row.length === headers.length);
-  
-  const typeInfo = detectDataTypes(headers, sampleRows);
-  
-  const contacts: Contact[] = [];
-  const validationResults: ValidationResult[] = [];
-  
-  for (let i = 1; i < lines.length; i++) {
-    if (!lines[i].trim()) continue;
+  try {
+    // Handle different line endings and potential BOM characters
+    const cleanedText = csvText.replace(/^\ufeff/, '').trim();
+    const lines = cleanedText.split(/\r?\n/);
     
-    const values = lines[i].split(',').map(value => value.trim());
-    const rowErrors: string[] = [];
+    if (lines.length < 2) {
+      throw new Error('CSV file must contain at least a header row and one data row');
+    }
     
-    // Check if row has correct number of columns
-    if (values.length !== headers.length) {
-      rowErrors.push(`Column count mismatch: expected ${headers.length}, got ${values.length}`);
+    // Parse headers, trimming whitespace
+    const headers = lines[0].split(',').map(header => header.trim());
+    
+    // Get sample data for type detection (up to 5 rows)
+    const sampleRows = lines.slice(1, Math.min(6, lines.length))
+      .map(line => {
+        // Split by comma, respecting quotes (simple implementation)
+        // For a more robust solution, consider a CSV parsing library
+        const values = line.split(',').map(val => val.trim());
+        
+        // Pad the row if it has fewer columns than headers
+        while (values.length < headers.length) {
+          values.push('');
+        }
+        
+        // Truncate if it has more columns than headers
+        return values.slice(0, headers.length);
+      });
+    
+    // Detect data types from samples
+    const typeInfo = detectDataTypes(headers, sampleRows);
+    
+    const contacts: Contact[] = [];
+    const validationResults: ValidationResult[] = [];
+    
+    // Process each row (skipping headers)
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line) continue; // Skip empty lines
+      
+      // Split values, respecting quotes (simple version)
+      let values = line.split(',').map(val => val.trim());
+      
+      // Adjust row if column count doesn't match headers
+      if (values.length < headers.length) {
+        // Pad the row if it has fewer columns
+        while (values.length < headers.length) {
+          values.push('');
+        }
+      } else if (values.length > headers.length) {
+        // Truncate if it has more columns
+        values = values.slice(0, headers.length);
+      }
+      
+      const rowErrors: string[] = [];
+      const contact: any = { id: `contact-${Date.now()}-${i}` };
+      let hasRequiredFields = true;
+      
+      // Apply field mappings
+      fieldMappings.forEach(mapping => {
+        if (!mapping.mappedTo) return; // Skip unmapped fields
+        
+        const headerIndex = headers.findIndex(h => h === mapping.csvHeader);
+        if (headerIndex === -1) return;
+        
+        const value = values[headerIndex]?.trim() || '';
+        const fieldDef = knownFields.find(f => f.key === mapping.mappedTo);
+        
+        // Apply field-specific validation and formatting
+        if (fieldDef) {
+          if (fieldDef.required && !value) {
+            rowErrors.push(`Required field ${fieldDef.displayName} is empty`);
+            hasRequiredFields = false;
+          } else if (value && fieldDef.validator && !fieldDef.validator(value)) {
+            // More tolerant validation - don't fail immediately if possible
+            // For phone numbers, try to clean and validate again
+            if (fieldDef.key === 'phoneNumber') {
+              const cleanedPhone = value.replace(/[^0-9+]/g, '');
+              if (cleanedPhone.length >= 7 && cleanedPhone.length <= 15) {
+                // Accept anyway but format it
+                contact[mapping.mappedTo] = formatPhoneNumber(value);
+              } else {
+                rowErrors.push(`Invalid ${fieldDef.displayName} format: ${value}`);
+              }
+            } else {
+              rowErrors.push(fieldDef.errorMessage || `Invalid ${fieldDef.displayName} format: ${value}`);
+            }
+          } else if (value) {
+            // Apply type-specific formatting
+            if (mapping.mappedTo === 'phoneNumber') {
+              contact[mapping.mappedTo] = formatPhoneNumber(value);
+            } else if (mapping.mappedTo === 'attendingConference' || mapping.mappedTo.includes('is') || mapping.mappedTo.includes('has')) {
+              contact[mapping.mappedTo] = standardizeBoolean(value);
+            } else {
+              contact[mapping.mappedTo] = value;
+            }
+          }
+        } else {
+          // For custom fields, just assign the value
+          contact[mapping.mappedTo] = value;
+        }
+      });
+      
+      // Check for required fields explicitly
+      const hasName = !!contact.name;
+      const hasPhone = !!contact.phoneNumber;
+      
+      if (!hasName) {
+        rowErrors.push('Missing name field');
+        hasRequiredFields = false;
+      }
+      if (!hasPhone) {
+        rowErrors.push('Missing phone field');
+        hasRequiredFields = false;
+      }
+      
+      // Decide if this row is valid
+      const isValid = rowErrors.length === 0 && hasRequiredFields;
+      
+      if (isValid) {
+        contacts.push(contact as Contact);
+      }
+      
+      // Add validation result for this row
       validationResults.push({
         rowIndex: i,
-        valid: false,
+        valid: isValid,
         errors: rowErrors,
         rawData: values
       });
-      continue;
     }
     
-    const contact: any = { id: `contact-${Date.now()}-${i}` };
-    
-    // Apply field mappings
-    fieldMappings.forEach(mapping => {
-      if (!mapping.mappedTo) return; // Skip unmapped fields
-      
-      const headerIndex = headers.findIndex(h => h === mapping.csvHeader);
-      if (headerIndex === -1) return;
-      
-      const value = values[headerIndex];
-      const fieldDef = knownFields.find(f => f.key === mapping.mappedTo);
-      
-      // Apply field-specific validation and formatting
-      if (fieldDef) {
-        if (fieldDef.required && !value) {
-          rowErrors.push(`Required field ${fieldDef.displayName} is empty`);
-        } else if (value && fieldDef.validator && !fieldDef.validator(value)) {
-          rowErrors.push(fieldDef.errorMessage || `Invalid ${fieldDef.displayName} format`);
-        } else if (value) {
-          // Apply type-specific formatting
-          if (mapping.mappedTo === 'phoneNumber') {
-            contact[mapping.mappedTo] = formatPhoneNumber(value);
-          } else if (mapping.mappedTo === 'attendingConference') {
-            contact[mapping.mappedTo] = standardizeBoolean(value);
-          } else {
-            contact[mapping.mappedTo] = value;
-          }
-        }
-      } else {
-        // For custom fields, just assign the value
-        contact[mapping.mappedTo] = value;
-      }
-    });
-    
-    // Check for required fields
-    const hasName = !!contact.name;
-    const hasPhone = !!contact.phoneNumber;
-    
-    if (!hasName) rowErrors.push('Missing name field');
-    if (!hasPhone) rowErrors.push('Missing phone field');
-    
-    // Only add if validation passed
-    const isValid = rowErrors.length === 0 && hasName && hasPhone;
-    
-    if (isValid) {
-      contacts.push(contact as Contact);
-    }
-    
-    validationResults.push({
-      rowIndex: i,
-      valid: isValid,
-      errors: rowErrors,
-      rawData: values
-    });
+    return { headers, contacts, validationResults, typeInfo };
+  } catch (error) {
+    console.error("CSV Parsing Error:", error);
+    throw new Error(`Failed to parse CSV: ${error instanceof Error ? error.message : String(error)}`);
   }
-  
-  return { headers, contacts, validationResults, typeInfo };
 };

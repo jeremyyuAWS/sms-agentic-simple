@@ -62,8 +62,15 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
   };
 
   const processFile = (file: File) => {
-    if (!file || file.type !== 'text/csv') {
-      setError('Please select a CSV file.');
+    if (!file) {
+      setError('No file selected.');
+      return;
+    }
+    
+    // Accept more file types - some CSV files might have different MIME types
+    const acceptedTypes = ['text/csv', 'application/csv', 'application/vnd.ms-excel', 'text/plain'];
+    if (!acceptedTypes.includes(file.type) && !file.name.endsWith('.csv')) {
+      setError('Please select a CSV file. The file should have a .csv extension.');
       return;
     }
 
@@ -78,20 +85,47 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
     reader.onload = (e) => {
       try {
         const content = e.target?.result as string;
+        if (!content || content.trim() === '') {
+          throw new Error('The file appears to be empty');
+        }
+        
         setCsvText(content); // Store CSV text for later processing
         
-        // Parse headers only at this stage
-        const lines = content.split(/\r?\n/);
+        // Handle different line endings and potential BOM characters
+        const cleanedContent = content.replace(/^\ufeff/, '').trim();
+        const lines = cleanedContent.split(/\r?\n/);
+        
+        if (lines.length < 2) {
+          throw new Error('CSV file must contain at least a header row and one data row');
+        }
+        
+        // Parse headers, trimming whitespace
         const headers = lines[0].split(',').map(header => header.trim());
         setHeaders(headers);
+        
+        // Check if there are multiple rows of data
+        if (lines.length < 2) {
+          throw new Error('CSV file must contain at least one row of data besides the header');
+        }
         
         // Get automatic field mappings
         const suggestedMappings = guessFieldMappings(headers);
         
         // Prepare sample data for type detection
         const sampleRows = lines.slice(1, Math.min(6, lines.length))
-          .map(line => line.split(',').map(value => value.trim()))
-          .filter(row => row.length === headers.length);
+          .map(line => {
+            // Split by comma, handling simple cases
+            const values = line.split(',').map(value => value.trim());
+            
+            // Ensure the row has the correct number of columns
+            const paddedValues = [...values];
+            while (paddedValues.length < headers.length) {
+              paddedValues.push('');
+            }
+            
+            return paddedValues.slice(0, headers.length);
+          })
+          .filter(row => row.some(cell => cell.trim() !== ''));  // Filter out empty rows
         
         // Set form values with suggested mappings
         const initialMappings: FieldMappingItem[] = suggestedMappings.map(mapping => ({
@@ -99,22 +133,22 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
           mappedTo: mapping.mappedTo || "ignore-column" // Use non-empty string for empty mappings
         }));
         
-        // Show mapping interface
-        setShowMappingInterface(true);
-        
         // Process with initial mappings to get typeInfo
         const { typeInfo } = parseCSV(content, initialMappings);
         setTypeInfo(typeInfo);
         
+        // Show mapping interface
+        setShowMappingInterface(true);
+        
       } catch (err) {
         console.error("CSV Processing Error:", err);
-        setError('An error occurred while parsing the CSV file. Please check the file format.');
+        setError(`Error processing CSV file: ${err instanceof Error ? err.message : 'Unknown error'}`);
         setContacts([]);
       }
     };
     
     reader.onerror = () => {
-      setError('Failed to read the file. Please try again.');
+      setError('Failed to read the file. Please try again with a different file.');
     };
     
     reader.readAsText(file);
@@ -138,30 +172,55 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
       setTypeInfo(typeInfo);
       
       if (parsedContacts.length === 0) {
-        setError('No valid contacts found in the CSV. Make sure it has name and phone columns.');
+        setError('No valid contacts found in the CSV. Please check your field mappings and ensure your data contains required fields (name and phone number).');
         setContacts([]);
+        
+        // Show diagnostic info in toast
+        const validRows = validationResults.filter(r => r.valid).length;
+        const invalidRows = validationResults.filter(r => !r.valid).length;
+        
+        if (invalidRows > 0) {
+          const commonErrors = validationResults
+            .filter(r => !r.valid)
+            .flatMap(r => r.errors)
+            .reduce((counts: Record<string, number>, error) => {
+              counts[error] = (counts[error] || 0) + 1;
+              return counts;
+            }, {});
+          
+          const mostCommonError = Object.entries(commonErrors)
+            .sort((a, b) => b[1] - a[1])[0];
+          
+          if (mostCommonError) {
+            toast({
+              title: `CSV Import Issue: ${invalidRows} invalid rows`,
+              description: `Most common error: "${mostCommonError[0]}" (${mostCommonError[1]} occurrences). Check the validation details for more information.`,
+              variant: "destructive",
+            });
+          }
+        }
       } else {
         setContacts(parsedContacts);
         setShowMappingInterface(false);
-      }
-      
-      // Show detailed results in toast
-      const invalidRows = validationResults.filter(r => !r.valid);
-      if (invalidRows.length > 0) {
-        toast({
-          title: `${invalidRows.length} invalid rows detected`,
-          description: "See validation details below for more information",
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: `${parsedContacts.length} valid contacts ready to import`,
-          description: "All rows passed validation",
-        });
+        
+        // Show detailed results in toast
+        const invalidRows = validationResults.filter(r => !r.valid);
+        if (invalidRows.length > 0) {
+          toast({
+            title: `${parsedContacts.length} contacts ready to import`,
+            description: `${invalidRows.length} rows were skipped due to validation errors. See details below.`,
+            variant: "warning",
+          });
+        } else {
+          toast({
+            title: `${parsedContacts.length} valid contacts ready to import`,
+            description: "All rows passed validation",
+          });
+        }
       }
     } catch (err) {
       console.error("Mapping Error:", err);
-      setError('An error occurred while processing the CSV file. Please try again.');
+      setError(`Error processing CSV data: ${err instanceof Error ? err.message : 'Unknown error'}`);
       setContacts([]);
     }
   };
@@ -193,6 +252,11 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
     
     setIsUploading(false);
     clearFile();
+    
+    toast({
+      title: `${contacts.length} contacts imported successfully`,
+      description: `Import "${customImportName}" has been completed.`,
+    });
   };
 
   const validRows = validationResults.filter(r => r.valid).length;
@@ -213,7 +277,7 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
         type="file"
         ref={fileInputRef}
         onChange={handleFileChange}
-        accept=".csv"
+        accept=".csv,text/csv,application/csv,application/vnd.ms-excel,text/plain"
         className="hidden"
       />
       
