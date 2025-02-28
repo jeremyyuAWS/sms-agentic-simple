@@ -155,6 +155,29 @@ export interface TemplateCategory {
   description?: string;
 }
 
+// Template Version for version history
+export interface TemplateVersion {
+  id: string;
+  templateId: string;
+  name: string;
+  body: string;
+  variables: string[];
+  createdAt: Date;
+  createdBy?: string; // User who created this version
+  notes?: string; // Optional notes about the changes
+}
+
+// Template Usage Analytics
+export interface TemplateUsage {
+  templateId: string;
+  usageCount: number;
+  lastUsed?: Date;
+  campaignIds: string[]; // Campaigns where this template was used
+  responseRate?: number; // Average response rate
+  positiveResponseRate?: number; // Percentage of positive responses
+  negativeResponseRate?: number; // Percentage of negative responses
+}
+
 // Additional types used in the application
 export interface Template {
   id: string;
@@ -164,6 +187,13 @@ export interface Template {
   updatedAt: Date;
   variables: string[];
   categoryIds?: string[]; // Reference to template categories
+  isPublic?: boolean; // Whether this template can be shared
+  sharedWith?: string[]; // IDs of users this template is shared with
+  sharedById?: string; // ID of user who shared this template, if it's a shared template
+  originalTemplateId?: string; // If this is a copy of a shared template, the ID of the original
+  versionsCount?: number; // Number of versions available
+  currentVersionId?: string; // ID of the current version
+  usageStats?: TemplateUsage; // Usage statistics for this template
 }
 
 export interface MetricItem {

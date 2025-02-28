@@ -11,7 +11,8 @@ import {
   ContactTag,
   ContactSegment,
   ContactList,
-  TemplateCategory
+  TemplateCategory,
+  TemplateVersion
 } from '@/lib/types';
 import { AppContext } from './AppContext';
 import { createMessageActions } from './actions/messageActions';
@@ -27,7 +28,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   const [campaignsState, setCampaigns] = useState<Campaign[]>(campaigns);
   const [contactsState, setContacts] = useState<Contact[]>(contacts);
   const [conversationsState, setConversations] = useState<Conversation[]>(conversations);
-  const [templatesState, setTemplates] = useState<Template[]>(templates);
+  const [templatesState, setTemplates] = useState<Template[]>(templates.map(template => ({
+    ...template,
+    versionsCount: 1,
+    currentVersionId: `version-initial-${template.id}`,
+    usageStats: {
+      templateId: template.id,
+      usageCount: Math.floor(Math.random() * 10),
+      campaignIds: [],
+      responseRate: Math.random() * 0.5,
+      positiveResponseRate: Math.random() * 0.3,
+      negativeResponseRate: Math.random() * 0.2
+    },
+    isPublic: Math.random() > 0.5
+  })));
   const [metricsState, setMetrics] = useState<MetricItem[]>(metrics);
   const [knowledgeBasesState, setKnowledgeBases] = useState<KnowledgeBase[]>([]);
   const [contactTagsState, setContactTags] = useState<ContactTag[]>([]);
@@ -167,6 +181,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   const deleteContactList = (id: string) => {
     setContactLists(prev => prev.filter(list => list.id !== id));
   };
+
+  // Initialize template versions
+  const initializeTemplateVersions = () => {
+    templatesState.forEach(template => {
+      if (template.currentVersionId) {
+        templateActions.createTemplateVersion(template.id, {
+          id: template.currentVersionId,
+          templateId: template.id,
+          name: template.name,
+          body: template.body,
+          variables: template.variables,
+          createdAt: template.createdAt,
+          notes: "Initial version"
+        });
+      }
+    });
+  };
+  
+  // Call this once during initialization
+  React.useEffect(() => {
+    initializeTemplateVersions();
+  }, []);
 
   return (
     <AppContext.Provider 

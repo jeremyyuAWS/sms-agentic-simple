@@ -14,7 +14,8 @@ import {
   ContactImport,
   ContactList,
   TimeWindow,
-  TemplateCategory
+  TemplateCategory,
+  TemplateVersion
 } from '@/lib/types';
 import React from 'react';
 
@@ -84,6 +85,17 @@ export interface AppContextProps {
   deleteTemplateCategory: (id: string) => void;
   assignTemplateToCategory: (templateId: string, categoryId: string) => void;
   removeTemplateFromCategory: (templateId: string, categoryId: string) => void;
+  // Version history
+  getTemplateVersions: (templateId: string) => TemplateVersion[];
+  getTemplateVersion: (templateId: string, versionId: string) => TemplateVersion | undefined;
+  revertToVersion: (templateId: string, versionId: string) => void;
+  // Sharing
+  shareTemplate: (templateId: string, isPublic?: boolean, userIds?: string[]) => void;
+  unshareTemplate: (templateId: string) => void;
+  copySharedTemplate: (templateId: string, userId: string) => void;
+  // Usage tracking
+  trackTemplateUsage: (templateId: string, campaignId: string) => void;
+  updateTemplateStats: (templateId: string, responseRate?: number, positiveRate?: number, negativeRate?: number) => void;
   createContactTag: (tag: Omit<ContactTag, 'id' | 'count'>) => void;
   assignTagToContacts: (tagId: string, contactIds: string[]) => void;
   removeTagFromContacts: (tagId: string, contactIds: string[]) => void;
