@@ -15,6 +15,7 @@ import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import NavigationButtons from '@/components/ui/navigation-buttons';
 import {
   Dialog,
   DialogContent,
@@ -537,6 +538,9 @@ const Contacts: React.FC = () => {
           />
         </TabsContent>
       </Tabs>
+
+      {/* Navigation Buttons */}
+      <NavigationButtons currentPage="contacts" />
 
       {/* Contact List Creation/Edit Dialog */}
       <Dialog open={isContactListDialogOpen} onOpenChange={setIsContactListDialogOpen}>
