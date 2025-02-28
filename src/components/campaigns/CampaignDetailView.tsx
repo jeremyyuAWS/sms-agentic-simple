@@ -29,12 +29,14 @@ interface CampaignDetailViewProps {
   campaign: Campaign;
   onClose: () => void;
   onStatusChange: (campaignId: string, status: Campaign['status']) => void;
+  onEdit?: (campaignId: string) => void;
 }
 
 const CampaignDetailView: React.FC<CampaignDetailViewProps> = ({
   campaign,
   onClose,
-  onStatusChange
+  onStatusChange,
+  onEdit
 }) => {
   const { 
     templates, 
@@ -144,10 +146,24 @@ const CampaignDetailView: React.FC<CampaignDetailViewProps> = ({
             {campaign.description || 'No description provided.'}
           </p>
         </div>
-        <Badge variant="outline" className={getStatusColorClass(campaign.status)}>
-          {getStatusIcon(campaign.status)}
-          {campaign.status}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className={getStatusColorClass(campaign.status)}>
+            {getStatusIcon(campaign.status)}
+            {campaign.status}
+          </Badge>
+          
+          {campaign.status === 'draft' && onEdit && (
+            <Button 
+              size="sm" 
+              variant="outline" 
+              className="flex items-center gap-1"
+              onClick={() => onEdit(campaign.id)}
+            >
+              <Edit className="h-4 w-4" />
+              Edit Draft
+            </Button>
+          )}
+        </div>
       </div>
 
       <Tabs

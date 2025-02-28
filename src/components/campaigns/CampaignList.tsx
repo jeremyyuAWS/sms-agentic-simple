@@ -11,6 +11,7 @@ import {
   Users,
   BarChart3,
   Clock,
+  Edit,
 } from 'lucide-react';
 import { formatDistance } from 'date-fns';
 
@@ -85,14 +86,27 @@ const CampaignList: React.FC<CampaignListProps> = ({ campaigns, onSelect, onUpda
         );
       case 'draft':
         return (
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8"
-            onClick={(e) => handleStatusChange(e, campaign, 'active')}
-          >
-            <Play className="h-3.5 w-3.5 mr-1" /> Start
-          </Button>
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8"
+              onClick={(e) => {
+                e.stopPropagation();
+                onSelect(campaign.id);
+              }}
+            >
+              <Edit className="h-3.5 w-3.5 mr-1" /> Edit
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8"
+              onClick={(e) => handleStatusChange(e, campaign, 'active')}
+            >
+              <Play className="h-3.5 w-3.5 mr-1" /> Start
+            </Button>
+          </>
         );
       default:
         return null;

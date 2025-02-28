@@ -55,6 +55,7 @@ const Campaigns: React.FC = () => {
         title: "Campaign Updated",
         description: `Campaign "${campaignData.name}" has been updated successfully.`
       });
+      setActiveTab('view');
     } catch (error) {
       toast({
         title: "Error Updating Campaign",
@@ -176,6 +177,7 @@ const Campaigns: React.FC = () => {
           campaign={selectedCampaign}
           onClose={handleBackToList}
           onStatusChange={updateCampaignStatus}
+          onEdit={handleEditCampaign}
         />
       )}
 
