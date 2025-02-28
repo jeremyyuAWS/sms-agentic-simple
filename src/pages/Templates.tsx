@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useApp } from '@/contexts';
 import { Template, Contact } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Edit, Trash2, Tag, Copy, HelpCircle, Info } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Tag, Copy, HelpCircle, Info, Clock, CalendarIcon } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -12,12 +12,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
 import {
   Table,
   TableBody,
@@ -27,6 +34,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 
 const Templates = () => {
   const { templates, contacts, createTemplate } = useApp();
@@ -40,6 +48,12 @@ const Templates = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [previewData, setPreviewData] = useState<{[key: string]: string}>({});
+  
+  // Scheduling states
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [selectedTime, setSelectedTime] = useState<string>("09:00");
+  const [showScheduling, setShowScheduling] = useState(false);
+  const [templateSchedules, setTemplateSchedules] = useState<{[templateId: string]: {date: Date, time: string}}>({});
 
   // Get available contact fields for template variables
   const getAvailableContactFields = () => {
@@ -205,8 +219,98 @@ const Templates = () => {
     });
   };
 
+  // Scheduling functionality
+  const handleScheduleTemplate = (templateId: string) => {
+    setSelectedTemplate(templates.find(t => t.id === templateId) || null);
+    
+    // Initialize with existing schedule or defaults
+    if (templateSchedules[templateId]) {
+      setSelectedDate(templateSchedules[templateId].date);
+      setSelectedTime(templateSchedules[templateId].time);
+    } else {
+      setSelectedDate(undefined);
+      setSelectedTime("09:00");
+    }
+    
+    setShowScheduling(true);
+  };
+
+  const saveSchedule = () => {
+    if (!selectedTemplate || !selectedDate) {
+      toast({
+        title: "Error",
+        description: "Please select a valid date and time.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setTemplateSchedules(prev => ({
+      ...prev,
+      [selectedTemplate.id]: {
+        date: selectedDate,
+        time: selectedTime
+      }
+    }));
+
+    setShowScheduling(false);
+    
+    toast({
+      title: "Success",
+      description: `Schedule set for "${selectedTemplate.name}".`
+    });
+  };
+
+  const removeSchedule = (templateId: string) => {
+    setTemplateSchedules(prev => {
+      const updated = { ...prev };
+      delete updated[templateId];
+      return updated;
+    });
+    
+    toast({
+      title: "Schedule Removed",
+      description: "The scheduled sending has been canceled."
+    });
+  };
+
   // Get available fields for display
   const availableFields = getAvailableContactFields();
+
+  // Function to generate a preview with real contact data
+  const generatePreview = (templateBody: string) => {
+    if (!templateBody) return "";
+    
+    // Check if we have contacts to use in the preview
+    if (contacts.length > 0) {
+      // Use the first contact for preview
+      const sampleContact = contacts[0];
+      let preview = templateBody;
+      
+      // Replace all variables with contact data
+      Object.keys(sampleContact).forEach(key => {
+        const regex = new RegExp(`{${key}}`, 'g');
+        const value = sampleContact[key] || `[${key}]`;
+        preview = preview.replace(regex, String(value));
+      });
+      
+      // Find any remaining variables that weren't replaced
+      const remainingVariables = [...preview.matchAll(/{([^}]+)}/g)];
+      
+      if (remainingVariables.length > 0) {
+        // Replace remaining variables with placeholders
+        remainingVariables.forEach(match => {
+          const variable = match[1];
+          preview = preview.replace(new RegExp(`{${variable}}`, 'g'), `[${variable}]`);
+        });
+      }
+      
+      return preview;
+    } else {
+      // No contacts available, just show placeholder variables
+      return templateBody.replace(/{([^}]+)}/g, (_, variable) => `[${variable}]`);
+    }
+  };
 
   return (
     <div className="container mx-auto py-6 max-w-6xl">
@@ -242,65 +346,106 @@ const Templates = () => {
       ) : (
         <div className="grid gap-6">
           {templates.map(template => (
-            <Card key={template.id} className="overflow-hidden">
-              <div className="p-6 pb-4">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="text-lg font-medium">{template.name}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Created {new Date(template.createdAt).toLocaleDateString()}
-                    </p>
+            <React.Fragment key={template.id}>
+              <Card className="overflow-hidden">
+                <div className="p-6 pb-4">
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h3 className="text-lg font-medium">{template.name}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Created {new Date(template.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => copyToClipboard(template.body)}
+                            >
+                              <Copy className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Copy template</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => handlePreview(template)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Edit & preview</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
                   </div>
-                  <div className="flex gap-2">
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button 
-                            variant="ghost" 
-                            size="icon"
-                            onClick={() => copyToClipboard(template.body)}
-                          >
-                            <Copy className="h-4 w-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Copy template</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button 
-                            variant="ghost" 
-                            size="icon"
-                            onClick={() => handlePreview(template)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Edit & preview</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                  
+                  <div className="bg-muted/50 p-3 rounded-lg text-sm mb-4">
+                    {contacts.length > 0 ? (
+                      <>
+                        {generatePreview(template.body)}
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Preview shows data from {contacts[0].name} ({contacts[0].company || "No company"})
+                        </p>
+                      </>
+                    ) : (
+                      template.body
+                    )}
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-2">
+                    {template.variables.map(variable => (
+                      <Badge key={variable} variant="outline" className="bg-primary/5">
+                        <Tag className="h-3 w-3 mr-1" />
+                        {variable}
+                      </Badge>
+                    ))}
                   </div>
                 </div>
                 
-                <div className="bg-muted/50 p-3 rounded-lg text-sm mb-4">
-                  {template.body}
-                </div>
-                
-                <div className="flex flex-wrap gap-2">
-                  {template.variables.map(variable => (
-                    <Badge key={variable} variant="outline" className="bg-primary/5">
-                      <Tag className="h-3 w-3 mr-1" />
-                      {variable}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            </Card>
+                <CardFooter className="bg-muted/30 p-4 border-t flex justify-between items-center">
+                  {templateSchedules[template.id] ? (
+                    <div className="flex items-center text-sm">
+                      <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <span>
+                        Scheduled: {format(templateSchedules[template.id].date, "MMM d, yyyy")} at {templateSchedules[template.id].time}
+                      </span>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => removeSchedule(template.id)}
+                        className="ml-2 h-7 text-xs"
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="text-sm text-muted-foreground">Not scheduled</div>
+                  )}
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => handleScheduleTemplate(template.id)}
+                    className="ml-auto"
+                  >
+                    <Clock className="h-4 w-4 mr-2" />
+                    {templateSchedules[template.id] ? "Reschedule" : "Schedule Send"}
+                  </Button>
+                </CardFooter>
+              </Card>
+            </React.Fragment>
           ))}
         </div>
       )}
@@ -427,8 +572,17 @@ const Templates = () => {
             <div className="space-y-2">
               <Label>Preview</Label>
               <div className="p-4 border rounded-lg bg-muted/30 text-sm">
-                {newTemplate.body.replace(/{([^}]+)}/g, (_, variable) => `[${variable}]`)}
+                {contacts.length > 0 ? (
+                  generatePreview(newTemplate.body)
+                ) : (
+                  newTemplate.body.replace(/{([^}]+)}/g, (_, variable) => `[${variable}]`)
+                )}
               </div>
+              {contacts.length > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Preview shows data from {contacts[0].name}
+                </p>
+              )}
             </div>
           </div>
           
@@ -486,6 +640,83 @@ const Templates = () => {
             <Button onClick={() => copyToClipboard(renderPreview())}>
               <Copy className="mr-2 h-4 w-4" />
               Copy Preview
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Scheduling Dialog */}
+      <Dialog open={showScheduling} onOpenChange={setShowScheduling}>
+        <DialogContent className="sm:max-w-[450px]">
+          <DialogHeader>
+            <DialogTitle>Schedule Template Send</DialogTitle>
+            <DialogDescription>
+              Set when you want to send this template to your contacts.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Send Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !selectedDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {selectedDate ? format(selectedDate, "PPP") : "Select a date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={setSelectedDate}
+                    initialFocus
+                    disabled={(date) => date < new Date()}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="sendTime">Send Time</Label>
+              <Input
+                id="sendTime"
+                type="time"
+                value={selectedTime}
+                onChange={(e) => setSelectedTime(e.target.value)}
+              />
+            </div>
+            
+            {selectedTemplate && (
+              <div className="space-y-2 border-t pt-4 mt-4">
+                <Label>Template Preview</Label>
+                <div className="p-3 border rounded-md bg-muted/30 text-sm">
+                  {contacts.length > 0 ? generatePreview(selectedTemplate.body) : selectedTemplate.body}
+                </div>
+                {contacts.length > 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    Preview shows data from {contacts[0].name}
+                  </p>
+                )}
+                <p className="text-xs text-muted-foreground mt-2">
+                  This template will be sent to all relevant contacts at the scheduled time.
+                </p>
+              </div>
+            )}
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowScheduling(false)}>
+              Cancel
+            </Button>
+            <Button onClick={saveSchedule}>
+              Schedule Send
             </Button>
           </DialogFooter>
         </DialogContent>

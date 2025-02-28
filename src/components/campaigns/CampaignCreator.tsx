@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import TimeZoneSelector from './TimeZoneSelector';
-import TimeWindowSelector from './TimeWindowSelector';
+import { TimeZoneSelector } from './TimeZoneSelector';
+import { TimeWindowSelector } from './TimeWindowSelector';
 import {
   Select,
   SelectContent,
@@ -76,7 +76,7 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
     condition: 'no-response'
   });
   const [previewTemplate, setPreviewTemplate] = useState<string>("");
-  
+
   // Reset the form when the dialog is opened
   useEffect(() => {
     if (isOpen) {
@@ -572,12 +572,8 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
               </div>
               
               <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <TimeZoneSelector onSelect={handleTimeZoneSelect} />
-                </div>
-                <div>
-                  <TimeWindowSelector onSelect={handleTimeWindowSelect} />
-                </div>
+                <TimeZoneSelector />
+                <TimeWindowSelector />
               </div>
             </div>
             
