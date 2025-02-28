@@ -8,25 +8,59 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useApp } from '@/contexts';
 import { Badge } from '@/components/ui/badge';
-import { Plus, X, Save, Tag } from 'lucide-react';
+import { Plus, X, Save, Tag, ChevronDown, Info } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface TemplateEditorProps {
   template?: Template;
   onClose: () => void;
 }
 
+// Common contact fields that can be used as variables
+const CONTACT_FIELDS = [
+  { name: 'name', description: 'Contact\'s full name' },
+  { name: 'firstName', description: 'Contact\'s first name' },
+  { name: 'lastName', description: 'Contact\'s last name' },
+  { name: 'email', description: 'Contact\'s email address' },
+  { name: 'phone', description: 'Contact\'s phone number' },
+  { name: 'company', description: 'Contact\'s company name' },
+  { name: 'position', description: 'Contact\'s job title/position' },
+  { name: 'city', description: 'Contact\'s city' },
+  { name: 'country', description: 'Contact\'s country' },
+  { name: 'industry', description: 'Contact\'s industry' },
+];
+
 const TemplateEditor: React.FC<TemplateEditorProps> = ({ 
   template,
   onClose
 }) => {
-  const { createTemplate, updateTemplate } = useApp();
+  const { createTemplate, updateTemplate, templateCategories } = useApp();
   const { toast } = useToast();
   
   const [name, setName] = useState(template?.name || '');
   const [body, setBody] = useState(template?.body || '');
   const [variables, setVariables] = useState<string[]>(template?.variables || []);
   const [newVariable, setNewVariable] = useState('');
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(template?.categoryIds || []);
   
   // Extract variables from body
   useEffect(() => {
@@ -53,7 +87,31 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
   };
   
   const handleInsertVariable = (variable: string) => {
-    setBody(prev => `${prev}{${variable}}`);
+    // Get cursor position or end of text
+    const textarea = document.getElementById('body') as HTMLTextAreaElement;
+    const startPos = textarea?.selectionStart || body.length;
+    const endPos = textarea?.selectionEnd || body.length;
+    
+    // Insert variable at cursor position
+    const newBody = body.substring(0, startPos) + `{${variable}}` + body.substring(endPos);
+    setBody(newBody);
+    
+    // Focus back on textarea and place cursor after inserted variable
+    setTimeout(() => {
+      textarea?.focus();
+      const newCursorPos = startPos + variable.length + 2; // +2 for the {} brackets
+      textarea?.setSelectionRange(newCursorPos, newCursorPos);
+    }, 0);
+  };
+  
+  const handleToggleCategory = (categoryId: string) => {
+    setSelectedCategories(prev => {
+      if (prev.includes(categoryId)) {
+        return prev.filter(id => id !== categoryId);
+      } else {
+        return [...prev, categoryId];
+      }
+    });
   };
   
   const handleSubmit = () => {
@@ -78,7 +136,8 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
     const templateData = {
       name,
       body,
-      variables
+      variables,
+      categoryIds: selectedCategories
     };
     
     if (template) {
@@ -101,6 +160,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
     setName('');
     setBody('');
     setVariables([]);
+    setSelectedCategories([]);
     
     onClose();
   };
@@ -124,6 +184,69 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
         </div>
         
         <div>
+          <Label htmlFor="categories">Categories</Label>
+          <div className="flex flex-wrap gap-2 mt-1.5">
+            {selectedCategories.length > 0 ? (
+              selectedCategories.map(categoryId => {
+                const category = templateCategories.find(c => c.id === categoryId);
+                return (
+                  <Badge 
+                    key={categoryId}
+                    variant="secondary"
+                    className="flex items-center gap-1 px-2 py-1.5"
+                    style={{ backgroundColor: category?.color || '#e2e8f0' }}
+                  >
+                    <Tag className="h-3 w-3" />
+                    {category?.name || 'Unknown'}
+                    <X
+                      className="h-3 w-3 ml-1 cursor-pointer" 
+                      onClick={() => handleToggleCategory(categoryId)}
+                    />
+                  </Badge>
+                );
+              })
+            ) : (
+              <div className="text-sm text-muted-foreground">
+                No categories selected
+              </div>
+            )}
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-8">
+                  <Plus className="h-3.5 w-3.5 mr-1" />
+                  Add Category
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-56">
+                {templateCategories.length > 0 ? (
+                  templateCategories.map(category => (
+                    <DropdownMenuItem
+                      key={category.id}
+                      onClick={() => handleToggleCategory(category.id)}
+                      className="flex items-center gap-2"
+                    >
+                      <div 
+                        className="h-3 w-3 rounded-full"
+                        style={{ backgroundColor: category.color }}
+                      />
+                      {category.name}
+                      {selectedCategories.includes(category.id) && (
+                        <span className="ml-auto text-primary">✓</span>
+                      )}
+                    </DropdownMenuItem>
+                  ))
+                ) : (
+                  <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                    No categories available
+                  </div>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+        
+        <div>
           <div className="flex justify-between items-center mb-1.5">
             <Label htmlFor="body">Message Body</Label>
             <div className="text-xs text-muted-foreground">
@@ -134,7 +257,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
             id="body"
             value={body}
             onChange={(e) => setBody(e.target.value)}
-            placeholder="Hi {name}, I'm Alex from Taikis. Do you have 5 minutes to discuss our opportunity?"
+            placeholder="Hi {firstName}, I'm Alex from Taikis. Do you have 5 minutes to discuss our opportunity?"
             className="mt-1.5 h-32 resize-none"
           />
         </div>
@@ -190,11 +313,50 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
               <Plus className="h-4 w-4 mr-1" /> Add
             </Button>
           </div>
+          
+          <div className="mt-2">
+            <Label className="text-sm text-muted-foreground mb-1 block">
+              Suggested Contact Fields
+            </Label>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+              {CONTACT_FIELDS.map(field => (
+                <TooltipProvider key={field.name}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="text-xs h-8 w-full justify-start"
+                        onClick={() => handleInsertVariable(field.name)}
+                      >
+                        {field.name}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{field.description}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              ))}
+            </div>
+          </div>
         </div>
         
         <div className="pt-2">
-          <h3 className="text-sm font-medium mb-2">Preview</h3>
-          <div className="p-4 border rounded-lg bg-muted/30 text-sm">
+          <div className="flex items-center gap-1">
+            <h3 className="text-sm font-medium">Preview</h3>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>This is how your message will appear with placeholder variables</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+          <div className="p-4 border rounded-lg bg-muted/30 text-sm mt-1">
             {body || <span className="text-muted-foreground">Your message preview will appear here</span>}
           </div>
         </div>
