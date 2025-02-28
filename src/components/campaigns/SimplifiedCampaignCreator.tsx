@@ -161,7 +161,7 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
         scheduledStartDate: defaultStartDate,
         sendingWindow: defaultSendingWindow,
         timeZone: defaultTimeZone,
-        estimatedReachCount: 0
+        contactCount: 0
       },
       'sales-outreach': {
         name: 'Sales Outreach Campaign',
@@ -178,7 +178,7 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           enabled: true,
           condition: 'no-response'
         }],
-        estimatedReachCount: 0
+        contactCount: 0
       },
       'follow-up-reminder': {
         name: 'Follow-Up Campaign',
@@ -201,7 +201,7 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           enabled: true,
           condition: 'no-response'
         }],
-        estimatedReachCount: 0
+        contactCount: 0
       },
       'meeting-scheduling': {
         name: 'Meeting Scheduler Campaign',
@@ -218,7 +218,7 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           enabled: true,
           condition: 'no-response'
         }],
-        estimatedReachCount: 0
+        contactCount: 0
       },
       'announcement': {
         name: 'General Announcement',
@@ -228,7 +228,7 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
         scheduledStartDate: defaultStartDate,
         sendingWindow: defaultSendingWindow,
         timeZone: defaultTimeZone,
-        estimatedReachCount: 0
+        contactCount: 0
       },
       'customer-feedback': {
         name: 'Customer Feedback Campaign',
@@ -245,7 +245,7 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           enabled: true,
           condition: 'no-response'
         }],
-        estimatedReachCount: 0
+        contactCount: 0
       },
       'newsletter': {
         name: 'Newsletter Campaign',
@@ -255,7 +255,7 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
         scheduledStartDate: defaultStartDate,
         sendingWindow: defaultSendingWindow,
         timeZone: defaultTimeZone,
-        estimatedReachCount: 0
+        contactCount: 0
       },
       'promotional': {
         name: 'Promotional Campaign',
@@ -272,7 +272,7 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           enabled: true,
           condition: 'no-response'
         }],
-        estimatedReachCount: 0
+        contactCount: 0
       },
       'seasonal': {
         name: 'Seasonal Greeting Campaign',
@@ -282,7 +282,7 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
         scheduledStartDate: defaultStartDate,
         sendingWindow: defaultSendingWindow,
         timeZone: defaultTimeZone,
-        estimatedReachCount: 0
+        contactCount: 0
       },
       'survey': {
         name: 'Survey Campaign',
@@ -299,7 +299,7 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           enabled: true,
           condition: 'no-response'
         }],
-        estimatedReachCount: 0
+        contactCount: 0
       },
       'webinar-invitation': {
         name: 'Webinar Invitation Campaign',
@@ -316,7 +316,7 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           enabled: true,
           condition: 'no-response'
         }],
-        estimatedReachCount: 0
+        contactCount: 0
       }
     };
 
