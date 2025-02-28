@@ -80,6 +80,30 @@ export interface FollowUp {
   };
 }
 
+// Define campaign goal types
+export type CampaignGoalType = 
+  | 'lead-generation' 
+  | 'sales' 
+  | 'event-promotion' 
+  | 'customer-feedback'
+  | 'event-follow-up'
+  | 'product-announcement'
+  | 'survey'
+  | 'webinar-invitation'
+  | 'newsletter'
+  | 'other';
+
+// Campaign goal definition
+export interface CampaignGoal {
+  type: CampaignGoalType;
+  description?: string;
+  targetMetrics?: {
+    responseRate?: number;
+    conversionRate?: number;
+    completionDays?: number;
+  };
+}
+
 // New interfaces for A/B testing
 export interface TemplateVariant {
   id: string;
@@ -128,6 +152,27 @@ export interface Campaign {
   winnerSelectionCriteria?: 'response-rate' | 'positive-response-rate' | 'manual'; // How to select the winning template
   testWinnerTemplateId?: string; // ID of the template that won the test
   testStatus?: 'in-progress' | 'completed' | 'not-started'; // Status of the A/B test
+  
+  // New fields for campaign goals
+  goal?: CampaignGoal;
+  
+  // New fields for validation and pre-launch checks
+  validationStatus?: 'pending' | 'passed' | 'failed';
+  validationIssues?: {
+    type: 'error' | 'warning';
+    message: string;
+    field?: string;
+  }[];
+  
+  // Performance tracking
+  performance?: {
+    totalResponses: number;
+    positiveResponses: number;
+    negativeResponses: number;
+    neutralResponses: number;
+    conversionCount: number;
+    goalCompletionRate?: number;
+  };
 }
 
 export interface Message {
@@ -275,4 +320,41 @@ export interface TimeWindowOption {
   endTime: string;
   daysOfWeek: number[];
   label?: string;
+}
+
+// New interface for campaign validation
+export interface ValidationRule {
+  id: string;
+  name: string;
+  description: string;
+  severity: 'error' | 'warning';
+  validate: (campaign: Campaign) => boolean;
+  errorMessage: string;
+  field?: string;
+}
+
+// Visual flow builder types
+export interface FlowNode {
+  id: string;
+  type: 'template' | 'condition' | 'action' | 'start' | 'end';
+  position: { x: number; y: number };
+  data: {
+    label: string;
+    templateId?: string;
+    condition?: FollowUpCondition;
+    action?: string;
+  };
+}
+
+export interface FlowEdge {
+  id: string;
+  source: string;
+  target: string;
+  label?: string;
+  type?: 'response' | 'no-response' | 'positive' | 'negative' | 'neutral' | 'default';
+}
+
+export interface CampaignFlow {
+  nodes: FlowNode[];
+  edges: FlowEdge[];
 }

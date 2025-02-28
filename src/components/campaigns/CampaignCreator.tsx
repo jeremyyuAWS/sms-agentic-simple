@@ -1,13 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { useApp } from '@/contexts';
-import { Campaign, Template, KnowledgeBase, ContactFilter, FollowUp, ContactList, TimeWindow } from '@/lib/types';
+import { Campaign, Template, KnowledgeBase, ContactFilter, FollowUp, ContactList, TimeWindow, CampaignGoal } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { CalendarIcon, PlusIcon, Trash2, X, Check, Clock, AlertCircle, Users, List, FileText, AlertTriangle } from 'lucide-react';
+import { CalendarIcon, PlusIcon, Trash2, X, Check, Clock, AlertCircle, Users, List, FileText, AlertTriangle, BarChart3 } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -42,6 +42,7 @@ import TimeZoneSelector from './TimeZoneSelector';
 import TimeWindowSelector from './TimeWindowSelector';
 import CampaignContactSelection from './CampaignContactSelection';
 import FollowUpFlowBuilder from './FollowUpFlowBuilder';
+import CampaignGoalSelector from './CampaignGoalSelector';
 
 // Define props for the component
 interface CampaignCreatorProps {
@@ -84,6 +85,7 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
     campaign?.scheduledStartDate ? new Date(campaign.scheduledStartDate) : undefined
   );
   const [activeTab, setActiveTab] = useState("details");
+  const [goal, setGoal] = useState<CampaignGoal | undefined>(campaign?.goal);
   
   // Selected template (for display purposes)
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
@@ -109,7 +111,8 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
   const [errors, setErrors] = useState({
     name: false,
     templateId: false,
-    contacts: false
+    contacts: false,
+    goal: false
   });
   
   // Update selected template when templateId changes
@@ -137,12 +140,27 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
     }
   }, [contactListId, contactLists]);
   
+  // Initialize goal if not set
+  useEffect(() => {
+    if (!goal) {
+      setGoal({
+        type: 'lead-generation',
+        targetMetrics: {
+          responseRate: 0.2,
+          conversionRate: 0.1,
+          completionDays: 14,
+        }
+      });
+    }
+  }, []);
+  
   // Validate the form
   const validateForm = () => {
     const newErrors = {
       name: !name.trim(),
       templateId: !templateId,
-      contacts: !hasContactSelection()
+      contacts: !hasContactSelection(),
+      goal: !goal
     };
     
     setErrors(newErrors);
@@ -197,7 +215,8 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
       contactIds: selectedContactIds.length > 0 ? selectedContactIds : undefined,
       contactListId: contactListId || undefined,
       segmentId: segmentId || undefined,
-      customFilter
+      customFilter,
+      goal
     };
     
     // Create or update the campaign
@@ -259,10 +278,14 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="details" value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid grid-cols-4 mb-6">
+            <TabsList className="grid grid-cols-5 mb-6">
               <TabsTrigger value="details" className="flex items-center gap-2">
                 <FileText className="h-4 w-4" />
                 <span>Campaign Details</span>
+              </TabsTrigger>
+              <TabsTrigger value="goal" className="flex items-center gap-2">
+                <BarChart3 className="h-4 w-4" />
+                <span>Goal</span>
               </TabsTrigger>
               <TabsTrigger value="audience" className="flex items-center gap-2">
                 <Users className="h-4 w-4" />
@@ -420,6 +443,31 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
                 
                 <div className="flex justify-end mt-4">
                   <Button 
+                    onClick={() => setActiveTab("goal")}
+                    className="bg-[#9b87f5] hover:bg-[#8B5CF6] text-white"
+                  >
+                    Continue to Goal
+                  </Button>
+                </div>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="goal" className="space-y-6">
+              <div className="space-y-4">
+                <CampaignGoalSelector 
+                  value={goal} 
+                  onChange={setGoal} 
+                />
+                
+                {errors.goal && (
+                  <p className="text-sm text-destructive">Please select a campaign goal</p>
+                )}
+                
+                <div className="flex justify-between mt-4">
+                  <Button variant="outline" onClick={() => setActiveTab("details")}>
+                    Back to Details
+                  </Button>
+                  <Button 
                     onClick={() => setActiveTab("audience")}
                     className="bg-[#9b87f5] hover:bg-[#8B5CF6] text-white"
                   >
@@ -519,8 +567,8 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
                 </div>
                 
                 <div className="flex justify-between mt-4">
-                  <Button variant="outline" onClick={() => setActiveTab("details")}>
-                    Back to Details
+                  <Button variant="outline" onClick={() => setActiveTab("goal")}>
+                    Back to Goal
                   </Button>
                   <Button 
                     onClick={() => setActiveTab("schedule")}
