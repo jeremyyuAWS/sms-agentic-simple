@@ -4,7 +4,7 @@ import { Label } from '@/components/ui/label';
 import FollowUpFlowBuilder from '../FollowUpFlowBuilder';
 import { Template, FollowUpCondition } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { Sparkles, AlertCircle, MessageSquare, Clock, Calendar, ArrowRight, CheckCircle } from 'lucide-react';
+import { Sparkles, AlertCircle, MessageSquare, Clock, Calendar, ArrowRight, CheckCircle, ArrowUp, ArrowDown, ListOrdered } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
 import { 
@@ -74,6 +74,52 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
     }
   };
 
+  // Function to move a follow-up message up in the sequence
+  const moveFollowUpUp = (index: number) => {
+    if (index <= 0) return; // Can't move the first item up
+    
+    const newFollowUps = [...followUps];
+    const temp = newFollowUps[index];
+    newFollowUps[index] = newFollowUps[index - 1];
+    newFollowUps[index - 1] = temp;
+    
+    // Adjust delay days to maintain relative spacing
+    const currentDelay = newFollowUps[index].delayDays;
+    const prevDelay = newFollowUps[index - 1].delayDays;
+    newFollowUps[index].delayDays = prevDelay;
+    newFollowUps[index - 1].delayDays = currentDelay;
+    
+    onFollowUpsChange(newFollowUps);
+    
+    toast({
+      title: "Message Reordered",
+      description: "Message moved up in the sequence.",
+    });
+  };
+
+  // Function to move a follow-up message down in the sequence
+  const moveFollowUpDown = (index: number) => {
+    if (index >= followUps.length - 1) return; // Can't move the last item down
+    
+    const newFollowUps = [...followUps];
+    const temp = newFollowUps[index];
+    newFollowUps[index] = newFollowUps[index + 1];
+    newFollowUps[index + 1] = temp;
+    
+    // Adjust delay days to maintain relative spacing
+    const currentDelay = newFollowUps[index].delayDays;
+    const nextDelay = newFollowUps[index + 1].delayDays;
+    newFollowUps[index].delayDays = nextDelay;
+    newFollowUps[index + 1].delayDays = currentDelay;
+    
+    onFollowUpsChange(newFollowUps);
+    
+    toast({
+      title: "Message Reordered",
+      description: "Message moved down in the sequence.",
+    });
+  };
+
   return (
     <div className="space-y-4">
       <div className="text-sm space-y-2 mt-2 mb-4">
@@ -89,6 +135,73 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
         <TabsContent value="visual" className="mt-4">
           <div className="border rounded-lg p-4">
             <div className="space-y-6">
+              {/* Pre-defined message sequence */}
+              {followUps.map((followUp, index) => (
+                <div key={followUp.id} className="relative bg-slate-50 border rounded-lg p-4 shadow-sm">
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      <div className="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center font-medium">
+                        {index + 1}
+                      </div>
+                      <h4 className="font-medium">
+                        {index === 0 ? 'Initial Message' : `Follow-up #${index}`}
+                      </h4>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => moveFollowUpUp(index)}
+                              disabled={index === 0}
+                            >
+                              <ArrowUp className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Move message up in sequence</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => moveFollowUpDown(index)}
+                              disabled={index === followUps.length - 1}
+                            >
+                              <ArrowDown className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Move message down in sequence</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-2">
+                    <div className="flex items-center text-sm text-muted-foreground mb-2">
+                      <Clock className="mr-1 h-4 w-4" />
+                      {index === 0 ? 
+                        'Initial message sent immediately' : 
+                        `Sent ${followUp.delayDays} days after initial message`}
+                    </div>
+                    
+                    <div className="flex items-center text-sm text-muted-foreground">
+                      <MessageSquare className="mr-1 h-4 w-4" />
+                      {`Template: ${templates.find(t => t.id === followUp.templateId)?.name || 'Unknown template'}`}
+                    </div>
+                  </div>
+                </div>
+              ))}
+              
               {/* Add follow-up button */}
               <Button 
                 variant="outline" 
@@ -124,6 +237,27 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
         </TabsContent>
       </Tabs>
 
+      {/* Sequence Overview */}
+      <div className="mt-6 bg-slate-50 border rounded-lg p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <ListOrdered className="h-5 w-5 text-primary" />
+          <h3 className="font-medium">Message Sequence Summary</h3>
+        </div>
+        <div className="pl-4 border-l-2 border-primary/20 space-y-2">
+          {followUps.map((followUp, index) => (
+            <div key={`summary-${followUp.id}`} className="flex items-center text-sm">
+              <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center mr-2">
+                {index + 1}
+              </div>
+              <span>
+                {index === 0 ? 'Initial message' : 
+                  `Follow-up ${index}: Sent after ${followUp.delayDays} days`}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Approval and Completion Section */}
       <div className="mt-8 border-t pt-4">
         <div className="flex justify-between items-center">
@@ -140,7 +274,7 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
                 className="bg-green-600 hover:bg-green-700 text-white"
               >
                 <CheckCircle className="mr-2 h-4 w-4" />
-                Approve Messages
+                Approve Sequence
               </Button>
             ) : (
               <Button 
@@ -153,7 +287,7 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
           </div>
         </div>
         {approved && (
-          <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-md flex items-center gap-2 text-green-700">
+          <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2 text-green-700">
             <CheckCircle className="h-5 w-5" />
             <span>Message sequence approved! You can now complete the campaign setup.</span>
           </div>
