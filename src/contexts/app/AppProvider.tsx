@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { campaigns, contacts, conversations, templates, metrics } from '@/lib/mockData';
 import { 
   Campaign, 
@@ -11,8 +11,7 @@ import {
   ContactTag,
   ContactSegment,
   ContactList,
-  TemplateCategory,
-  TemplateVersion
+  TemplateCategory
 } from '@/lib/types';
 import { AppContext } from './AppContext';
 import { createMessageActions } from './actions/messageActions';
@@ -20,12 +19,16 @@ import { createContactActions } from './actions/contactActions';
 import { createKnowledgeBaseActions } from './actions/knowledgeBaseActions';
 import { createCampaignActions } from './actions/campaignActions';
 import { createTemplateActions } from './actions/templateActions';
-import { WorkflowState } from './types';
+import { createWorkflowActions } from './actions/workflowActions';
+import { createUIStateActions } from './actions/uiStateActions';
+import { createCategoryActions } from './actions/categoryActions';
+import { createContactListActions } from './actions/contactListActions';
+import { initialTemplateCategories, initialContactLists } from './initialData';
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ 
   children 
 }) => {
-  // State
+  // Main data state
   const [campaignsState, setCampaigns] = useState<Campaign[]>(campaigns);
   const [contactsState, setContacts] = useState<Contact[]>(contacts);
   const [conversationsState, setConversations] = useState<Conversation[]>(conversations);
@@ -47,209 +50,53 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   const [knowledgeBasesState, setKnowledgeBases] = useState<KnowledgeBase[]>([]);
   const [contactTagsState, setContactTags] = useState<ContactTag[]>([]);
   const [contactSegmentsState, setContactSegments] = useState<ContactSegment[]>([]);
-  const [templateCategoriesState, setTemplateCategories] = useState<TemplateCategory[]>([
-    {
-      id: 'category-1',
-      name: 'Outreach',
-      color: 'blue',
-      description: 'Templates for initial outreach to new contacts'
-    },
-    {
-      id: 'category-2',
-      name: 'Follow-up',
-      color: 'green',
-      description: 'Templates for following up with contacts who haven\'t responded'
-    },
-    {
-      id: 'category-3',
-      name: 'Nurture',
-      color: 'purple',
-      description: 'Templates for nurturing relationships with engaged contacts'
-    }
-  ]);
-  const [contactListsState, setContactLists] = useState<ContactList[]>([
-    {
-      id: 'list-1',
-      name: 'Conference Attendees',
-      description: 'People who attended the 2023 Annual Tech Conference',
-      contactIds: contacts.slice(0, 15).map(c => c.id),
-      createdAt: new Date('2023-05-15'),
-      source: 'csv'
-    },
-    {
-      id: 'list-2',
-      name: 'Newsletter Subscribers',
-      description: 'Active subscribers to our monthly newsletter',
-      contactIds: contacts.slice(15, 35).map(c => c.id),
-      createdAt: new Date('2023-06-20'),
-      source: 'import'
-    },
-    {
-      id: 'list-3',
-      name: 'Product Demo Requests',
-      description: 'People who requested a product demo in the last 3 months',
-      contactIds: contacts.slice(35, 50).map(c => c.id),
-      createdAt: new Date('2023-08-05'),
-      source: 'manual'
-    }
-  ]);
+  const [templateCategoriesState, setTemplateCategories] = useState<TemplateCategory[]>(initialTemplateCategories);
+  const [contactListsState, setContactLists] = useState<ContactList[]>(initialContactLists);
   
-  const [activeCampaign, setActiveCampaign] = useState<Campaign | null>(null);
-  const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
-  const [activeTemplate, setActiveTemplate] = useState<Template | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  // Domain-specific action hooks
+  const campaignActions = createCampaignActions(
+    setCampaigns,
+    setKnowledgeBases
+  );
   
-  // New workflow state
-  const [workflowState, setWorkflowState] = useState<WorkflowState>({
-    active: false,
-    currentStep: 'contacts',
-  });
+  // Create the workflow actions, passing in the createCampaign function from campaignActions
+  const workflowActions = createWorkflowActions(campaignActions.createCampaign);
   
-  // Workflow actions
-  const startWorkflow = () => {
-    setWorkflowState({
-      active: true,
-      currentStep: 'contacts',
-    });
-  };
+  // UI state actions
+  const uiStateActions = createUIStateActions();
   
-  const continueWorkflow = (nextStep: WorkflowState['currentStep']) => {
-    setWorkflowState(prev => ({
-      ...prev,
-      currentStep: nextStep,
-    }));
-  };
-  
-  const updateWorkflowData = (data: Partial<WorkflowState>) => {
-    setWorkflowState(prev => ({
-      ...prev,
-      ...data,
-    }));
-  };
-  
-  const completeWorkflow = () => {
-    // Before resetting, we may want to create a campaign with the collected data
-    const { contactsData, templateData, campaignData, scheduleData } = workflowState;
-    
-    if (contactsData && templateData && campaignData) {
-      // Create a new campaign with the collected data
-      const newCampaign: Omit<Campaign, 'id' | 'createdAt'> = {
-        name: campaignData.name || 'New Campaign',
-        description: campaignData.description,
-        status: 'draft',
-        updatedAt: new Date(),
-        contactCount: contactsData.contactIds?.length || 0,
-        templateId: templateData.selectedTemplateId,
-        knowledgeBaseId: campaignData.knowledgeBaseId,
-        scheduledStartDate: scheduleData?.scheduledStartDate,
-        timeZone: scheduleData?.timeZone,
-        sendingWindow: scheduleData?.sendingWindow,
-        contactIds: contactsData.contactIds,
-        contactListId: contactsData.listId,
-        segmentId: contactsData.segmentId,
-      };
-      
-      campaignActions.createCampaign(newCampaign);
-    }
-    
-    // Reset the workflow state
-    setWorkflowState({
-      active: false,
-      currentStep: 'contacts',
-    });
-  };
-  
-  const cancelWorkflow = () => {
-    // Simply reset the workflow state
-    setWorkflowState({
-      active: false,
-      currentStep: 'contacts',
-    });
-  };
-  
-  // UI Actions
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
-
-  // Domain-specific actions
+  // Message actions
   const messageActions = createMessageActions(
     contactsState,
     setConversations,
-    activeConversation,
-    setActiveConversation
+    uiStateActions.activeConversation,
+    uiStateActions.setActiveConversation
   );
   
+  // Contact actions
   const contactActions = createContactActions(
     setContacts,
     setContactTags,
     setContactSegments
   );
   
+  // Knowledge base actions
   const knowledgeBaseActions = createKnowledgeBaseActions(
     setKnowledgeBases,
     setCampaigns
   );
   
-  const campaignActions = createCampaignActions(
-    setCampaigns,
-    setKnowledgeBases
+  // Template actions
+  const templateActions = createTemplateActions(setTemplates);
+  
+  // Category actions
+  const categoryActions = createCategoryActions(
+    setTemplateCategories,
+    setTemplates
   );
   
-  const templateActions = createTemplateActions(setTemplates);
-
-  // Template category actions
-  const createTemplateCategory = (category: Omit<TemplateCategory, 'id'>) => {
-    const newCategory = {
-      ...category,
-      id: `category-${Date.now()}`
-    };
-    setTemplateCategories(prev => [...prev, newCategory]);
-    return newCategory;
-  };
-
-  const updateTemplateCategory = (id: string, updates: Partial<Omit<TemplateCategory, 'id'>>) => {
-    setTemplateCategories(prev => prev.map(category => 
-      category.id === id ? { ...category, ...updates } : category
-    ));
-  };
-
-  const deleteTemplateCategory = (id: string) => {
-    // Remove the category from all templates first
-    setTemplates(prev => prev.map(template => {
-      if (template.categoryIds?.includes(id)) {
-        return {
-          ...template,
-          categoryIds: template.categoryIds.filter(catId => catId !== id),
-          updatedAt: new Date()
-        };
-      }
-      return template;
-    }));
-    
-    // Then remove the category itself
-    setTemplateCategories(prev => prev.filter(category => category.id !== id));
-  };
-
   // Contact list actions
-  const createContactList = (list: Omit<ContactList, 'id' | 'createdAt'>) => {
-    const newList: ContactList = {
-      ...list,
-      id: `list-${Date.now()}`,
-      createdAt: new Date()
-    };
-    setContactLists(prev => [...prev, newList]);
-  };
-
-  const updateContactList = (id: string, updates: Partial<Omit<ContactList, 'id' | 'createdAt'>>) => {
-    setContactLists(prev => prev.map(list => 
-      list.id === id ? { ...list, ...updates, updatedAt: new Date() } : list
-    ));
-  };
-
-  const deleteContactList = (id: string) => {
-    setContactLists(prev => prev.filter(list => list.id !== id));
-  };
+  const contactListActions = createContactListActions(setContactLists);
 
   // Initialize template versions
   const initializeTemplateVersions = () => {
@@ -269,7 +116,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   };
   
   // Call this once during initialization
-  React.useEffect(() => {
+  useEffect(() => {
     initializeTemplateVersions();
   }, []);
 
@@ -287,16 +134,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
         contactSegments: contactSegmentsState,
         contactLists: contactListsState,
         templateCategories: templateCategoriesState,
-        activeCampaign,
-        activeConversation,
-        activeTemplate,
-        sidebarOpen,
         
-        // New workflow state
-        workflow: workflowState,
+        // UI State
+        ...uiStateActions,
+        
+        // Workflow state and actions
+        ...workflowActions,
         
         // State setters
-        toggleSidebar,
         setCampaigns,
         setContacts,
         setConversations,
@@ -307,33 +152,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
         setContactSegments,
         setContactLists,
         setTemplateCategories,
-        setActiveCampaign,
-        setActiveConversation,
-        setActiveTemplate,
         
-        // Workflow actions
-        startWorkflow,
-        continueWorkflow,
-        updateWorkflowData,
-        completeWorkflow,
-        cancelWorkflow,
-        
-        // Actions
+        // Domain-specific actions
         ...messageActions,
         ...contactActions,
         ...knowledgeBaseActions,
         ...campaignActions,
         ...templateActions,
-        createTemplateCategory,
-        updateTemplateCategory,
-        deleteTemplateCategory,
-        createContactList,
-        updateContactList,
-        deleteContactList
+        ...categoryActions,
+        ...contactListActions
       }}
     >
       {children}
     </AppContext.Provider>
   );
 };
-
