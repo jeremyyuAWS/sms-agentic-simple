@@ -30,7 +30,7 @@ import { cn } from '@/lib/utils';
 type TemplateCategory = 'outreach' | 'event' | 'followup' | 'announcement';
 
 // Define campaign template structure
-interface CampaignTemplate {
+export interface CampaignTemplate {
   id: string;
   name: string;
   description: string;
@@ -44,6 +44,11 @@ interface CampaignTemplate {
     condition: 'no-response' | 'all';
   }[];
   tags?: string[];
+  
+  // Add properties required by Template interface to make it compatible
+  body?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 // Sample campaign templates
@@ -56,6 +61,9 @@ const campaignTemplates: CampaignTemplate[] = [
     icon: <Sparkles className="h-10 w-10 text-blue-500" />,
     messageTemplateBody: "Hi {name}, I'm {sender_name} from {company}. I'd love to welcome you to our community and learn more about your business needs. Would you have 15 minutes this week for a quick introduction?",
     variables: ['name', 'sender_name', 'company'],
+    body: "Hi {name}, I'm {sender_name} from {company}. I'd love to welcome you to our community and learn more about your business needs. Would you have 15 minutes this week for a quick introduction?",
+    createdAt: new Date(),
+    updatedAt: new Date(),
     followUps: [
       {
         delayDays: 3,
@@ -78,6 +86,9 @@ const campaignTemplates: CampaignTemplate[] = [
     icon: <HandshakeIcon className="h-10 w-10 text-green-500" />,
     messageTemplateBody: "Hi {name}, great meeting you at {event_name}! As promised, I'm sending you the {resource} we discussed. Let me know if you have any questions.",
     variables: ['name', 'event_name', 'resource'],
+    body: "Hi {name}, great meeting you at {event_name}! As promised, I'm sending you the {resource} we discussed. Let me know if you have any questions.",
+    createdAt: new Date(),
+    updatedAt: new Date(),
     followUps: [
       {
         delayDays: 2,
@@ -95,6 +106,9 @@ const campaignTemplates: CampaignTemplate[] = [
     icon: <CalendarClock className="h-10 w-10 text-purple-500" />,
     messageTemplateBody: "Hi {name}, I'd like to invite you to {event_name} on {event_date} at {event_time}. This {event_type} will cover {event_topic}. Would you be interested in attending?",
     variables: ['name', 'event_name', 'event_date', 'event_time', 'event_type', 'event_topic'],
+    body: "Hi {name}, I'd like to invite you to {event_name} on {event_date} at {event_time}. This {event_type} will cover {event_topic}. Would you be interested in attending?",
+    createdAt: new Date(),
+    updatedAt: new Date(),
     followUps: [
       {
         delayDays: 3,
@@ -112,6 +126,9 @@ const campaignTemplates: CampaignTemplate[] = [
     icon: <Megaphone className="h-10 w-10 text-amber-500" />,
     messageTemplateBody: "Hi {name}, I'm excited to share that we've just launched {product_name}! This new {product_type} will help you {benefit}. Would you like to schedule a quick demo?",
     variables: ['name', 'product_name', 'product_type', 'benefit'],
+    body: "Hi {name}, I'm excited to share that we've just launched {product_name}! This new {product_type} will help you {benefit}. Would you like to schedule a quick demo?",
+    createdAt: new Date(),
+    updatedAt: new Date(),
     followUps: [
       {
         delayDays: 4,
@@ -129,6 +146,9 @@ const campaignTemplates: CampaignTemplate[] = [
     icon: <Users className="h-10 w-10 text-indigo-500" />,
     messageTemplateBody: "Hi {name}, it was great connecting with you at {conference_name}! I enjoyed our conversation about {topic}. I'd love to continue our discussion - would you be available for a quick call next week?",
     variables: ['name', 'conference_name', 'topic'],
+    body: "Hi {name}, it was great connecting with you at {conference_name}! I enjoyed our conversation about {topic}. I'd love to continue our discussion - would you be available for a quick call next week?",
+    createdAt: new Date(),
+    updatedAt: new Date(),
     tags: ['Conference', 'Networking', 'Event']
   },
   {
@@ -139,6 +159,9 @@ const campaignTemplates: CampaignTemplate[] = [
     icon: <MessageSquare className="h-10 w-10 text-pink-500" />,
     messageTemplateBody: "Hi {name}, thank you for being a valued customer of {company}. We're constantly working to improve, and your feedback would be incredibly helpful. Could you share your thoughts on your experience with {product_name}?",
     variables: ['name', 'company', 'product_name'],
+    body: "Hi {name}, thank you for being a valued customer of {company}. We're constantly working to improve, and your feedback would be incredibly helpful. Could you share your thoughts on your experience with {product_name}?",
+    createdAt: new Date(),
+    updatedAt: new Date(),
     tags: ['Feedback', 'Customer', 'Research']
   }
 ];

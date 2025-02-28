@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect } from 'react';
-// Remove uuid import as it's not installed and not needed
 import { useApp } from '@/contexts';
 import { 
   Campaign, 
@@ -22,7 +21,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import CampaignContactSelection from './CampaignContactSelection';
-import TemplateSelector from '@/components/templates/TemplateSelector';
+import TemplateSelector, { CampaignTemplate } from '@/components/templates/TemplateSelector';
 import ScheduleCampaign from './ScheduleCampaign';
 import FollowUpFlowBuilder from './FollowUpFlowBuilder';
 
@@ -71,7 +70,8 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
     setDescription(e.target.value);
   };
 
-  const handleTemplateSelect = (template: Template) => {
+  // Updated to handle CampaignTemplate type
+  const handleTemplateSelect = (template: CampaignTemplate) => {
     setSelectedTemplateId(template.id);
   };
 
