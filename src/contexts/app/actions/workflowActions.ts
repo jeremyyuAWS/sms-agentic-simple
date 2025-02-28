@@ -9,6 +9,7 @@ export const createWorkflowActions = (
   const [workflowState, setWorkflowState] = useState<WorkflowState>({
     active: false,
     currentStep: 'contacts',
+    returnToStep: null,
   });
   
   const startWorkflow = () => {
@@ -61,6 +62,7 @@ export const createWorkflowActions = (
     setWorkflowState({
       active: false,
       currentStep: 'contacts',
+      returnToStep: null,
     });
   };
   
@@ -69,6 +71,33 @@ export const createWorkflowActions = (
     setWorkflowState({
       active: false,
       currentStep: 'contacts',
+      returnToStep: null,
+    });
+  };
+  
+  // New methods for template creation workflow
+  const startTemplateCreation = (returnToStep: WorkflowState['currentStep']) => {
+    setWorkflowState(prev => ({
+      ...prev,
+      returnToStep: returnToStep,
+    }));
+  };
+  
+  const finishTemplateCreation = (templateId?: string) => {
+    setWorkflowState(prev => {
+      const returnTo = prev.returnToStep || 'template';
+      
+      // If template was created and ID returned, update template data
+      const updatedTemplateData = templateId 
+        ? { ...prev.templateData, selectedTemplateId: templateId }
+        : prev.templateData;
+        
+      return {
+        ...prev,
+        currentStep: returnTo,
+        returnToStep: null,
+        templateData: updatedTemplateData
+      };
     });
   };
 
@@ -78,6 +107,8 @@ export const createWorkflowActions = (
     continueWorkflow,
     updateWorkflowData,
     completeWorkflow,
-    cancelWorkflow
+    cancelWorkflow,
+    startTemplateCreation,
+    finishTemplateCreation
   };
 };

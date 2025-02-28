@@ -24,6 +24,7 @@ import React from 'react';
 export interface WorkflowState {
   active: boolean;
   currentStep: 'contacts' | 'template' | 'campaign' | 'schedule' | 'review';
+  returnToStep?: 'contacts' | 'template' | 'campaign' | 'schedule' | 'review' | null;
   contactsData?: {
     importId?: string;
     contactIds?: string[];
@@ -88,6 +89,8 @@ export interface AppContextProps {
   updateWorkflowData: (data: Partial<WorkflowState>) => void;
   completeWorkflow: () => void;
   cancelWorkflow: () => void;
+  startTemplateCreation: (returnToStep: WorkflowState['currentStep']) => void;
+  finishTemplateCreation: (templateId?: string) => void;
   
   // Actions
   sendMessage: (contactId: string, message: string, campaignId?: string) => void;
