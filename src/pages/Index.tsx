@@ -25,6 +25,11 @@ const Index = () => {
               <p className="text-muted-foreground text-sm mb-4">
                 Upload contact lists via CSV with validation and preview options.
               </p>
+              <Button asChild size="sm" variant="outline">
+                <Link to="/contacts">
+                  Import Contacts
+                </Link>
+              </Button>
             </div>
             
             <div className="bg-card rounded-lg p-6 text-center hover:shadow-lg transition-all">
@@ -35,6 +40,11 @@ const Index = () => {
               <p className="text-muted-foreground text-sm mb-4">
                 Set up automated messaging campaigns with personalized templates.
               </p>
+              <Button asChild size="sm" variant="outline">
+                <Link to="/campaigns">
+                  Create Campaign
+                </Link>
+              </Button>
             </div>
             
             <div className="bg-card rounded-lg p-6 text-center hover:shadow-lg transition-all">
@@ -45,6 +55,11 @@ const Index = () => {
               <p className="text-muted-foreground text-sm mb-4">
                 Track responses and engage with prospects in real-time.
               </p>
+              <Button asChild size="sm" variant="outline">
+                <Link to="/campaigns">
+                  Manage Conversations
+                </Link>
+              </Button>
             </div>
           </div>
           
