@@ -146,7 +146,7 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
   const renderStatusBadge = (section: string) => {
     const isComplete = completedSections.includes(section);
     return (
-      <Badge variant={isComplete ? "success" : "outline"} className={isComplete ? "bg-green-100 text-green-800 border-green-200" : ""}>
+      <Badge variant={isComplete ? "default" : "outline"} className={isComplete ? "bg-green-100 text-green-800 border-green-200" : ""}>
         {isComplete ? <Check className="w-3 h-3 mr-1" /> : null}
         {isComplete ? "Complete" : "Required"}
       </Badge>
