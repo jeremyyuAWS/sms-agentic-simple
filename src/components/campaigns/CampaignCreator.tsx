@@ -46,6 +46,9 @@ interface CampaignCreatorProps {
   onOpenChange: (open: boolean) => void;
 }
 
+// Define a temporary type for follow-ups without ID for form state
+type FollowUpDraft = Omit<FollowUp, 'id'> & { tempId?: string };
+
 const CampaignCreator: React.FC<CampaignCreatorProps> = ({
   open,
   onOpenChange
@@ -64,7 +67,8 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
   const [timeZone, setTimeZone] = useState('');
   const [scheduledDate, setScheduledDate] = useState<Date | undefined>(undefined);
   const [activeTab, setActiveTab] = useState("details");
-  const [followUps, setFollowUps] = useState<Array<Omit<FollowUp, 'id'>>>([]);
+  // Using the FollowUpDraft type for the form state
+  const [followUps, setFollowUps] = useState<FollowUpDraft[]>([]);
   
   // Time window for sending
   const [sendingWindow, setSendingWindow] = useState<Campaign['sendingWindow']>({
@@ -108,6 +112,12 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
       // All contacts
       contactCount = 100; // Example total count
     }
+
+    // Create complete FollowUp objects with IDs before passing to createCampaign
+    const completedFollowUps: FollowUp[] = followUps.map(followUp => ({
+      ...followUp,
+      id: followUp.tempId || `followup-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
+    }));
     
     // Create the campaign
     createCampaign({
@@ -121,7 +131,7 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
       timeZone: timeZone || undefined,
       scheduledStartDate: scheduledDate,
       sendingWindow,
-      followUps,
+      followUps: completedFollowUps,
       contactIds: selectedContactIds.length > 0 ? selectedContactIds : undefined,
       segmentId: segmentId || undefined,
       customFilter
@@ -166,9 +176,11 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
       return;
     }
     
+    const tempId = `temp-followup-${Date.now()}`;
     setFollowUps([
       ...followUps,
       {
+        tempId, // Add temporary ID for form tracking
         templateId, // Default to same template as main message
         delayDays: 2,
         enabled: true,
@@ -181,7 +193,7 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
     setFollowUps(followUps.filter((_, i) => i !== index));
   };
   
-  const updateFollowUp = (index: number, updates: Partial<Omit<FollowUp, 'id'>>) => {
+  const updateFollowUp = (index: number, updates: Partial<FollowUpDraft>) => {
     setFollowUps(followUps.map((followUp, i) => {
       if (i === index) {
         return { ...followUp, ...updates };
@@ -359,7 +371,7 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
                 ) : (
                   <div className="space-y-3">
                     {followUps.map((followUp, index) => (
-                      <div key={index} className="border rounded-md p-3 bg-muted/20">
+                      <div key={followUp.tempId || index} className="border rounded-md p-3 bg-muted/20">
                         <div className="flex justify-between items-start mb-2">
                           <h4 className="font-medium">
                             Follow-up #{index + 1}: {getTemplateNameById(followUp.templateId)}
