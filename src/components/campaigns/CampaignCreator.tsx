@@ -154,20 +154,20 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
   };
 
   return (
-    <div className="container mx-auto py-6 max-w-4xl">
+    <div className="container mx-auto py-4 md:py-6 max-w-4xl px-2 sm:px-4">
       <Card>
         <CampaignCreatorHeader isEditing={!!campaign} />
-        <CardContent className="space-y-8">
+        <CardContent className="space-y-6 md:space-y-8 p-4 sm:p-6">
           <LoadingState isLoading={isSubmitting} loadingText="Saving campaign...">
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
               {/* Left Column - Campaign Details */}
-              <div className="md:col-span-1 space-y-6">
-                <div className="border rounded-lg p-4">
-                  <h2 className="text-xl font-semibold mb-3 flex justify-between items-center">
+              <div className="md:col-span-1 space-y-4 md:space-y-6">
+                <div className="border rounded-lg p-3 md:p-4">
+                  <h2 className="text-lg md:text-xl font-semibold mb-3 flex justify-between items-center">
                     Campaign Details
                     {renderStatusBadge('details')}
                   </h2>
-                  <div className="space-y-4">
+                  <div className="space-y-3 md:space-y-4">
                     <div>
                       <Label htmlFor="name">Campaign Name</Label>
                       <Input
@@ -192,8 +192,8 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
                   </div>
                 </div>
 
-                <div className="border rounded-lg p-4">
-                  <h2 className="text-xl font-semibold mb-3 flex justify-between items-center">
+                <div className="border rounded-lg p-3 md:p-4">
+                  <h2 className="text-lg md:text-xl font-semibold mb-3 flex justify-between items-center">
                     Contacts
                     {renderStatusBadge('contacts')}
                   </h2>
@@ -209,9 +209,9 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
               </div>
 
               {/* Middle Column - Templates and Schedule */}
-              <div className="md:col-span-1 space-y-6">
-                <div className="border rounded-lg p-4">
-                  <h2 className="text-xl font-semibold mb-3 flex justify-between items-center">
+              <div className="md:col-span-1 space-y-4 md:space-y-6">
+                <div className="border rounded-lg p-3 md:p-4">
+                  <h2 className="text-lg md:text-xl font-semibold mb-3 flex justify-between items-center">
                     Message Template
                     {renderStatusBadge('template')}
                   </h2>
@@ -223,8 +223,8 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
                   />
                 </div>
 
-                <div className="border rounded-lg p-4">
-                  <h2 className="text-xl font-semibold mb-3 flex justify-between items-center">
+                <div className="border rounded-lg p-3 md:p-4">
+                  <h2 className="text-lg md:text-xl font-semibold mb-3 flex justify-between items-center">
                     Schedule
                     {renderStatusBadge('schedule')}
                   </h2>
@@ -241,8 +241,8 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
 
               {/* Right Column - Follow-ups */}
               <div className="md:col-span-1">
-                <div className="border rounded-lg p-4 h-full">
-                  <h2 className="text-xl font-semibold mb-3 flex justify-between items-center">
+                <div className="border rounded-lg p-3 md:p-4 h-full">
+                  <h2 className="text-lg md:text-xl font-semibold mb-3 flex justify-between items-center">
                     Follow-up Sequence
                     <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">
                       Pre-configured
@@ -261,7 +261,7 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
               </div>
             </div>
             
-            <div className="flex justify-end mt-8">
+            <div className="flex justify-end mt-6 md:mt-8">
               <CampaignCreatorFooter
                 isEditing={!!campaign}
                 isSubmitting={isSubmitting}

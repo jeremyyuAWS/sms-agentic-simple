@@ -122,10 +122,10 @@ const SimplifiedCampaigns: React.FC = () => {
   const renderContent = () => {
     if (selectedView === 'type-selection') {
       return campaigns.length === 0 ? (
-        <div className="space-y-8">
-          <div className="text-center space-y-4">
+        <div className="space-y-8 px-4 sm:px-6">
+          <div className="text-center space-y-4 max-w-2xl mx-auto">
             <h2 className="text-2xl font-bold">Welcome to the SMS Campaign Creator</h2>
-            <p className="text-muted-foreground max-w-xl mx-auto">
+            <p className="text-muted-foreground">
               Create your first campaign by selecting a campaign type below. Each tile represents a different 
               outreach scenario with pre-configured templates and settings.
             </p>
@@ -133,8 +133,8 @@ const SimplifiedCampaigns: React.FC = () => {
           <SimplifiedCampaignTypeGrid onSelect={handleSelectCampaignType} />
         </div>
       ) : (
-        <div className="space-y-8">
-          <div className="flex justify-between items-center mb-4">
+        <div className="space-y-8 px-4 sm:px-6">
+          <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-semibold">Your Existing Campaigns</h2>
             <Button 
               variant="outline" 
@@ -145,7 +145,7 @@ const SimplifiedCampaigns: React.FC = () => {
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredCampaigns.slice(0, 3).map((campaign) => (
               <Card key={campaign.id} className="overflow-hidden hover:shadow-md cursor-pointer transition-all" onClick={() => handleViewCampaign(campaign.id)}>
                 <div className="h-2 bg-purple-100 w-full"></div>
@@ -166,29 +166,33 @@ const SimplifiedCampaigns: React.FC = () => {
     
     if (selectedView === 'create') {
       return (
-        <SimplifiedCampaignCreator
-          initialCampaignType={selectedCampaignType}
-          onCancel={handleBackToTypeSelection}
-          onComplete={handleCampaignCreated}
-        />
+        <div className="px-4 sm:px-6">
+          <SimplifiedCampaignCreator
+            initialCampaignType={selectedCampaignType}
+            onCancel={handleBackToTypeSelection}
+            onComplete={handleCampaignCreated}
+          />
+        </div>
       );
     }
     
     if (selectedView === 'detail' && selectedCampaign) {
       return (
-        <CampaignDetailView
-          campaign={selectedCampaign}
-          onClose={handleBackToTypeSelection}
-          onStatusChange={updateCampaignStatus}
-          onEdit={handleEditCampaign}
-        />
+        <div className="px-4 sm:px-6">
+          <CampaignDetailView
+            campaign={selectedCampaign}
+            onClose={handleBackToTypeSelection}
+            onStatusChange={updateCampaignStatus}
+            onEdit={handleEditCampaign}
+          />
+        </div>
       );
     }
     
     // Default to list view
     return (
       <LoadingState isLoading={isLoading} error={apiError}>
-        <div className="space-y-4">
+        <div className="space-y-4 px-4 sm:px-6">
           <div className="flex flex-col sm:flex-row gap-4 mb-4">
             <div className="relative flex-1">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -230,9 +234,9 @@ const SimplifiedCampaigns: React.FC = () => {
 
   return (
     <div className="container mx-auto py-6 max-w-7xl">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-6 px-4 sm:px-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">SMS Campaigns</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">SMS Campaigns</h1>
           <p className="text-muted-foreground mt-1">
             Create and manage automated outreach campaigns
           </p>
@@ -244,14 +248,14 @@ const SimplifiedCampaigns: React.FC = () => {
             className="bg-[#9b87f5] hover:bg-[#8B5CF6] text-white"
           >
             <Plus className="mr-2 h-4 w-4" />
-            New Campaign
+            <span className="hidden sm:inline">New Campaign</span>
           </Button>
         )}
         
         {selectedView !== 'list' && selectedView !== 'type-selection' && (
-          <Button variant="outline" onClick={handleBackToTypeSelection}>
+          <Button variant="outline" onClick={handleBackToTypeSelection} className="text-sm">
             <Undo2 className="mr-2 h-4 w-4" />
-            Back to Campaign Types
+            <span className="hidden sm:inline">Back to Campaign Types</span>
           </Button>
         )}
       </div>
@@ -259,7 +263,9 @@ const SimplifiedCampaigns: React.FC = () => {
       {renderContent()}
       
       {/* Navigation Buttons */}
-      <NavigationButtons currentPage="simplified-campaigns" />
+      <div className="mt-12">
+        <NavigationButtons currentPage="simplified-campaigns" />
+      </div>
     </div>
   );
 };
