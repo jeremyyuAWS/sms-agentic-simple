@@ -26,6 +26,7 @@ interface ScheduleCampaignProps {
     timeZone?: string,
     sendingWindow?: TimeWindow
   ) => void;
+  onClose?: () => void;
 }
 
 // Common time zones options
@@ -52,7 +53,11 @@ const timeSlots = Array.from({ length: 24 * 4 }, (_, i) => {
   };
 });
 
-const ScheduleCampaign: React.FC<ScheduleCampaignProps> = ({ campaign, onScheduleUpdate }) => {
+const ScheduleCampaign: React.FC<ScheduleCampaignProps> = ({ 
+  campaign, 
+  onScheduleUpdate,
+  onClose
+}) => {
   // Set default date to today if not already set
   const [date, setDate] = useState<Date>(
     campaign.scheduledStartDate || addDays(new Date(), 1)
@@ -109,6 +114,10 @@ const ScheduleCampaign: React.FC<ScheduleCampaignProps> = ({ campaign, onSchedul
     }
     
     onScheduleUpdate(date, timeZone, sendingWindow);
+    
+    if (onClose) {
+      onClose();
+    }
   };
   
   return (

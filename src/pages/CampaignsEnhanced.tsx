@@ -32,7 +32,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
-import { Campaign } from '@/lib/types';
+import { Campaign, TimeWindow } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
@@ -57,7 +57,7 @@ import CampaignJustification from '@/components/campaigns/CampaignJustification'
 import NavigationButtons from '@/components/ui/navigation-buttons';
 
 const CampaignsEnhanced: React.FC = () => {
-  const { campaigns, contacts, contactLists, templates, knowledgeBases, createCampaign, updateCampaignStatus } = useApp();
+  const { campaigns, contacts, contactLists, templates, knowledgeBases, createCampaign, updateCampaignStatus, updateCampaignSchedule } = useApp();
   const { toast } = useToast();
   
   const [filter, setFilter] = useState<string>('all');
@@ -65,6 +65,7 @@ const CampaignsEnhanced: React.FC = () => {
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
   const [showSchedule, setShowSchedule] = useState<boolean>(false);
   const [newCampaignOpen, setNewCampaignOpen] = useState<boolean>(false);
+  const [showJustification, setShowJustification] = useState<boolean>(false);
   
   // Filter and search campaigns
   const filteredCampaigns = campaigns.filter(campaign => {
@@ -88,6 +89,7 @@ const CampaignsEnhanced: React.FC = () => {
   
   const handleShowStats = (campaign: Campaign) => {
     setSelectedCampaign(campaign);
+    setShowJustification(true);
   };
   
   const handleCreateCampaign = (campaignData: any) => {
@@ -109,6 +111,18 @@ const CampaignsEnhanced: React.FC = () => {
   
   const handleStatusChange = (campaign: Campaign, newStatus: Campaign['status']) => {
     updateCampaignStatus(campaign.id, newStatus);
+  };
+  
+  const handleScheduleUpdate = (scheduledStartDate: Date, timeZone?: string, sendingWindow?: TimeWindow) => {
+    if (selectedCampaign) {
+      updateCampaignSchedule(selectedCampaign.id, scheduledStartDate, timeZone, sendingWindow);
+      setShowSchedule(false);
+      
+      toast({
+        title: "Campaign Scheduled",
+        description: `Campaign "${selectedCampaign.name}" has been scheduled to start on ${format(scheduledStartDate, 'PPP')}.`
+      });
+    }
   };
   
   // Count campaigns by status
@@ -438,19 +452,23 @@ const CampaignsEnhanced: React.FC = () => {
             </DrawerHeader>
             <div className="px-4 pb-6">
               <ScheduleCampaign 
-                campaignId={selectedCampaign.id}
-                onCancel={() => setShowSchedule(false)}
+                campaign={selectedCampaign}
+                onScheduleUpdate={handleScheduleUpdate}
+                onClose={() => setShowSchedule(false)}
               />
             </div>
           </DrawerContent>
         </Drawer>
       )}
       
-      {selectedCampaign && !showSchedule && (
+      {selectedCampaign && (
         <CampaignJustification 
           campaignId={selectedCampaign.id}
-          isOpen={true}
-          onClose={() => setSelectedCampaign(null)}
+          isOpen={showJustification}
+          onClose={() => {
+            setShowJustification(false);
+            setSelectedCampaign(null);
+          }}
         />
       )}
       
