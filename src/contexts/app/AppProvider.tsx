@@ -10,7 +10,8 @@ import {
   KnowledgeBase,
   ContactTag,
   ContactSegment,
-  ContactList
+  ContactList,
+  TemplateCategory
 } from '@/lib/types';
 import { AppContext } from './AppContext';
 import { createMessageActions } from './actions/messageActions';
@@ -31,6 +32,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   const [knowledgeBasesState, setKnowledgeBases] = useState<KnowledgeBase[]>([]);
   const [contactTagsState, setContactTags] = useState<ContactTag[]>([]);
   const [contactSegmentsState, setContactSegments] = useState<ContactSegment[]>([]);
+  const [templateCategoriesState, setTemplateCategories] = useState<TemplateCategory[]>([
+    {
+      id: 'category-1',
+      name: 'Outreach',
+      color: 'blue',
+      description: 'Templates for initial outreach to new contacts'
+    },
+    {
+      id: 'category-2',
+      name: 'Follow-up',
+      color: 'green',
+      description: 'Templates for following up with contacts who haven\'t responded'
+    },
+    {
+      id: 'category-3',
+      name: 'Nurture',
+      color: 'purple',
+      description: 'Templates for nurturing relationships with engaged contacts'
+    }
+  ]);
   const [contactListsState, setContactLists] = useState<ContactList[]>([
     {
       id: 'list-1',
@@ -94,6 +115,39 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   
   const templateActions = createTemplateActions(setTemplates);
 
+  // Template category actions
+  const createTemplateCategory = (category: Omit<TemplateCategory, 'id'>) => {
+    const newCategory = {
+      ...category,
+      id: `category-${Date.now()}`
+    };
+    setTemplateCategories(prev => [...prev, newCategory]);
+    return newCategory;
+  };
+
+  const updateTemplateCategory = (id: string, updates: Partial<Omit<TemplateCategory, 'id'>>) => {
+    setTemplateCategories(prev => prev.map(category => 
+      category.id === id ? { ...category, ...updates } : category
+    ));
+  };
+
+  const deleteTemplateCategory = (id: string) => {
+    // Remove the category from all templates first
+    setTemplates(prev => prev.map(template => {
+      if (template.categoryIds?.includes(id)) {
+        return {
+          ...template,
+          categoryIds: template.categoryIds.filter(catId => catId !== id),
+          updatedAt: new Date()
+        };
+      }
+      return template;
+    }));
+    
+    // Then remove the category itself
+    setTemplateCategories(prev => prev.filter(category => category.id !== id));
+  };
+
   // Contact list actions
   const createContactList = (list: Omit<ContactList, 'id' | 'createdAt'>) => {
     const newList: ContactList = {
@@ -127,6 +181,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
         contactTags: contactTagsState,
         contactSegments: contactSegmentsState,
         contactLists: contactListsState,
+        templateCategories: templateCategoriesState,
         activeCampaign,
         activeConversation,
         activeTemplate,
@@ -143,6 +198,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
         setContactTags,
         setContactSegments,
         setContactLists,
+        setTemplateCategories,
         setActiveCampaign,
         setActiveConversation,
         setActiveTemplate,
@@ -153,6 +209,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
         ...knowledgeBaseActions,
         ...campaignActions,
         ...templateActions,
+        createTemplateCategory,
+        updateTemplateCategory,
+        deleteTemplateCategory,
         createContactList,
         updateContactList,
         deleteContactList

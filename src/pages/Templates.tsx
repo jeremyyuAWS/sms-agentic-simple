@@ -1,9 +1,21 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '@/contexts';
-import { Template, Contact } from '@/lib/types';
+import { Template, Contact, TemplateCategory } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Edit, Trash2, Tag, Copy, HelpCircle, Info } from 'lucide-react';
+import { 
+  PlusCircle, 
+  Edit, 
+  Trash2, 
+  Tag, 
+  Copy, 
+  HelpCircle, 
+  Info, 
+  Filter, 
+  X, 
+  CheckCircle2, 
+  Circle 
+} from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -21,7 +33,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { format } from "date-fns";
 import {
@@ -45,20 +57,104 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Checkbox } from "@/components/ui/checkbox";
+import { 
+  Command, 
+  CommandEmpty, 
+  CommandGroup, 
+  CommandInput, 
+  CommandItem, 
+  CommandList, 
+  CommandSeparator 
+} from "@/components/ui/command";
 
 const Templates = () => {
-  const { templates, contacts, createTemplate, deleteTemplate } = useApp();
+  const { 
+    templates, 
+    contacts, 
+    templateCategories, 
+    createTemplate, 
+    updateTemplate, 
+    deleteTemplate,
+    duplicateTemplate,
+    assignTemplateToCategory,
+    removeTemplateFromCategory,
+    createTemplateCategory
+  } = useApp();
   const { toast } = useToast();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   const [newTemplate, setNewTemplate] = useState({
     name: '',
-    body: ''
+    body: '',
+    categoryIds: [] as string[]
   });
+  const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
   const [extractedVariables, setExtractedVariables] = useState<string[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [previewData, setPreviewData] = useState<{[key: string]: string}>({});
   const [templateToDelete, setTemplateToDelete] = useState<Template | null>(null);
+  const [activeFilter, setActiveFilter] = useState<string | null>(null);
+  const [newCategory, setNewCategory] = useState({
+    name: '',
+    color: 'blue',
+    description: ''
+  });
+  const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState('all');
+
+  const availableColors = [
+    { name: 'Blue', value: 'blue' },
+    { name: 'Green', value: 'green' },
+    { name: 'Red', value: 'red' },
+    { name: 'Purple', value: 'purple' },
+    { name: 'Orange', value: 'orange' },
+    { name: 'Pink', value: 'pink' },
+    { name: 'Indigo', value: 'indigo' },
+    { name: 'Teal', value: 'teal' },
+    { name: 'Yellow', value: 'yellow' },
+    { name: 'Gray', value: 'gray' }
+  ];
+
+  // Reset template form when closing dialog
+  useEffect(() => {
+    if (!isCreateOpen) {
+      setNewTemplate({
+        name: '',
+        body: '',
+        categoryIds: []
+      });
+      setExtractedVariables([]);
+    }
+  }, [isCreateOpen]);
+
+  // Reset editing form when closing
+  useEffect(() => {
+    if (!isEditOpen) {
+      setEditingTemplate(null);
+    }
+  }, [isEditOpen]);
 
   // Get available contact fields for template variables
   const getAvailableContactFields = () => {
@@ -97,7 +193,7 @@ const Templates = () => {
     return uniqueVars;
   };
 
-  // Handle template body change
+  // Handle template body change for new template
   const handleBodyChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newBody = e.target.value;
     setNewTemplate({
@@ -108,6 +204,18 @@ const Templates = () => {
     // Extract variables
     const variables = extractVariables(newBody);
     setExtractedVariables(variables);
+  };
+
+  // Handle template body change for editing template
+  const handleEditBodyChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    if (!editingTemplate) return;
+    
+    const newBody = e.target.value;
+    setEditingTemplate({
+      ...editingTemplate,
+      body: newBody,
+      variables: extractVariables(newBody)
+    });
   };
 
   // Insert variable at cursor position
@@ -131,6 +239,12 @@ const Templates = () => {
       // Extract variables including the newly added one
       const variables = extractVariables(newText);
       setExtractedVariables(variables);
+    } else if (textareaId === 'edit-body' && editingTemplate) {
+      setEditingTemplate({
+        ...editingTemplate,
+        body: newText,
+        variables: extractVariables(newText)
+      });
     }
     
     // Set focus back to textarea for better UX
@@ -164,12 +278,14 @@ const Templates = () => {
     createTemplate({
       name: newTemplate.name,
       body: newTemplate.body,
-      variables: extractedVariables
+      variables: extractedVariables,
+      categoryIds: newTemplate.categoryIds
     });
 
     setNewTemplate({
       name: '',
-      body: ''
+      body: '',
+      categoryIds: []
     });
     setExtractedVariables([]);
     setIsCreateOpen(false);
@@ -178,6 +294,55 @@ const Templates = () => {
       title: "Success",
       description: "Template created successfully."
     });
+  };
+
+  // Handle template update
+  const handleUpdateTemplate = () => {
+    if (!editingTemplate) return;
+
+    if (!editingTemplate.name.trim()) {
+      toast({
+        title: "Error",
+        description: "Template name is required.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!editingTemplate.body.trim()) {
+      toast({
+        title: "Error",
+        description: "Template body is required.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    updateTemplate(editingTemplate.id, {
+      name: editingTemplate.name,
+      body: editingTemplate.body,
+      variables: editingTemplate.variables,
+      categoryIds: editingTemplate.categoryIds
+    });
+
+    setIsEditOpen(false);
+    setEditingTemplate(null);
+
+    toast({
+      title: "Success",
+      description: "Template updated successfully."
+    });
+  };
+
+  // Handle template editing
+  const handleEditTemplate = (template: Template) => {
+    setEditingTemplate({...template});
+    setIsEditOpen(true);
+  };
+
+  // Handle template duplication
+  const handleDuplicateTemplate = (templateId: string) => {
+    duplicateTemplate(templateId);
   };
 
   // Handle template preview
@@ -272,22 +437,245 @@ const Templates = () => {
     }
   };
 
+  // Create category
+  const handleCreateCategory = () => {
+    if (!newCategory.name.trim()) {
+      toast({
+        title: "Error",
+        description: "Category name is required.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    createTemplateCategory(newCategory);
+    setNewCategory({
+      name: '',
+      color: 'blue',
+      description: ''
+    });
+    setIsCategoryDialogOpen(false);
+
+    toast({
+      title: "Success",
+      description: "Category created successfully."
+    });
+  };
+
+  // Toggle category for template
+  const toggleTemplateCategory = (template: Template, categoryId: string) => {
+    if (template.categoryIds?.includes(categoryId)) {
+      removeTemplateFromCategory(template.id, categoryId);
+    } else {
+      assignTemplateToCategory(template.id, categoryId);
+    }
+  };
+
+  // Toggle category filter
+  const toggleCategoryFilter = (categoryId: string) => {
+    if (activeFilter === categoryId) {
+      setActiveFilter(null);
+      setActiveTab('all');
+    } else {
+      setActiveFilter(categoryId);
+      setActiveTab('filtered');
+    }
+  };
+
+  // Reset all filters
+  const resetFilters = () => {
+    setActiveFilter(null);
+    setSearchTerm('');
+    setActiveTab('all');
+  };
+
+  // Filter templates
+  const getFilteredTemplates = () => {
+    // First apply search term filter
+    let filtered = templates;
+    
+    if (searchTerm.trim()) {
+      const search = searchTerm.toLowerCase();
+      filtered = filtered.filter(template => 
+        template.name.toLowerCase().includes(search) || 
+        template.body.toLowerCase().includes(search)
+      );
+    }
+    
+    // Apply category filter if active
+    if (activeFilter) {
+      filtered = filtered.filter(template => 
+        template.categoryIds?.includes(activeFilter)
+      );
+    }
+    
+    // Then apply tab filter if not on 'all' tab
+    if (activeTab === 'uncategorized') {
+      filtered = filtered.filter(template => 
+        !template.categoryIds || template.categoryIds.length === 0
+      );
+    }
+    
+    return filtered;
+  };
+
+  // Get the color badge for a category
+  const getCategoryColorClass = (color: string) => {
+    const colorMap: Record<string, string> = {
+      blue: 'bg-blue-100 text-blue-800 border-blue-200',
+      green: 'bg-green-100 text-green-800 border-green-200',
+      red: 'bg-red-100 text-red-800 border-red-200',
+      purple: 'bg-purple-100 text-purple-800 border-purple-200',
+      orange: 'bg-orange-100 text-orange-800 border-orange-200',
+      pink: 'bg-pink-100 text-pink-800 border-pink-200',
+      indigo: 'bg-indigo-100 text-indigo-800 border-indigo-200',
+      teal: 'bg-teal-100 text-teal-800 border-teal-200',
+      yellow: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+      gray: 'bg-gray-100 text-gray-800 border-gray-200'
+    };
+    
+    return colorMap[color] || 'bg-gray-100 text-gray-800 border-gray-200';
+  };
+
   // Available fields for display
   const availableFields = getAvailableContactFields();
+  const filteredTemplates = getFilteredTemplates();
+
+  // Get categories for a template
+  const getTemplateCategoriesDisplay = (template: Template) => {
+    if (!template.categoryIds || template.categoryIds.length === 0) {
+      return null;
+    }
+    
+    const templateCats = templateCategories.filter(cat => 
+      template.categoryIds?.includes(cat.id)
+    );
+    
+    if (templateCats.length === 0) return null;
+    
+    return (
+      <div className="flex flex-wrap gap-1 mt-1">
+        {templateCats.map(category => (
+          <Badge 
+            key={category.id} 
+            variant="outline" 
+            className={cn("text-xs py-0 h-5", getCategoryColorClass(category.color))}
+          >
+            {category.name}
+          </Badge>
+        ))}
+      </div>
+    );
+  };
 
   return (
     <div className="container mx-auto py-6 max-w-6xl">
-      <div className="mb-8 flex justify-between items-start">
+      <div className="mb-6 flex justify-between items-start">
         <div className="text-left">
           <h1 className="text-3xl font-bold tracking-tight mb-2">Message Templates</h1>
           <p className="text-muted-foreground">
             Create and manage reusable templates for your SMS campaigns with personalization variables.
           </p>
         </div>
-        <Button onClick={() => setIsCreateOpen(true)}>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          New Template
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setIsCategoryDialogOpen(true)}>
+            <Tag className="mr-2 h-4 w-4" />
+            Add Category
+          </Button>
+          <Button onClick={() => setIsCreateOpen(true)}>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            New Template
+          </Button>
+        </div>
+      </div>
+
+      {/* Filters and Tabs */}
+      <div className="mb-6 space-y-4">
+        <div className="flex justify-between items-center">
+          <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList>
+              <TabsTrigger value="all">All Templates</TabsTrigger>
+              <TabsTrigger value="uncategorized">Uncategorized</TabsTrigger>
+              {activeFilter && (
+                <TabsTrigger value="filtered">
+                  {templateCategories.find(c => c.id === activeFilter)?.name || 'Filtered'}
+                </TabsTrigger>
+              )}
+            </TabsList>
+          </Tabs>
+          
+          <div className="flex gap-2 ml-4">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className={activeFilter ? "bg-primary/10" : ""}>
+                  <Filter className="mr-2 h-4 w-4" />
+                  Filter
+                  {activeFilter && (
+                    <Badge variant="secondary" className="ml-2">1</Badge>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64">
+                <div className="space-y-2">
+                  <h4 className="font-medium">Filter by Category</h4>
+                  <div className="space-y-2 max-h-[200px] overflow-y-auto">
+                    {templateCategories.map(category => (
+                      <div 
+                        key={category.id} 
+                        className="flex items-center space-x-2 cursor-pointer hover:bg-accent rounded-md p-1"
+                        onClick={() => toggleCategoryFilter(category.id)}
+                      >
+                        {activeFilter === category.id ? (
+                          <CheckCircle2 className="h-4 w-4 text-primary" />
+                        ) : (
+                          <Circle className="h-4 w-4 text-muted-foreground" />
+                        )}
+                        <span className="text-sm">{category.name}</span>
+                        <Badge 
+                          variant="outline" 
+                          className={cn("ml-auto text-xs py-0 h-5", getCategoryColorClass(category.color))}
+                        >
+                          {templates.filter(t => t.categoryIds?.includes(category.id)).length}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {activeFilter && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="w-full mt-2" 
+                      onClick={resetFilters}
+                    >
+                      <X className="mr-2 h-4 w-4" />
+                      Clear Filters
+                    </Button>
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
+            
+            <div className="relative">
+              <Input
+                placeholder="Search templates..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-[200px]"
+              />
+              {searchTerm && (
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="absolute right-0 top-0 h-full"
+                  onClick={() => setSearchTerm('')}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
       {templates.length === 0 ? (
@@ -306,9 +694,25 @@ const Templates = () => {
             </Button>
           </CardContent>
         </Card>
+      ) : filteredTemplates.length === 0 ? (
+        <Card className="bg-muted/50">
+          <CardContent className="flex flex-col items-center justify-center py-10">
+            <div className="rounded-full p-3 bg-primary/10 mb-4">
+              <Filter className="h-6 w-6 text-primary" />
+            </div>
+            <h3 className="text-lg font-medium mb-2">No Matching Templates</h3>
+            <p className="text-muted-foreground text-center max-w-md mb-6">
+              No templates found with the current filters. Try adjusting your search or filters.
+            </p>
+            <Button onClick={resetFilters}>
+              <X className="mr-2 h-4 w-4" />
+              Clear Filters
+            </Button>
+          </CardContent>
+        </Card>
       ) : (
         <div className="grid gap-6 mb-6">
-          {templates.map(template => (
+          {filteredTemplates.map(template => (
             <React.Fragment key={template.id}>
               <Card className="overflow-hidden">
                 <div className="p-6 pb-4">
@@ -318,6 +722,7 @@ const Templates = () => {
                       <p className="text-sm text-muted-foreground">
                         Created {new Date(template.createdAt).toLocaleDateString()}
                       </p>
+                      {getTemplateCategoriesDisplay(template)}
                     </div>
                     <div className="flex gap-2">
                       <TooltipProvider>
@@ -342,16 +747,48 @@ const Templates = () => {
                             <Button 
                               variant="ghost" 
                               size="icon"
-                              onClick={() => handlePreview(template)}
+                              onClick={() => handleEditTemplate(template)}
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent>
-                            <p>Edit & preview</p>
+                            <p>Edit template</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <Tag className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-56">
+                          <div className="px-2 py-1.5 text-sm font-semibold">Assign Categories</div>
+                          {templateCategories.map(category => (
+                            <DropdownMenuItem 
+                              key={category.id}
+                              onSelect={(e) => {
+                                e.preventDefault();
+                                toggleTemplateCategory(template, category.id);
+                              }}
+                              className="flex items-center gap-2"
+                            >
+                              <Checkbox 
+                                id={`cat-${category.id}-${template.id}`}
+                                checked={template.categoryIds?.includes(category.id)}
+                                onCheckedChange={() => toggleTemplateCategory(template, category.id)}
+                              />
+                              <Label htmlFor={`cat-${category.id}-${template.id}`} className="flex-1 cursor-pointer">
+                                {category.name}
+                              </Label>
+                              <Badge variant="outline" className={cn("text-xs py-0 h-5", getCategoryColorClass(category.color))}>
+                                {templates.filter(t => t.categoryIds?.includes(category.id)).length}
+                              </Badge>
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -422,13 +859,23 @@ const Templates = () => {
                     Used in campaigns: {/* This could be implemented if you track template usage */}
                     Not currently tracked
                   </div>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => handlePreview(template)}
-                  >
-                    Preview & Edit
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => handleDuplicateTemplate(template.id)}
+                    >
+                      <Copy className="mr-2 h-4 w-4" />
+                      Duplicate
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => handlePreview(template)}
+                    >
+                      Preview
+                    </Button>
+                  </div>
                 </CardFooter>
               </Card>
             </React.Fragment>
@@ -456,6 +903,42 @@ const Templates = () => {
                 placeholder="e.g., Initial Outreach"
                 required
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Categories (Optional)</Label>
+              <div className="flex flex-wrap gap-2">
+                {templateCategories.map(category => (
+                  <Badge 
+                    key={category.id} 
+                    variant={newTemplate.categoryIds.includes(category.id) ? "default" : "outline"}
+                    className={newTemplate.categoryIds.includes(category.id) ? "" : "cursor-pointer hover:bg-primary/20"}
+                    onClick={() => {
+                      if (newTemplate.categoryIds.includes(category.id)) {
+                        setNewTemplate({
+                          ...newTemplate,
+                          categoryIds: newTemplate.categoryIds.filter(id => id !== category.id)
+                        });
+                      } else {
+                        setNewTemplate({
+                          ...newTemplate,
+                          categoryIds: [...newTemplate.categoryIds, category.id]
+                        });
+                      }
+                    }}
+                  >
+                    {category.name}
+                    {newTemplate.categoryIds.includes(category.id) && (
+                      <X className="ml-1 h-3 w-3 cursor-pointer" />
+                    )}
+                  </Badge>
+                ))}
+                {templateCategories.length === 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    No categories created yet. You can create categories to organize your templates.
+                  </p>
+                )}
+              </div>
             </div>
             
             {/* Available Contact Fields */}
@@ -584,6 +1067,187 @@ const Templates = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Edit Template Dialog */}
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="sticky top-0 bg-background z-10 pb-4">
+            <DialogTitle>Edit Template</DialogTitle>
+            <DialogDescription>
+              Update your message template with personalization variables using {"{variable}"} syntax.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {editingTemplate && (
+            <div className="space-y-6 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-name">Template Name</Label>
+                <Input 
+                  id="edit-name" 
+                  value={editingTemplate.name} 
+                  onChange={(e) => setEditingTemplate({...editingTemplate, name: e.target.value})} 
+                  placeholder="e.g., Initial Outreach"
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Categories (Optional)</Label>
+                <div className="flex flex-wrap gap-2">
+                  {templateCategories.map(category => (
+                    <Badge 
+                      key={category.id} 
+                      variant={editingTemplate.categoryIds?.includes(category.id) ? "default" : "outline"}
+                      className={editingTemplate.categoryIds?.includes(category.id) ? "" : "cursor-pointer hover:bg-primary/20"}
+                      onClick={() => {
+                        if (editingTemplate.categoryIds?.includes(category.id)) {
+                          setEditingTemplate({
+                            ...editingTemplate,
+                            categoryIds: editingTemplate.categoryIds.filter(id => id !== category.id)
+                          });
+                        } else {
+                          setEditingTemplate({
+                            ...editingTemplate,
+                            categoryIds: [...(editingTemplate.categoryIds || []), category.id]
+                          });
+                        }
+                      }}
+                    >
+                      {category.name}
+                      {editingTemplate.categoryIds?.includes(category.id) && (
+                        <X className="ml-1 h-3 w-3 cursor-pointer" />
+                      )}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              {/* Available Contact Fields */}
+              <div className="space-y-2 bg-muted/30 p-3 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <Info className="h-4 w-4 text-blue-500" />
+                  <Label className="text-sm font-medium">Available Contact Fields</Label>
+                </div>
+                
+                <div className="text-sm text-muted-foreground mb-2">
+                  Click a field to insert it into your template. Use format {"{field_name}"}
+                </div>
+                
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-xs font-semibold mb-1 text-muted-foreground">Standard Fields:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {availableFields.standard.map((field) => (
+                        <TooltipProvider key={field.name}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button 
+                                type="button" 
+                                variant="outline" 
+                                size="sm" 
+                                className="h-7 text-xs bg-background"
+                                onClick={() => insertVariable(field.name, "edit-body")}
+                              >
+                                <span className="truncate">{field.name}</span>
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{field.description}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {availableFields.custom.length > 0 && (
+                    <div>
+                      <p className="text-xs font-semibold mb-1 text-muted-foreground">Custom Fields:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {availableFields.custom.map((field) => (
+                          <TooltipProvider key={field.name}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button 
+                                  type="button" 
+                                  variant="outline" 
+                                  size="sm" 
+                                  className="h-7 text-xs bg-background"
+                                  onClick={() => insertVariable(field.name, "edit-body")}
+                                >
+                                  <span className="truncate">{field.name}</span>
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>{field.description}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="edit-body">Template Body</Label>
+                <Textarea 
+                  id="edit-body" 
+                  value={editingTemplate.body} 
+                  onChange={handleEditBodyChange} 
+                  placeholder="Hi {name}, I'm Alex from Taikis. Do you have 5 minutes to discuss our opportunity?"
+                  rows={6}
+                  required
+                  className="min-h-[120px]"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Use {"{variable}"} syntax for personalization (e.g., {"{name}"}, {"{company}"})
+                </p>
+              </div>
+              
+              {editingTemplate.variables.length > 0 && (
+                <div className="space-y-2">
+                  <Label>Detected Variables</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {editingTemplate.variables.map(variable => (
+                      <Badge key={variable} variant="outline" className="bg-primary/5">
+                        <Tag className="h-3 w-3 mr-1" />
+                        {variable}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label>Preview</Label>
+                <div className="p-4 border rounded-lg bg-muted/30 text-sm">
+                  {contacts.length > 0 ? (
+                    generatePreview(editingTemplate.body)
+                  ) : (
+                    editingTemplate.body.replace(/{([^}]+)}/g, (_, variable) => `[${variable}]`)
+                  )}
+                </div>
+                {contacts.length > 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    Preview shows data from {contacts[0].name}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter className="sticky bottom-0 bg-background pt-4 z-10">
+            <Button variant="outline" onClick={() => setIsEditOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleUpdateTemplate}>
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Template Preview Dialog */}
       <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
         <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
@@ -627,6 +1291,72 @@ const Templates = () => {
             <Button onClick={() => copyToClipboard(renderPreview())}>
               <Copy className="mr-2 h-4 w-4" />
               Copy Preview
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Category Dialog */}
+      <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Create Template Category</DialogTitle>
+            <DialogDescription>
+              Create a new category to organize your templates.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="category-name">Category Name</Label>
+              <Input 
+                id="category-name" 
+                value={newCategory.name} 
+                onChange={(e) => setNewCategory({...newCategory, name: e.target.value})} 
+                placeholder="e.g., Outreach, Follow-up"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="category-color">Color</Label>
+              <Select 
+                value={newCategory.color} 
+                onValueChange={(value) => setNewCategory({...newCategory, color: value})}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a color" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableColors.map(color => (
+                    <SelectItem key={color.value} value={color.value}>
+                      <div className="flex items-center">
+                        <div className={cn("w-3 h-3 rounded-full mr-2", `bg-${color.value}-500`)} />
+                        {color.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="category-description">Description (Optional)</Label>
+              <Textarea 
+                id="category-description" 
+                value={newCategory.description} 
+                onChange={(e) => setNewCategory({...newCategory, description: e.target.value})} 
+                placeholder="Briefly describe this category"
+                rows={3}
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCategoryDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreateCategory}>
+              Create Category
             </Button>
           </DialogFooter>
         </DialogContent>

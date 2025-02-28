@@ -13,7 +13,8 @@ import {
   ContactSegment,
   ContactImport,
   ContactList,
-  TimeWindow
+  TimeWindow,
+  TemplateCategory
 } from '@/lib/types';
 import React from 'react';
 
@@ -28,6 +29,7 @@ export interface AppContextProps {
   contactTags: ContactTag[];
   contactSegments: ContactSegment[];
   contactLists: ContactList[];
+  templateCategories: TemplateCategory[];
   activeCampaign: Campaign | null;
   activeConversation: Conversation | null;
   activeTemplate: Template | null;
@@ -44,6 +46,7 @@ export interface AppContextProps {
   setContactTags: React.Dispatch<React.SetStateAction<ContactTag[]>>;
   setContactSegments: React.Dispatch<React.SetStateAction<ContactSegment[]>>;
   setContactLists: React.Dispatch<React.SetStateAction<ContactList[]>>;
+  setTemplateCategories: React.Dispatch<React.SetStateAction<TemplateCategory[]>>;
   setActiveCampaign: (campaign: Campaign | null) => void;
   setActiveConversation: (conversation: Conversation | null) => void;
   setActiveTemplate: (template: Template | null) => void;
@@ -73,8 +76,14 @@ export interface AppContextProps {
   removeFollowUp: (campaignId: string, followUpId: string) => void;
   updateCampaignSchedule: (campaignId: string, scheduledStartDate: Date, timeZone?: string, sendingWindow?: TimeWindow) => void;
   createTemplate: (template: Omit<Template, 'id' | 'createdAt' | 'updatedAt'>) => void;
-  updateTemplate?: (id: string, updates: Partial<Omit<Template, 'id' | 'createdAt'>>) => void;
-  deleteTemplate?: (id: string) => void;
+  updateTemplate: (id: string, updates: Partial<Omit<Template, 'id' | 'createdAt'>>) => void;
+  deleteTemplate: (id: string) => void;
+  duplicateTemplate: (id: string) => void;
+  createTemplateCategory: (category: Omit<TemplateCategory, 'id'>) => TemplateCategory;
+  updateTemplateCategory: (id: string, updates: Partial<Omit<TemplateCategory, 'id'>>) => void;
+  deleteTemplateCategory: (id: string) => void;
+  assignTemplateToCategory: (templateId: string, categoryId: string) => void;
+  removeTemplateFromCategory: (templateId: string, categoryId: string) => void;
   createContactTag: (tag: Omit<ContactTag, 'id' | 'count'>) => void;
   assignTagToContacts: (tagId: string, contactIds: string[]) => void;
   removeTagFromContacts: (tagId: string, contactIds: string[]) => void;

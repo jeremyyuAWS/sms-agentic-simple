@@ -147,6 +147,14 @@ export interface KnowledgeBase {
   campaigns: string[]; // Campaign IDs that use this knowledge base
 }
 
+// Template Category type
+export interface TemplateCategory {
+  id: string;
+  name: string;
+  color: string;
+  description?: string;
+}
+
 // Additional types used in the application
 export interface Template {
   id: string;
@@ -155,6 +163,7 @@ export interface Template {
   createdAt: Date;
   updatedAt: Date;
   variables: string[];
+  categoryIds?: string[]; // Reference to template categories
 }
 
 export interface MetricItem {
