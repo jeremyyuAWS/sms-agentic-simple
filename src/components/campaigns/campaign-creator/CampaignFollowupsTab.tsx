@@ -41,21 +41,10 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
   const [selectedView, setSelectedView] = useState<string>("visual");
   const [approved, setApproved] = useState(false);
 
-  // Find first template if none selected
-  const initialTemplate = selectedTemplateId 
-    ? templates.find(t => t.id === selectedTemplateId) 
-    : templates[0];
-
-  // Helper to get template preview
-  const getTemplatePreview = (templateId: string) => {
-    const template = templates.find(t => t.id === templateId);
-    return template ? template.body : "No template selected";
-  };
-
   // Generate follow-ups if none exist
   useEffect(() => {
     if (followUps.length === 0 && templates.length > 0) {
-      // Create default follow-up sequence with first two templates
+      // Create default follow-up sequence with first template
       const defaultFollowUps = [
         {
           id: `followup-${Date.now()}-1`,
@@ -66,21 +55,6 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
           conditions: [{ type: 'no-response' as FollowUpCondition['type'] }]
         }
       ];
-      
-      // Only add second follow-up if we have more than one template
-      if (templates.length > 1) {
-        defaultFollowUps.push({
-          id: `followup-${Date.now()}-2`,
-          templateId: templates[1].id,
-          delayDays: 7,
-          enabled: true,
-          condition: 'no-response',
-          conditions: [
-            { type: 'no-response' as FollowUpCondition['type'] },
-            { type: 'negative-response' as FollowUpCondition['type'] }
-          ]
-        });
-      }
       
       onFollowUpsChange(defaultFollowUps);
     }
@@ -115,135 +89,7 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
         <TabsContent value="visual" className="mt-4">
           <div className="border rounded-lg p-4">
             <div className="space-y-6">
-              {/* Initial message */}
-              <div className="relative">
-                <Card className="border-2 border-primary">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      Initial Message
-                    </CardTitle>
-                    <CardDescription>
-                      Sent immediately when campaign starts
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="pb-2">
-                    <div className="bg-muted/40 rounded-md p-3 text-sm">
-                      {getTemplatePreview(selectedTemplateId || templates[0]?.id || "")}
-                    </div>
-                  </CardContent>
-                  <CardFooter className="text-xs text-muted-foreground pt-0 flex justify-between items-center">
-                    <span>Template: {initialTemplate?.name || "None selected"}</span>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="text-xs"
-                      onClick={() => {
-                        toast({
-                          title: "Template Preview",
-                          description: "View and edit templates from the Templates page",
-                        });
-                      }}
-                    >
-                      Preview
-                    </Button>
-                  </CardFooter>
-                </Card>
-                
-                {/* Visual connector */}
-                {followUps.length > 0 && (
-                  <div className="absolute h-8 w-0.5 bg-border left-1/2 -bottom-8 transform -translate-x-1/2"></div>
-                )}
-              </div>
-              
-              {/* Follow-up messages */}
-              {followUps.map((followUp, index) => {
-                const template = templates.find(t => t.id === followUp.templateId);
-                const conditions = followUp.conditions || 
-                  (followUp.condition === 'no-response' ? [{ type: 'no-response' as FollowUpCondition['type'] }] : 
-                   followUp.condition === 'all' ? [{ type: 'all' as FollowUpCondition['type'] }] : []);
-                
-                const hasNextFollowUp = index < followUps.length - 1;
-                
-                return (
-                  <div key={followUp.id} className="relative">
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-base flex items-center gap-2">
-                          <Clock className="h-4 w-4" />
-                          Follow-up {index + 1}: After {followUp.delayDays} days
-                        </CardTitle>
-                        <CardDescription>
-                          {conditions.map((condition, i) => (
-                            <span key={i} className="inline-flex items-center mr-2">
-                              {condition.type === 'no-response' && "If no response"}
-                              {condition.type === 'negative-response' && "If negative response"}
-                              {condition.type === 'positive-response' && "If positive response"}
-                              {condition.type === 'all' && "Always send"}
-                              {condition.type === 'keyword' && "If keyword detected"}
-                              {i < conditions.length - 1 && " or "}
-                            </span>
-                          ))}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="pb-2">
-                        <div className="bg-muted/40 rounded-md p-3 text-sm">
-                          {getTemplatePreview(followUp.templateId)}
-                        </div>
-                        <div className="mt-2 flex justify-between">
-                          <div className="flex items-center gap-1">
-                            <Label htmlFor={`enabled-${followUp.id}`} className="text-xs">Enabled</Label>
-                            <Switch
-                              id={`enabled-${followUp.id}`}
-                              checked={followUp.enabled}
-                              onCheckedChange={(checked) => {
-                                const updatedFollowUps = [...followUps];
-                                updatedFollowUps[index].enabled = checked;
-                                onFollowUpsChange(updatedFollowUps);
-                              }}
-                              className="scale-75 origin-left"
-                            />
-                          </div>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="text-xs h-7 px-2"
-                            onClick={() => {
-                              const updatedFollowUps = followUps.filter((_, i) => i !== index);
-                              onFollowUpsChange(updatedFollowUps);
-                            }}
-                          >
-                            Remove
-                          </Button>
-                        </div>
-                      </CardContent>
-                      <CardFooter className="text-xs text-muted-foreground pt-0 flex justify-between items-center">
-                        <span>Template: {template?.name || "None selected"}</span>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="text-xs"
-                          onClick={() => {
-                            toast({
-                              title: "Template Preview",
-                              description: "View and edit templates from the Templates page",
-                            });
-                          }}
-                        >
-                          Preview
-                        </Button>
-                      </CardFooter>
-                    </Card>
-                    
-                    {/* Visual connector for next follow-up */}
-                    {hasNextFollowUp && (
-                      <div className="absolute h-8 w-0.5 bg-border left-1/2 -bottom-8 transform -translate-x-1/2"></div>
-                    )}
-                  </div>
-                );
-              })}
-              
-              {/* Add new follow-up button */}
+              {/* Add follow-up button */}
               <Button 
                 variant="outline" 
                 className="w-full mt-4 border-dashed"
@@ -263,7 +109,7 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
                   onFollowUpsChange([...followUps, newFollowUp]);
                 }}
               >
-                Add Another Follow-up Message
+                Add Follow-up Message
               </Button>
             </div>
           </div>
