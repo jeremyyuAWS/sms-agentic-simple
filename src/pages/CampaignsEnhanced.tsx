@@ -438,19 +438,19 @@ const CampaignsEnhanced: React.FC = () => {
             </DrawerHeader>
             <div className="px-4 pb-6">
               <ScheduleCampaign 
-                campaign={selectedCampaign}
-                onClose={() => setShowSchedule(false)}
+                campaignId={selectedCampaign.id}
+                onCancel={() => setShowSchedule(false)}
               />
             </div>
           </DrawerContent>
         </Drawer>
       )}
       
-      {selectedCampaign && (
+      {selectedCampaign && !showSchedule && (
         <CampaignJustification 
-          campaign={selectedCampaign}
-          open={!!selectedCampaign && !showSchedule} 
-          onOpenChange={() => setSelectedCampaign(null)} 
+          campaignId={selectedCampaign.id}
+          isOpen={true}
+          onClose={() => setSelectedCampaign(null)}
         />
       )}
       
