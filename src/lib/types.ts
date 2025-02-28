@@ -143,7 +143,7 @@ export interface ContactImport {
   contactCount: number;
   status: 'completed' | 'failed' | 'processing';
   errorMessage?: string;
-  source: 'csv' | 'api' | 'manual';
+  source: 'csv' | 'api' | 'manual' | 'import';
 }
 
 // Field mapping interfaces for CSV import
