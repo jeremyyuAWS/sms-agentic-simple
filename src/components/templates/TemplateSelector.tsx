@@ -181,7 +181,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
       <Card>
         <CardContent className="pt-6">
           {templates.length === 0 ? (
-            <div className="text-center py-8">
+            <div className="text-left py-8">
               <p className="text-muted-foreground">No templates available</p>
               <Button variant="outline" className="mt-4" onClick={handleCreateNewTemplate}>
                 Create Your First Template
@@ -200,7 +200,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                   >
                     <div className="flex items-start">
                       <RadioGroupItem value={template.id} id={template.id} className="mt-1" />
-                      <div className="ml-3 flex-1">
+                      <div className="ml-3 flex-1 text-left">
                         <Label htmlFor={template.id} className="text-base font-medium cursor-pointer">
                           {template.name}
                         </Label>
