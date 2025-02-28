@@ -373,18 +373,33 @@ const FollowUpFlowBuilder: React.FC<FollowUpFlowBuilderProps> = ({
           </div>
         ) : (
           <div className="space-y-4">
-            {/* Instructions message - RESTORED */}
-            <div className="p-4 bg-blue-50 text-blue-800 rounded-md mb-4">
-              <h3 className="font-medium mb-2 flex items-center gap-2">
-                <MessageSquare className="h-4 w-4" />
+            {/* Enhanced instructions with emojis and better spacing */}
+            <div className="p-5 bg-blue-50 text-blue-800 rounded-md mb-4">
+              <h3 className="font-semibold mb-3 flex items-center gap-2 text-lg">
+                <MessageSquare className="h-5 w-5" />
                 How to Build a Follow-up Sequence
               </h3>
-              <ul className="list-disc pl-5 space-y-1 text-sm">
-                <li>Click <strong>Add Follow-up</strong> to create a new follow-up message</li>
-                <li>Set the number of days to wait before sending the follow-up</li>
-                <li>Choose when to send: after no response or to all contacts</li>
-                <li>Toggle the Flow Builder to visually connect follow-ups</li>
-                <li>Create multi-step sequences by connecting follow-ups together</li>
+              <ul className="list-none space-y-3">
+                <li className="flex items-start">
+                  <span className="mr-2 text-lg">➕</span>
+                  <span>Click <strong>Add Follow-up</strong> to create a new follow-up message</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="mr-2 text-lg">⏱️</span>
+                  <span>Set the number of days to wait before sending the follow-up</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="mr-2 text-lg">🔄</span>
+                  <span>Choose when to send: after no response or to all contacts</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="mr-2 text-lg">🔀</span>
+                  <span>Toggle the Flow Builder to visually connect follow-ups</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="mr-2 text-lg">🔗</span>
+                  <span>Create multi-step sequences by connecting follow-ups together</span>
+                </li>
               </ul>
             </div>
             
