@@ -38,6 +38,7 @@ import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import CampaignContactSelection from '@/components/campaigns/CampaignContactSelection';
+import { Label } from '@/components/ui/label';
 
 const Campaigns = () => {
   const { campaigns, templates, contacts, knowledgeBases, createCampaign, updateCampaignStatus, addFollowUpToCampaign, removeFollowUp } = useApp();

@@ -21,7 +21,7 @@ const CampaignContactSelection: React.FC<CampaignContactSelectionProps> = ({
 
   // Filter contacts based on search query
   const filteredContacts = contacts.filter((contact) => {
-    const searchString = `${contact.firstName} ${contact.lastName} ${contact.email}`.toLowerCase();
+    const searchString = `${contact.name} ${contact.email || ''} ${contact.company || ''}`.toLowerCase();
     return searchString.includes(searchQuery.toLowerCase());
   });
 
@@ -94,10 +94,10 @@ const CampaignContactSelection: React.FC<CampaignContactSelectionProps> = ({
                 >
                   <div className="flex items-center space-x-2">
                     <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
-                      {contact.firstName.charAt(0)}{contact.lastName.charAt(0)}
+                      {contact.name.charAt(0)}
                     </div>
                     <div>
-                      <div className="font-medium">{contact.firstName} {contact.lastName}</div>
+                      <div className="font-medium">{contact.name}</div>
                       <div className="text-xs text-muted-foreground">{contact.email}</div>
                     </div>
                   </div>
