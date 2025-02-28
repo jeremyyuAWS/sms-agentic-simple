@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { PlusCircle, Info, Sparkles } from 'lucide-react';
+import { PlusCircle, Info, Sparkles, ArrowRightCircle } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -118,9 +118,9 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <div>
-          <h3 className="text-lg font-medium">Choose a template</h3>
+          <h3 className="text-lg font-medium">Select your initial message template</h3>
           <p className="text-sm text-muted-foreground">
-            Select a message template for this campaign
+            Choose the template for your first message in this campaign. You'll be able to add follow-up templates later.
           </p>
         </div>
         <div className="flex gap-2">
@@ -150,6 +150,19 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
             <PlusCircle className="h-4 w-4 mr-2" />
             New Template
           </Button>
+        </div>
+      </div>
+
+      <div className="bg-amber-50 dark:bg-amber-950 p-3 rounded-md flex items-start gap-2 text-sm">
+        <Info className="h-5 w-5 text-amber-500 mt-0.5" />
+        <div>
+          <p className="font-medium">This is just your first message</p>
+          <p className="text-muted-foreground mt-1">
+            After selecting your initial message template, you can add follow-up messages in the "Follow-ups" tab.
+            <span className="flex items-center mt-1 text-primary">
+              <ArrowRightCircle className="h-4 w-4 mr-1" /> Go to Follow-ups tab after this step
+            </span>
+          </p>
         </div>
       </div>
 
