@@ -17,7 +17,7 @@ const NavigationButtons: React.FC<NavigationButtonsProps> = ({ currentPage }) =>
         <Button 
           variant="outline" 
           size="lg"
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 border-slate-300 hover:border-slate-400 hover:bg-slate-50"
           onClick={() => navigate('/contacts')}
         >
           <Contact className="h-4 w-4" />
@@ -27,9 +27,8 @@ const NavigationButtons: React.FC<NavigationButtonsProps> = ({ currentPage }) =>
       
       {currentPage !== 'templates' && (
         <Button 
-          variant="outline" 
           size="lg"
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 bg-[#9b87f5] hover:bg-[#8B5CF6] text-white"
           onClick={() => navigate('/templates')}
         >
           <File className="h-4 w-4" />
@@ -39,9 +38,8 @@ const NavigationButtons: React.FC<NavigationButtonsProps> = ({ currentPage }) =>
       
       {currentPage !== 'campaigns' && (
         <Button 
-          variant="outline" 
           size="lg"
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 bg-[#8B5CF6] hover:bg-[#7E69AB] text-white"
           onClick={() => navigate('/campaigns')}
         >
           <MailCheck className="h-4 w-4" />
