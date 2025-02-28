@@ -6,6 +6,7 @@ import { Template, FollowUpCondition } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Sparkles, AlertCircle, MessageSquare, Clock, Calendar, ArrowRight, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Switch } from '@/components/ui/switch';
 import { 
   Tooltip,
   TooltipContent,
