@@ -136,18 +136,22 @@ const CampaignGoalSelector: React.FC<CampaignGoalSelectorProps> = ({ value, onCh
   };
 
   const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    if (!value) return;
+    
     onChange({
-      ...value!,
+      ...value,
       description: e.target.value,
     });
   };
 
-  const handleMetricChange = (metric: keyof Required<CampaignGoal>['targetMetrics'], value: number) => {
+  const handleMetricChange = (metric: keyof Required<CampaignGoal>['targetMetrics'], metricValue: number) => {
+    if (!value) return;
+    
     onChange({
-      ...value!,
+      ...value,
       targetMetrics: {
-        ...value?.targetMetrics,
-        [metric]: value,
+        ...(value.targetMetrics || {}),
+        [metric]: metricValue,
       },
     });
   };
