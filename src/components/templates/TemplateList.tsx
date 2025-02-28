@@ -2,7 +2,7 @@
 import React from 'react';
 import { Template } from '@/lib/types';
 import AnimatedCard from '@/components/ui/AnimatedCard';
-import { FileText, Clock, Tag, Edit, Trash2 } from 'lucide-react';
+import { FileText, Clock, Tag, Edit, Trash2, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -12,12 +12,16 @@ interface TemplateListProps {
   templates: Template[];
   onEdit: (templateId: string) => void;
   onDelete: (templateId: string) => void;
+  selectedTemplateId?: string;
+  onSelect?: (templateId: string) => void;
 }
 
 const TemplateList: React.FC<TemplateListProps> = ({ 
   templates, 
   onEdit,
-  onDelete
+  onDelete,
+  selectedTemplateId,
+  onSelect
 }) => {
   return (
     <div className="space-y-4">
@@ -29,14 +33,25 @@ const TemplateList: React.FC<TemplateListProps> = ({
         templates.map((template, index) => (
           <AnimatedCard
             key={template.id}
-            className="transition-all duration-300 hover:border-primary/30 hover:bg-primary/5"
+            className={cn(
+              "transition-all duration-300 cursor-pointer",
+              selectedTemplateId === template.id 
+                ? "border-primary border-2 bg-primary/5" 
+                : "hover:border-primary/30 hover:bg-primary/5"
+            )}
             animationDelay={index * 100}
+            onClick={() => onSelect && onSelect(template.id)}
           >
             <div className="flex items-start justify-between">
               <div className="w-full">
                 <div className="flex items-center">
                   <FileText className="h-4 w-4 text-primary mr-2" />
                   <h3 className="font-medium">{template.name}</h3>
+                  {selectedTemplateId === template.id && (
+                    <Badge className="ml-2 bg-green-500 text-white">
+                      <Check className="h-3 w-3 mr-1" /> Selected
+                    </Badge>
+                  )}
                 </div>
                 
                 <div className="flex items-center mt-1 text-sm text-muted-foreground">
@@ -69,7 +84,10 @@ const TemplateList: React.FC<TemplateListProps> = ({
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  onClick={() => onEdit(template.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit(template.id);
+                  }}
                   className="text-primary hover:text-primary/80 hover:bg-primary/10"
                 >
                   <Edit className="h-4 w-4" />
@@ -77,7 +95,10 @@ const TemplateList: React.FC<TemplateListProps> = ({
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  onClick={() => onDelete(template.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(template.id);
+                  }}
                   className="text-red-500 hover:text-red-600 hover:bg-red-50"
                 >
                   <Trash2 className="h-4 w-4" />

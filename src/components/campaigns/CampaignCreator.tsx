@@ -1,13 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { useApp } from '@/contexts';
-import { Campaign, Template, KnowledgeBase, ContactFilter, FollowUp, ContactList } from '@/lib/types';
+import { Campaign, Template, KnowledgeBase, ContactFilter, FollowUp, ContactList, TimeWindow } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { CalendarIcon, PlusIcon, Trash2, X, Check, Clock, AlertCircle, Users, List, FileText } from 'lucide-react';
+import { CalendarIcon, PlusIcon, Trash2, X, Check, Clock, AlertCircle, Users, List, FileText, AlertTriangle } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -41,6 +41,7 @@ import { Badge } from '@/components/ui/badge';
 import TimeZoneSelector from './TimeZoneSelector';
 import TimeWindowSelector from './TimeWindowSelector';
 import CampaignContactSelection from './CampaignContactSelection';
+import FollowUpFlowBuilder from './FollowUpFlowBuilder';
 
 // Define props for the component
 interface CampaignCreatorProps {
@@ -84,11 +85,6 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
   );
   const [activeTab, setActiveTab] = useState("details");
   
-  // Using the FollowUpDraft type for the form state
-  const [followUps, setFollowUps] = useState<FollowUpDraft[]>(
-    campaign?.followUps?.map(fu => ({ ...fu, tempId: `temp-${fu.id}` })) || []
-  );
-  
   // Selected template (for display purposes)
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   
@@ -96,12 +92,17 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
   const [selectedContactList, setSelectedContactList] = useState<ContactList | null>(null);
   
   // Time window for sending
-  const [sendingWindow, setSendingWindow] = useState<Campaign['sendingWindow']>(
+  const [sendingWindow, setSendingWindow] = useState<TimeWindow | undefined>(
     campaign?.sendingWindow || {
       startTime: '09:00',
       endTime: '17:00',
       daysOfWeek: [1, 2, 3, 4, 5] // Monday to Friday
     }
+  );
+  
+  // Using FollowUpDraft type for form state
+  const [followUps, setFollowUps] = useState<FollowUp[]>(
+    campaign?.followUps || []
   );
   
   // Validation states
@@ -179,12 +180,6 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
       // Example filtered count (in a real app, this would be calculated)
       contactCount = 15;
     }
-
-    // Create complete FollowUp objects with IDs
-    const completedFollowUps: FollowUp[] = followUps.map(followUp => ({
-      ...followUp,
-      id: followUp.id || `followup-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
-    }));
     
     // Prepare campaign data
     const campaignData = {
@@ -198,7 +193,7 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
       timeZone: timeZone || undefined,
       scheduledStartDate: scheduledDate,
       sendingWindow,
-      followUps: completedFollowUps,
+      followUps,
       contactIds: selectedContactIds.length > 0 ? selectedContactIds : undefined,
       contactListId: contactListId || undefined,
       segmentId: segmentId || undefined,
@@ -211,45 +206,16 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
     } else {
       onCreateCampaign(campaignData);
     }
-  };
-  
-  // Handle adding a follow-up
-  const addFollowUp = () => {
-    if (!templateId) {
-      toast({
-        title: "Select Template First",
-        description: "Please select a primary message template before adding follow-ups.",
-        variant: "destructive"
-      });
-      return;
-    }
     
-    const tempId = `temp-followup-${Date.now()}`;
-    setFollowUps([
-      ...followUps,
-      {
-        tempId, // Add temporary ID for form tracking
-        templateId, // Default to same template as main message
-        delayDays: 2,
-        enabled: true,
-        condition: 'no-response'
-      }
-    ]);
+    toast({
+      title: campaign ? "Campaign Updated" : "Campaign Created",
+      description: campaign ? "Your campaign has been updated successfully." : "Your campaign has been created successfully.",
+    });
   };
   
-  // Handle removing a follow-up
-  const removeFollowUp = (index: number) => {
-    setFollowUps(followUps.filter((_, i) => i !== index));
-  };
-  
-  // Handle updating a follow-up
-  const updateFollowUp = (index: number, updates: Partial<FollowUpDraft>) => {
-    setFollowUps(followUps.map((followUp, i) => {
-      if (i === index) {
-        return { ...followUp, ...updates };
-      }
-      return followUp;
-    }));
+  // Handle updating follow-ups
+  const handleFollowUpsUpdate = (updatedFollowUps: FollowUp[]) => {
+    setFollowUps(updatedFollowUps);
   };
   
   // Get the name of a template by ID
@@ -293,7 +259,7 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="details" value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid grid-cols-3 mb-6">
+            <TabsList className="grid grid-cols-4 mb-6">
               <TabsTrigger value="details" className="flex items-center gap-2">
                 <FileText className="h-4 w-4" />
                 <span>Campaign Details</span>
@@ -304,7 +270,11 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
               </TabsTrigger>
               <TabsTrigger value="schedule" className="flex items-center gap-2">
                 <Clock className="h-4 w-4" />
-                <span>Schedule & Follow-ups</span>
+                <span>Schedule</span>
+              </TabsTrigger>
+              <TabsTrigger value="followups" className="flex items-center gap-2">
+                <List className="h-4 w-4" />
+                <span>Follow-ups</span>
               </TabsTrigger>
             </TabsList>
             
@@ -340,12 +310,18 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
                 
                 <div className="space-y-2">
                   <Label htmlFor="template" className={errors.templateId ? 'text-destructive' : ''}>
-                    Message Template*
+                    Initial Message Template*
                   </Label>
                   
                   {/* Template selection with card display */}
                   <div className="space-y-2">
-                    <Select value={templateId} onValueChange={setTemplateId}>
+                    <Select 
+                      value={templateId} 
+                      onValueChange={(value) => {
+                        console.log("Template selected:", value);
+                        setTemplateId(value);
+                      }}
+                    >
                       <SelectTrigger id="template" className={cn(
                         errors.templateId ? 'border-destructive' : '',
                         "w-full"
@@ -385,7 +361,7 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
                             {selectedTemplate.body}
                           </div>
                           
-                          {selectedTemplate.variables.length > 0 && (
+                          {selectedTemplate.variables && selectedTemplate.variables.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-2">
                               {selectedTemplate.variables.map(variable => (
                                 <Badge key={variable} variant="outline" className="text-xs">
@@ -562,7 +538,7 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
                   <Label>Sending Schedule</Label>
                   <div className="mt-2 space-y-4">
                     <div className="space-y-2">
-                      <p className="text-sm text-muted-foreground">Start Date (Optional)</p>
+                      <p className="text-sm font-medium">Start Date (Optional)</p>
                       <Popover>
                         <PopoverTrigger asChild>
                           <Button
@@ -602,125 +578,54 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
                   value={sendingWindow}
                   onChange={setSendingWindow}
                 />
-                
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <Label>Follow-up Messages</Label>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={addFollowUp}
-                      className="flex items-center gap-1"
-                    >
-                      <PlusIcon className="h-4 w-4" />
-                      Add Follow-up
-                    </Button>
-                  </div>
-                  
-                  {followUps.length === 0 ? (
-                    <div className="border border-dashed rounded-md p-4 text-center text-muted-foreground">
-                      No follow-ups added. Add a follow-up message to increase response rates.
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {followUps.map((followUp, index) => (
-                        <div key={followUp.tempId || index} className="border rounded-md p-3 bg-muted/20">
-                          <div className="flex justify-between items-start mb-2">
-                            <h4 className="font-medium">
-                              Follow-up #{index + 1}: {getTemplateNameById(followUp.templateId)}
-                            </h4>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => removeFollowUp(index)}
-                              className="h-8 w-8"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                          
-                          <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-1">
-                              <Label htmlFor={`followup-delay-${index}`} className="text-xs">
-                                Send after (days)
-                              </Label>
-                              <Input
-                                id={`followup-delay-${index}`}
-                                type="number"
-                                min="1"
-                                value={followUp.delayDays}
-                                onChange={(e) => updateFollowUp(index, { 
-                                  delayDays: parseInt(e.target.value) || 1 
-                                })}
-                              />
-                            </div>
-                            
-                            <div className="space-y-1">
-                              <Label htmlFor={`followup-condition-${index}`} className="text-xs">
-                                Condition
-                              </Label>
-                              <Select
-                                value={followUp.condition || 'no-response'}
-                                onValueChange={(value: 'no-response' | 'all') => updateFollowUp(index, { condition: value })}
-                              >
-                                <SelectTrigger id={`followup-condition-${index}`}>
-                                  <SelectValue placeholder="When to send" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="no-response">Only if no response</SelectItem>
-                                  <SelectItem value="all">Send to all</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            
-                            <div className="space-y-1">
-                              <Label htmlFor={`followup-template-${index}`} className="text-xs">
-                                Template
-                              </Label>
-                              <Select
-                                value={followUp.templateId}
-                                onValueChange={(value) => updateFollowUp(index, { templateId: value })}
-                              >
-                                <SelectTrigger id={`followup-template-${index}`}>
-                                  <SelectValue placeholder="Select template" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {templates.map((template) => (
-                                    <SelectItem key={template.id} value={template.id}>
-                                      {template.name}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            
-                            <div className="flex items-center pt-6">
-                              <Select
-                                value={followUp.enabled ? "enabled" : "disabled"}
-                                onValueChange={(value) => updateFollowUp(index, { 
-                                  enabled: value === "enabled" 
-                                })}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Status" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="enabled">Enabled</SelectItem>
-                                  <SelectItem value="disabled">Disabled</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
               </div>
               
               <div className="flex justify-between mt-6">
                 <Button variant="outline" onClick={() => setActiveTab("audience")}>
                   Back to Audience
+                </Button>
+                <Button 
+                  onClick={() => setActiveTab("followups")}
+                  className="bg-[#9b87f5] hover:bg-[#8B5CF6] text-white"
+                >
+                  Continue to Follow-ups
+                </Button>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="followups" className="space-y-6">
+              {!templateId ? (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
+                    <div>
+                      <h3 className="font-medium text-yellow-800">Template Required</h3>
+                      <p className="text-sm text-yellow-700 mt-1">
+                        You must select an initial template before configuring follow-ups.
+                      </p>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => setActiveTab("details")}
+                        className="mt-2 border-yellow-300 text-yellow-700 hover:bg-yellow-100"
+                      >
+                        Go back to select a template
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <FollowUpFlowBuilder
+                  initialTemplateId={templateId}
+                  followUps={followUps}
+                  templates={templates}
+                  onUpdate={handleFollowUpsUpdate}
+                />
+              )}
+              
+              <div className="flex justify-between mt-6">
+                <Button variant="outline" onClick={() => setActiveTab("schedule")}>
+                  Back to Schedule
                 </Button>
                 <Button 
                   onClick={handleSubmit}
