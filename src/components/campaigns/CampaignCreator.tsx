@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import CampaignContactSelection from './CampaignContactSelection';
 import TemplateSelector from '@/components/templates/TemplateSelector';
 import ScheduleCampaign from './ScheduleCampaign';
@@ -55,7 +56,9 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
   // Use our custom form hook
   const { 
     formState,
+    activeTab,
     isSubmitting: internalIsSubmitting,
+    setActiveTab,
     handleInputChange,
     handleTemplateSelect,
     handleContactsSelect,
@@ -154,49 +157,120 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
   };
 
   return (
-    <div className="container mx-auto py-4 md:py-6 max-w-4xl px-2 sm:px-4">
-      <Card>
+    <div className="container mx-auto py-6 md:py-8 max-w-5xl px-4">
+      <Card className="shadow-md">
         <CampaignCreatorHeader isEditing={!!campaign} />
-        <CardContent className="space-y-6 md:space-y-8 p-4 sm:p-6">
+        <CardContent className="p-6">
           <LoadingState isLoading={isSubmitting} loadingText="Saving campaign...">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-              {/* Left Column - Campaign Details */}
-              <div className="md:col-span-1 space-y-4 md:space-y-6">
-                <div className="border rounded-lg p-3 md:p-4">
-                  <h2 className="text-lg md:text-xl font-semibold mb-3 flex justify-between items-center">
-                    Campaign Details
+            <Tabs 
+              value={activeTab} 
+              onValueChange={setActiveTab}
+              className="w-full space-y-6"
+            >
+              <TabsList className="w-full max-w-4xl mx-auto grid grid-cols-3 mb-6">
+                <TabsTrigger value="details" className="relative py-3">
+                  Campaign Details
+                  <span className="absolute top-0 right-1 -mt-1 -mr-1">
                     {renderStatusBadge('details')}
-                  </h2>
-                  <div className="space-y-3 md:space-y-4">
-                    <div>
-                      <Label htmlFor="name">Campaign Name</Label>
-                      <Input
-                        type="text"
-                        id="name"
-                        placeholder="Enter campaign name"
-                        value={formState.name}
-                        onChange={(e) => handleInputChange('name', e.target.value)}
-                        required
-                        aria-required="true"
-                      />
+                  </span>
+                </TabsTrigger>
+                <TabsTrigger value="contacts" className="relative py-3">
+                  Audience
+                  <span className="absolute top-0 right-1 -mt-1 -mr-1">
+                    {renderStatusBadge('contacts')}
+                  </span>
+                </TabsTrigger>
+                <TabsTrigger value="followups" className="relative py-3">
+                  Message Sequence
+                  <span className="absolute top-0 right-1 -mt-1 -mr-1">
+                    <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">
+                      Pre-configured
+                    </Badge>
+                  </span>
+                </TabsTrigger>
+              </TabsList>
+
+              <div className="mt-6 px-2">
+                {/* Details Tab */}
+                <TabsContent value="details" className="space-y-6 mt-0">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Basic Campaign Details */}
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="name" className="text-base font-medium">Campaign Name</Label>
+                        <Input
+                          type="text"
+                          id="name"
+                          placeholder="Enter campaign name"
+                          value={formState.name}
+                          onChange={(e) => handleInputChange('name', e.target.value)}
+                          required
+                          aria-required="true"
+                          className="w-full"
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="description" className="text-base font-medium">Description</Label>
+                        <Textarea
+                          id="description"
+                          placeholder="Enter campaign description"
+                          value={formState.description}
+                          onChange={(e) => handleInputChange('description', e.target.value)}
+                          className="min-h-[120px] w-full"
+                        />
+                      </div>
                     </div>
-                    <div>
-                      <Label htmlFor="description">Description</Label>
-                      <Textarea
-                        id="description"
-                        placeholder="Enter campaign description"
-                        value={formState.description}
-                        onChange={(e) => handleInputChange('description', e.target.value)}
-                      />
+                    
+                    {/* Message Template */}
+                    <div className="space-y-4">
+                      <h2 className="text-lg font-semibold flex justify-between items-center">
+                        Message Template
+                        {renderStatusBadge('template')}
+                      </h2>
+                      <div className="border rounded-lg p-4">
+                        <RecommendedTemplatesList
+                          campaignType={campaignType}
+                          templates={templates}
+                          onSelectTemplate={(templateId) => handleInputChange('templateId', templateId)}
+                          selectedTemplateId={formState.templateId}
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
+                  
+                  {/* Schedule Section */}
+                  <div className="border rounded-lg p-4 mt-6">
+                    <h2 className="text-lg font-semibold mb-4 flex justify-between items-center">
+                      Schedule
+                      {renderStatusBadge('schedule')}
+                    </h2>
+                    <ScheduleCampaign
+                      startDate={formState.scheduledStartDate}
+                      window={formState.sendingWindow}
+                      timezone={formState.timeZone}
+                      onScheduleChange={(date) => handleInputChange('scheduledStartDate', date)}
+                      onSendingWindowChange={(window) => handleInputChange('sendingWindow', window)}
+                      onTimeZoneChange={(timezone) => handleInputChange('timeZone', timezone)}
+                    />
+                  </div>
+                  
+                  {/* Best Practices */}
+                  <div className="p-4 bg-blue-50 border border-blue-100 rounded-lg mt-6">
+                    <h3 className="text-lg font-medium mb-2 text-blue-700">SMS Best Practices</h3>
+                    <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 pl-5 text-sm text-blue-700 list-disc">
+                      <li>Keep messages concise: SMS messages should be brief and to the point</li>
+                      <li>Include a clear call-to-action in each message</li>
+                      <li>Personalize messages with recipient's name when possible</li>
+                      <li>Always identify yourself or your company in the first message</li>
+                      <li>Send during business hours to maximize response rates</li>
+                      <li>Follow up strategically - the sequence is pre-configured for optimal engagement</li>
+                    </ul>
+                  </div>
+                </TabsContent>
 
-                <div className="border rounded-lg p-3 md:p-4">
-                  <h2 className="text-lg md:text-xl font-semibold mb-3 flex justify-between items-center">
-                    Contacts
-                    {renderStatusBadge('contacts')}
-                  </h2>
+                {/* Contacts Tab */}
+                <TabsContent value="contacts" className="space-y-6 mt-0">
                   <CampaignContactSelection
                     selectedContactIds={formState.contactIds}
                     contactListId={formState.contactListId}
@@ -205,49 +279,10 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
                     onListSelect={handleListSelect}
                     onSegmentSelect={handleSegmentSelect}
                   />
-                </div>
-              </div>
+                </TabsContent>
 
-              {/* Middle Column - Templates and Schedule */}
-              <div className="md:col-span-1 space-y-4 md:space-y-6">
-                <div className="border rounded-lg p-3 md:p-4">
-                  <h2 className="text-lg md:text-xl font-semibold mb-3 flex justify-between items-center">
-                    Message Template
-                    {renderStatusBadge('template')}
-                  </h2>
-                  <RecommendedTemplatesList
-                    campaignType={campaignType}
-                    templates={templates}
-                    onSelectTemplate={(templateId) => handleInputChange('templateId', templateId)}
-                    selectedTemplateId={formState.templateId}
-                  />
-                </div>
-
-                <div className="border rounded-lg p-3 md:p-4">
-                  <h2 className="text-lg md:text-xl font-semibold mb-3 flex justify-between items-center">
-                    Schedule
-                    {renderStatusBadge('schedule')}
-                  </h2>
-                  <ScheduleCampaign
-                    startDate={formState.scheduledStartDate}
-                    window={formState.sendingWindow}
-                    timezone={formState.timeZone}
-                    onScheduleChange={(date) => handleInputChange('scheduledStartDate', date)}
-                    onSendingWindowChange={(window) => handleInputChange('sendingWindow', window)}
-                    onTimeZoneChange={(timezone) => handleInputChange('timeZone', timezone)}
-                  />
-                </div>
-              </div>
-
-              {/* Right Column - Follow-ups */}
-              <div className="md:col-span-1">
-                <div className="border rounded-lg p-3 md:p-4 h-full">
-                  <h2 className="text-lg md:text-xl font-semibold mb-3 flex justify-between items-center">
-                    Follow-up Sequence
-                    <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">
-                      Pre-configured
-                    </Badge>
-                  </h2>
+                {/* Followups Tab */}
+                <TabsContent value="followups" className="space-y-6 mt-0">
                   <CampaignFollowupsTab
                     isFollowUpsEnabled={formState.isFollowUpsEnabled}
                     setIsFollowUpsEnabled={setIsFollowUpsEnabled}
@@ -257,11 +292,11 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
                     onFollowUpsChange={(followUps) => handleInputChange('followUps', followUps)}
                     onComplete={handleSubmit}
                   />
-                </div>
+                </TabsContent>
               </div>
-            </div>
+            </Tabs>
             
-            <div className="flex justify-end mt-6 md:mt-8">
+            <div className="flex justify-end mt-8 pt-4 border-t">
               <CampaignCreatorFooter
                 isEditing={!!campaign}
                 isSubmitting={isSubmitting}
