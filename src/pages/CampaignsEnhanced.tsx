@@ -1,20 +1,21 @@
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useApp } from '@/contexts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Undo2, Calendar } from 'lucide-react';
+import { Plus, Undo2, Calendar, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { Input } from '@/components/ui/input';
 import CampaignList from '@/components/campaigns/CampaignList';
 import CampaignCreator from '@/components/campaigns/CampaignCreator';
 import CampaignDetailView from '@/components/campaigns/CampaignDetailView';
 import NavigationButtons from '@/components/ui/navigation-buttons';
 import CampaignFilters from '@/components/campaigns/CampaignFilters';
 import { Campaign } from '@/lib/types';
+import LoadingState from '@/components/ui/loading-state';
+import { useCampaignFilters } from '@/hooks/use-campaign-filters';
 
 type CampaignView = 'list' | 'create' | 'detail';
-type StatusFilter = 'all' | 'active' | 'draft' | 'paused' | 'completed';
-type SortOption = 'newest' | 'oldest' | 'response' | 'contacts';
 
 const CampaignsEnhanced: React.FC = () => {
   const { 
@@ -32,46 +33,31 @@ const CampaignsEnhanced: React.FC = () => {
   const { toast } = useToast();
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
   const [selectedView, setSelectedView] = useState<CampaignView>('list');
-  const [activeStatus, setActiveStatus] = useState<StatusFilter>('all');
-  const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [isLoading, setIsLoading] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
+
+  // Use our custom filters hook
+  const {
+    activeStatus,
+    sortBy,
+    searchQuery,
+    filteredCampaigns,
+    statusCounts,
+    setActiveStatus,
+    setSortBy,
+    setSearchQuery
+  } = useCampaignFilters(campaigns);
 
   // Get the selected campaign
-  const selectedCampaign = useMemo(() => 
-    selectedCampaignId ? campaigns.find(c => c.id === selectedCampaignId) : null, 
-    [selectedCampaignId, campaigns]
-  );
-
-  // Filter and sort campaigns
-  const filteredCampaigns = useMemo(() => {
-    // First filter by status
-    let filtered = activeStatus === 'all' 
-      ? campaigns 
-      : campaigns.filter(c => {
-          if (activeStatus === 'completed') return c.status === 'completed';
-          if (activeStatus === 'paused') return c.status === 'paused';
-          return c.status === activeStatus;
-        });
-    
-    // Then sort
-    return [...filtered].sort((a, b) => {
-      switch (sortBy) {
-        case 'oldest':
-          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-        case 'response':
-          return (b.responseRate || 0) - (a.responseRate || 0);
-        case 'contacts':
-          return (b.contactCount || 0) - (a.contactCount || 0);
-        case 'newest':
-        default:
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-      }
-    });
-  }, [campaigns, activeStatus, sortBy]);
+  const selectedCampaign = selectedCampaignId 
+    ? campaigns.find(c => c.id === selectedCampaignId) 
+    : null;
 
   // Event handlers - use useCallback to prevent recreating functions on each render
   const handleCreateCampaign = useCallback((campaignData: Partial<Omit<Campaign, 'id' | 'createdAt'>>) => {
     setIsLoading(true);
+    setApiError(null);
+    
     try {
       const newCampaign = createCampaign(campaignData as any);
       toast({
@@ -83,9 +69,11 @@ const CampaignsEnhanced: React.FC = () => {
       setSelectedCampaignId(newCampaign.id);
       setSelectedView('detail');
     } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : "Failed to create campaign";
+      setApiError(errorMsg);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to create campaign",
+        description: errorMsg,
         variant: "destructive",
       });
     } finally {
@@ -95,6 +83,8 @@ const CampaignsEnhanced: React.FC = () => {
 
   const handleUpdateCampaign = useCallback((campaignId: string, campaignData: Partial<Omit<Campaign, 'id' | 'createdAt'>>) => {
     setIsLoading(true);
+    setApiError(null);
+    
     try {
       updateCampaign(campaignId, campaignData);
       toast({
@@ -104,9 +94,11 @@ const CampaignsEnhanced: React.FC = () => {
       });
       setSelectedView('detail');
     } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : "Failed to update campaign";
+      setApiError(errorMsg);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to update campaign",
+        description: errorMsg,
         variant: "destructive",
       });
     } finally {
@@ -117,19 +109,25 @@ const CampaignsEnhanced: React.FC = () => {
   const handleNewCampaign = useCallback(() => {
     setSelectedCampaignId(null);
     setSelectedView('create');
+    setApiError(null);
   }, []);
 
   const handleViewCampaign = useCallback((campaignId: string) => {
     setSelectedCampaignId(campaignId);
     setSelectedView('detail');
+    setApiError(null);
   }, []);
 
   const handleEditCampaign = useCallback((campaignId: string) => {
     setSelectedCampaignId(campaignId);
     setSelectedView('create');
+    setApiError(null);
   }, []);
 
   const handleDeleteCampaign = useCallback((campaignId: string) => {
+    setIsLoading(true);
+    setApiError(null);
+    
     try {
       deleteCampaign(campaignId);
       toast({
@@ -143,26 +141,31 @@ const CampaignsEnhanced: React.FC = () => {
         setSelectedView('list');
       }
     } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : "Failed to delete campaign";
+      setApiError(errorMsg);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to delete campaign",
+        description: errorMsg,
         variant: "destructive"
       });
+    } finally {
+      setIsLoading(false);
     }
   }, [deleteCampaign, toast, selectedCampaignId]);
 
   const handleBackToList = useCallback(() => {
     setSelectedCampaignId(null);
     setSelectedView('list');
+    setApiError(null);
   }, []);
 
   const handleStatusChange = useCallback((status: string) => {
-    setActiveStatus(status as StatusFilter);
-  }, []);
+    setActiveStatus(status as any);
+  }, [setActiveStatus]);
 
   const handleSortChange = useCallback((sort: string) => {
-    setSortBy(sort as SortOption);
-  }, []);
+    setSortBy(sort as any);
+  }, [setSortBy]);
 
   // Render the appropriate view
   const renderContent = () => {
@@ -215,22 +218,37 @@ const CampaignsEnhanced: React.FC = () => {
     }
     
     return (
-      <>
-        <CampaignFilters 
-          activeStatus={activeStatus}
-          onStatusChange={handleStatusChange}
-          onSortChange={handleSortChange}
-          totalCount={campaigns.length}
-        />
+      <LoadingState isLoading={isLoading} error={apiError}>
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row gap-4 mb-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search campaigns..."
+                className="pl-8"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+          </div>
         
-        <CampaignList 
-          campaigns={filteredCampaigns}
-          onSelect={handleViewCampaign}
-          onUpdateStatus={updateCampaignStatus}
-          onEdit={handleEditCampaign}
-          onDelete={handleDeleteCampaign}
-        />
-      </>
+          <CampaignFilters 
+            activeStatus={activeStatus}
+            onStatusChange={handleStatusChange}
+            onSortChange={handleSortChange}
+            totalCount={statusCounts.all}
+          />
+          
+          <CampaignList 
+            campaigns={filteredCampaigns}
+            onSelect={handleViewCampaign}
+            onUpdateStatus={updateCampaignStatus}
+            onEdit={handleEditCampaign}
+            onDelete={handleDeleteCampaign}
+          />
+        </div>
+      </LoadingState>
     );
   };
 

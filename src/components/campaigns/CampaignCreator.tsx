@@ -1,20 +1,21 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { 
   Campaign, 
   Contact, 
   ContactList, 
   Template, 
   KnowledgeBase, 
-  TimeWindow 
 } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import CampaignContactSelection from './CampaignContactSelection';
-import TemplateSelector, { CampaignTemplate } from '@/components/templates/TemplateSelector';
+import TemplateSelector from '@/components/templates/TemplateSelector';
 import ScheduleCampaign from './ScheduleCampaign';
+import LoadingState from '@/components/ui/loading-state';
+import { useCampaignForm } from '@/hooks/use-campaign-form';
 
 // Import subcomponents
 import CampaignDetailsTab from './campaign-creator/CampaignDetailsTab';
@@ -44,122 +45,34 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
   onCreateCampaign,
   onUpdateCampaign,
   onCancel,
-  isSubmitting
+  isSubmitting: externalIsSubmitting,
 }) => {
-  // State for campaign data
-  const [name, setName] = useState(campaign?.name || '');
-  const [description, setDescription] = useState(campaign?.description || '');
-  const [selectedTemplateId, setSelectedTemplateId] = useState(campaign?.templateId || '');
-  const [knowledgeBaseId, setKnowledgeBaseId] = useState(campaign?.knowledgeBaseId || '');
-  const [scheduledStartDate, setScheduledStartDate] = useState<Date | undefined>(campaign?.scheduledStartDate);
-  const [timeZone, setTimeZone] = useState(campaign?.timeZone || 'America/Los_Angeles');
-  const [sendingWindow, setSendingWindow] = useState<TimeWindow | undefined>(campaign?.sendingWindow);
-  const [selectedContactIds, setSelectedContactIds] = useState<string[]>(campaign?.contactIds || []);
-  const [contactListId, setContactListId] = useState<string | undefined>(campaign?.contactListId);
-  const [segmentId, setSegmentId] = useState<string | undefined>(campaign?.segmentId);
-  const [followUps, setFollowUps] = useState(campaign?.followUps || []);
-  const [isFollowUpsEnabled, setIsFollowUpsEnabled] = useState<boolean>(campaign?.followUps && campaign.followUps.length > 0);
-  
-  // Navigation state
-  const [activeTab, setActiveTab] = useState<string>('details');
-
-  // Input change handlers
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setName(e.target.value);
-  };
-
-  const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setDescription(e.target.value);
-  };
-
-  const handleTemplateSelect = (template: CampaignTemplate) => {
-    setSelectedTemplateId(template.id);
-  };
-
-  const handleKnowledgeBaseSelect = (value: string) => {
-    setKnowledgeBaseId(value);
-  };
-
-  const handleScheduleChange = (date: Date) => {
-    setScheduledStartDate(date);
-  };
-
-  const handleTimeZoneChange = (timezone: string) => {
-    setTimeZone(timezone);
-  };
-
-  const handleSendingWindowChange = (window: TimeWindow | undefined) => {
-    setSendingWindow(window);
-  };
-
-  const handleContactsSelect = (contacts: string[]) => {
-    setSelectedContactIds(contacts);
-  };
-
-  const handleListSelect = (listId?: string) => {
-    setContactListId(listId);
-    setSegmentId(undefined);
-    setSelectedContactIds([]);
-  };
-
-  const handleSegmentSelect = (segmentId?: string) => {
-    setSegmentId(segmentId);
-    setContactListId(undefined);
-    setSelectedContactIds([]);
-  };
-
-  const handleFollowUpsChange = (updatedFollowUps: any[]) => {
-    setFollowUps(updatedFollowUps);
-  };
-
-  const handleTabChange = (tab: string) => {
-    setActiveTab(tab);
-  };
-
-  const handleSubmit = () => {
-    // Prepare campaign data for submission
-    const now = new Date();
-    const campaignData = {
-      name,
-      description,
-      templateId: selectedTemplateId,
-      knowledgeBaseId,
-      scheduledStartDate,
-      timeZone,
-      sendingWindow,
-      contactIds: selectedContactIds,
-      contactListId,
-      segmentId,
-      followUps: isFollowUpsEnabled ? followUps : [],
-      status: 'draft' as 'draft' | 'active' | 'paused' | 'completed',
-      updatedAt: now,
-      contactCount: selectedContactIds.length || 0
-    };
-
-    if (campaign) {
-      onUpdateCampaign(campaign.id, campaignData);
-    } else {
-      onCreateCampaign(campaignData);
+  // Use our custom form hook
+  const { 
+    formState,
+    activeTab,
+    isSubmitting: internalIsSubmitting,
+    setActiveTab,
+    handleInputChange,
+    handleTemplateSelect,
+    handleContactsSelect,
+    handleListSelect,
+    handleSegmentSelect,
+    setIsFollowUpsEnabled,
+    handleSubmit
+  } = useCampaignForm({
+    initialCampaign: campaign,
+    onSubmit: (campaignId, formData) => {
+      if (campaignId) {
+        onUpdateCampaign(campaignId, formData);
+      } else {
+        onCreateCampaign(formData as Omit<Campaign, 'id' | 'createdAt'>);
+      }
     }
-  };
+  });
 
-  // Update state when campaign prop changes
-  useEffect(() => {
-    if (campaign) {
-      setName(campaign.name || '');
-      setDescription(campaign.description || '');
-      setSelectedTemplateId(campaign.templateId || '');
-      setKnowledgeBaseId(campaign.knowledgeBaseId || '');
-      setScheduledStartDate(campaign.scheduledStartDate);
-      setTimeZone(campaign.timeZone || 'America/Los_Angeles');
-      setSendingWindow(campaign.sendingWindow);
-      setSelectedContactIds(campaign.contactIds || []);
-      setContactListId(campaign.contactListId);
-      setSegmentId(campaign.segmentId);
-      setFollowUps(campaign.followUps || []);
-      setIsFollowUpsEnabled(campaign.followUps && campaign.followUps.length > 0);
-    }
-  }, [campaign]);
+  // Use either external or internal submitting state
+  const isSubmitting = externalIsSubmitting || internalIsSubmitting;
 
   // Render the content for the active tab
   const renderTabContent = () => {
@@ -167,17 +80,17 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
       case 'details':
         return (
           <CampaignDetailsTab
-            knowledgeBaseId={knowledgeBaseId}
+            knowledgeBaseId={formState.knowledgeBaseId}
             knowledgeBases={knowledgeBases}
-            onKnowledgeBaseSelect={handleKnowledgeBaseSelect}
+            onKnowledgeBaseSelect={(value) => handleInputChange('knowledgeBaseId', value)}
           />
         );
       case 'contacts':
         return (
           <CampaignContactSelection
-            selectedContactIds={selectedContactIds}
-            contactListId={contactListId}
-            segmentId={segmentId}
+            selectedContactIds={formState.contactIds}
+            contactListId={formState.contactListId}
+            segmentId={formState.segmentId}
             onContactsSelect={handleContactsSelect}
             onListSelect={handleListSelect}
             onSegmentSelect={handleSegmentSelect}
@@ -185,28 +98,31 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
         );
       case 'template':
         return (
-          <TemplateSelector onSelect={handleTemplateSelect} />
+          <TemplateSelector 
+            onSelect={handleTemplateSelect} 
+            selectedTemplateId={formState.templateId}
+          />
         );
       case 'schedule':
         return (
           <ScheduleCampaign
-            startDate={scheduledStartDate}
-            window={sendingWindow}
-            timezone={timeZone}
-            onScheduleChange={handleScheduleChange}
-            onSendingWindowChange={handleSendingWindowChange}
-            onTimeZoneChange={handleTimeZoneChange}
+            startDate={formState.scheduledStartDate}
+            window={formState.sendingWindow}
+            timezone={formState.timeZone}
+            onScheduleChange={(date) => handleInputChange('scheduledStartDate', date)}
+            onSendingWindowChange={(window) => handleInputChange('sendingWindow', window)}
+            onTimeZoneChange={(timezone) => handleInputChange('timeZone', timezone)}
           />
         );
       case 'followups':
         return (
           <CampaignFollowupsTab
-            isFollowUpsEnabled={isFollowUpsEnabled}
+            isFollowUpsEnabled={formState.isFollowUpsEnabled}
             setIsFollowUpsEnabled={setIsFollowUpsEnabled}
-            followUps={followUps}
-            selectedTemplateId={selectedTemplateId}
+            followUps={formState.followUps}
+            selectedTemplateId={formState.templateId}
             templates={templates}
-            onFollowUpsChange={handleFollowUpsChange}
+            onFollowUpsChange={(followUps) => handleInputChange('followUps', followUps)}
           />
         );
       default:
@@ -219,43 +135,49 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
       <Card>
         <CampaignCreatorHeader isEditing={!!campaign} />
         <CardContent className="space-y-4">
-          {/* Campaign name and description (always visible) */}
-          <div className="space-y-2">
-            <Label htmlFor="name">Campaign Name</Label>
-            <Input
-              type="text"
-              id="name"
-              placeholder="Enter campaign name"
-              value={name}
-              onChange={handleNameChange}
+          <LoadingState isLoading={isSubmitting} loadingText="Saving campaign...">
+            {/* Campaign name and description (always visible) */}
+            <div className="space-y-2">
+              <Label htmlFor="name">Campaign Name</Label>
+              <Input
+                type="text"
+                id="name"
+                placeholder="Enter campaign name"
+                value={formState.name}
+                onChange={(e) => handleInputChange('name', e.target.value)}
+                required
+                aria-required="true"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                placeholder="Enter campaign description"
+                value={formState.description}
+                onChange={(e) => handleInputChange('description', e.target.value)}
+              />
+            </div>
+
+            {/* Navigation tabs */}
+            <div className="overflow-x-auto">
+              <CampaignCreatorTabs 
+                activeTab={activeTab} 
+                onTabChange={setActiveTab} 
+              />
+            </div>
+
+            {/* Tab content */}
+            {renderTabContent()}
+
+            {/* Footer with action buttons */}
+            <CampaignCreatorFooter
+              isEditing={!!campaign}
+              isSubmitting={isSubmitting}
+              onSubmit={handleSubmit}
+              onCancel={onCancel}
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              placeholder="Enter campaign description"
-              value={description}
-              onChange={handleDescriptionChange}
-            />
-          </div>
-
-          {/* Navigation tabs */}
-          <CampaignCreatorTabs 
-            activeTab={activeTab} 
-            onTabChange={handleTabChange} 
-          />
-
-          {/* Tab content */}
-          {renderTabContent()}
-
-          {/* Footer with action buttons */}
-          <CampaignCreatorFooter
-            isEditing={!!campaign}
-            isSubmitting={isSubmitting}
-            onSubmit={handleSubmit}
-            onCancel={onCancel}
-          />
+          </LoadingState>
         </CardContent>
       </Card>
     </div>
