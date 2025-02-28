@@ -20,7 +20,6 @@ import { Check, AlertCircle } from 'lucide-react';
 import CampaignDetailsTab from './campaign-creator/CampaignDetailsTab';
 import CampaignFollowupsTab from './campaign-creator/CampaignFollowupsTab';
 import CampaignCreatorHeader from './campaign-creator/CampaignCreatorHeader';
-import RecommendedTemplatesList from './RecommendedTemplatesList';
 import CampaignScheduleTab from './campaign-creator/CampaignScheduleTab';
 import { CampaignType } from './CampaignTypeSelector';
 
@@ -74,33 +73,6 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
   // Track completion status
   const [completedSections, setCompletedSections] = useState<string[]>([]);
   
-  // Determine campaign type from name
-  const getCampaignTypeFromName = (): CampaignType => {
-    const typeMap: Record<string, CampaignType> = {
-      'event': 'event-invitation',
-      'sales': 'sales-outreach',
-      'follow': 'follow-up-reminder',
-      'meeting': 'meeting-scheduling',
-      'announcement': 'announcement',
-      'feedback': 'customer-feedback',
-      'newsletter': 'newsletter',
-      'promotion': 'promotional',
-      'seasonal': 'seasonal',
-      'survey': 'survey',
-      'webinar': 'webinar-invitation'
-    };
-    
-    const name = formState.name.toLowerCase();
-    
-    for (const [keyword, type] of Object.entries(typeMap)) {
-      if (name.includes(keyword)) {
-        return type;
-      }
-    }
-    
-    return 'sales-outreach'; // Default
-  };
-  
   // Check for completed sections
   useEffect(() => {
     const completed: string[] = [];
@@ -137,7 +109,6 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
 
   // Use either external or internal submitting state
   const isSubmitting = externalIsSubmitting || internalIsSubmitting;
-  const campaignType = getCampaignTypeFromName();
 
   // Function to render status badge
   const renderStatusBadge = (section: string) => {
@@ -212,30 +183,21 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
                   />
                 </TabsContent>
 
-                {/* Message Sequence Tab - Moved to second position */}
+                {/* Message Sequence Tab - Now only shows the follow-ups component */}
                 <TabsContent value="messaging" className="space-y-6 mt-0">
                   <div className="space-y-8">
-                    <RecommendedTemplatesList
-                      campaignType={campaignType}
-                      templates={templates}
-                      onSelectTemplate={(templateId) => handleInputChange('templateId', templateId)}
+                    <CampaignFollowupsTab
+                      isFollowUpsEnabled={formState.isFollowUpsEnabled}
+                      setIsFollowUpsEnabled={setIsFollowUpsEnabled}
+                      followUps={formState.followUps}
                       selectedTemplateId={formState.templateId}
+                      templates={templates}
+                      onFollowUpsChange={(followUps) => handleInputChange('followUps', followUps)}
                     />
-
-                    <div className="border-t pt-6">
-                      <CampaignFollowupsTab
-                        isFollowUpsEnabled={formState.isFollowUpsEnabled}
-                        setIsFollowUpsEnabled={setIsFollowUpsEnabled}
-                        followUps={formState.followUps}
-                        selectedTemplateId={formState.templateId}
-                        templates={templates}
-                        onFollowUpsChange={(followUps) => handleInputChange('followUps', followUps)}
-                      />
-                    </div>
                   </div>
                 </TabsContent>
 
-                {/* Contacts Tab - Moved to third position */}
+                {/* Contacts Tab */}
                 <TabsContent value="contacts" className="space-y-6 mt-0">
                   <CampaignContactSelection
                     selectedContactIds={formState.contactIds}

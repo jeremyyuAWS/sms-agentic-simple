@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Label } from '@/components/ui/label';
-import { Template, FollowUpCondition } from '@/lib/types';
+import { FollowUpCondition } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Sparkles, AlertCircle, MessageSquare, Clock, Calendar, ArrowRight, CheckCircle, ArrowUp, ArrowDown, ListOrdered } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -19,7 +19,6 @@ interface CampaignFollowupsTabProps {
   setIsFollowUpsEnabled: (enabled: boolean) => void;
   followUps: any[];
   selectedTemplateId: string;
-  templates: Template[];
   onFollowUpsChange: (followUps: any[]) => void;
   knowledgeBaseId?: string;
   knowledgeBases?: any[];
@@ -31,7 +30,6 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
   setIsFollowUpsEnabled,
   followUps,
   selectedTemplateId,
-  templates,
   onFollowUpsChange,
   onComplete,
 }) => {
@@ -40,12 +38,12 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
 
   // Generate follow-ups if none exist
   useEffect(() => {
-    if (followUps.length === 0 && templates.length > 0) {
-      // Create default follow-up sequence with first template
+    if (followUps.length === 0) {
+      // Create default follow-up sequence with selectedTemplateId
       const defaultFollowUps = [
         {
           id: `followup-${Date.now()}-1`,
-          templateId: selectedTemplateId || templates[0]?.id,
+          templateId: selectedTemplateId,
           delayDays: 3,
           enabled: true,
           condition: 'no-response',
@@ -55,7 +53,7 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
       
       onFollowUpsChange(defaultFollowUps);
     }
-  }, [followUps.length, templates, selectedTemplateId, onFollowUpsChange]);
+  }, [followUps.length, selectedTemplateId, onFollowUpsChange]);
 
   const handleApproveSequence = () => {
     setApproved(true);
@@ -185,11 +183,6 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
                     'Initial message sent immediately' : 
                     `Sent ${followUp.delayDays} days after initial message`}
                 </div>
-                
-                <div className="flex items-center text-sm text-muted-foreground">
-                  <MessageSquare className="mr-1 h-4 w-4" />
-                  {`Template: ${templates.find(t => t.id === followUp.templateId)?.name || 'Unknown template'}`}
-                </div>
               </div>
             </div>
           ))}
@@ -199,13 +192,10 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
             variant="outline" 
             className="w-full mt-4 border-dashed"
             onClick={() => {
-              // Find a template not yet used, or reuse the first one
-              const usedTemplateIds = new Set(followUps.map(f => f.templateId));
-              let templateId = templates.find(t => !usedTemplateIds.has(t.id))?.id || templates[0]?.id;
-              
+              // Create a new follow-up with the same templateId as the initial message
               const newFollowUp = {
                 id: `followup-${Date.now()}-${followUps.length + 1}`,
-                templateId,
+                templateId: selectedTemplateId,
                 delayDays: followUps.length > 0 ? followUps[followUps.length - 1].delayDays + 4 : 3,
                 enabled: true,
                 conditions: [{ type: 'no-response' as FollowUpCondition['type'] }]
