@@ -86,8 +86,7 @@ const Templates: React.FC = () => {
         <TabsContent value="create">
           <TemplateEditor
             template={editingTemplate ? templates.find(t => t.id === editingTemplate) : undefined}
-            onSave={handleSaveTemplate}
-            onCancel={handleCancel}
+            onClose={handleCancel}
           />
         </TabsContent>
       </Tabs>

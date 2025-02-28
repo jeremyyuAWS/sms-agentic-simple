@@ -20,7 +20,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
   template,
   onClose
 }) => {
-  const { createTemplate } = useApp();
+  const { createTemplate, updateTemplate } = useApp();
   const { toast } = useToast();
   
   const [name, setName] = useState(template?.name || '');
@@ -75,27 +75,34 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
       return;
     }
     
+    const templateData = {
+      name,
+      body,
+      variables
+    };
+    
     if (template) {
-      // If editing existing template (not implemented in this version)
+      // Update existing template
+      updateTemplate(template.id, templateData);
       toast({
-        title: "Not Implemented",
-        description: "Editing templates is not available in this version.",
+        title: "Template Updated",
+        description: "Your template has been updated successfully.",
       });
     } else {
       // Create new template
-      createTemplate({
-        name,
-        body,
-        variables
+      createTemplate(templateData);
+      toast({
+        title: "Template Created",
+        description: "Your new template has been created successfully.",
       });
-      
-      // Reset form
-      setName('');
-      setBody('');
-      setVariables([]);
-      
-      onClose();
     }
+    
+    // Reset form
+    setName('');
+    setBody('');
+    setVariables([]);
+    
+    onClose();
   };
   
   return (
