@@ -370,55 +370,6 @@ const CampaignDetailView: React.FC<CampaignDetailViewProps> = ({
             </Card>
           </div>
         </TabsContent>
-
-        <TabsContent value="contacts" className="space-y-4">
-          <div className="space-y-3">
-            <h3 className="text-lg font-semibold">Target Contacts</h3>
-            <Card>
-              <CardContent className="p-4">
-                <p className="text-sm mb-3">
-                  This campaign targets {campaign.contactCount} contacts.
-                </p>
-                {campaign.contactIds && campaign.contactIds.length > 0 ? (
-                  <div className="space-y-2 max-h-[400px] overflow-y-auto">
-                    {campaign.contactIds.slice(0, 20).map(contactId => {
-                      const contact = getContactById(contactId);
-                      return contact ? (
-                        <div key={contactId} className="flex items-center p-2 border rounded-md">
-                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium mr-3">
-                            {contact.name.charAt(0)}
-                          </div>
-                          <div>
-                            <div className="font-medium">{contact.name}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {contact.email || contact.phoneNumber}
-                            </div>
-                          </div>
-                        </div>
-                      ) : null;
-                    })}
-                    {campaign.contactIds.length > 20 && (
-                      <p className="text-sm text-center text-muted-foreground pt-2">
-                        + {campaign.contactIds.length - 20} more contacts
-                      </p>
-                    )}
-                  </div>
-                ) : campaign.segmentId ? (
-                  <div className="p-3 border rounded-md bg-muted/20">
-                    <p className="font-medium">From Segment</p>
-                    <p className="text-sm text-muted-foreground">
-                      This campaign targets contacts from a saved segment.
-                    </p>
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    This campaign targets all contacts that match the specified criteria.
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
       </Tabs>
 
       <div className="border-t pt-4 flex justify-between">

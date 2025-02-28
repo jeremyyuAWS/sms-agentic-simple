@@ -107,7 +107,9 @@ export interface AppContextProps {
   deleteContactList?: (id: string) => void;
   uploadKnowledgeBase: (knowledgeBase: KnowledgeBase) => void;
   deleteKnowledgeBase: (id: string) => void;
-  createCampaign: (campaign: Omit<Campaign, 'id' | 'createdAt'>) => void;
+  createCampaign: (campaign: Omit<Campaign, 'id' | 'createdAt'>) => Campaign;
+  updateCampaign: (campaignId: string, updates: Partial<Omit<Campaign, 'id' | 'createdAt'>>) => void;
+  deleteCampaign: (campaignId: string) => void;
   updateCampaignStatus: (campaignId: string, status: Campaign['status']) => void;
   addFollowUpToCampaign: (campaignId: string, followUp: Omit<FollowUp, 'id'>) => void;
   updateFollowUp: (campaignId: string, followUpId: string, updates: Partial<Omit<FollowUp, 'id'>>) => void;

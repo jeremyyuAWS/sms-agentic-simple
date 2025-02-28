@@ -1,4 +1,3 @@
-
 import { Campaign, KnowledgeBase, FollowUp, FollowUpCondition, Message, TimeWindow, TemplateVariant, Template } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
@@ -43,6 +42,50 @@ export const createCampaignActions = (
     });
     
     return newCampaign;
+  };
+  
+  const updateCampaign = (campaignId: string, updates: Partial<Omit<Campaign, 'id' | 'createdAt'>>) => {
+    const now = new Date();
+    
+    setCampaigns(prev => {
+      const updated = [...prev];
+      const campaignIndex = updated.findIndex(c => c.id === campaignId);
+      
+      if (campaignIndex !== -1) {
+        updated[campaignIndex] = {
+          ...updated[campaignIndex],
+          ...updates,
+          updatedAt: now
+        };
+      }
+      
+      return updated;
+    });
+    
+    toast({
+      title: "Campaign Updated",
+      description: `Campaign has been updated successfully.`
+    });
+  };
+  
+  const deleteCampaign = (campaignId: string) => {
+    setCampaigns(prev => prev.filter(c => c.id !== campaignId));
+    
+    // If the campaign had a knowledge base, update the knowledge base's campaigns array
+    setKnowledgeBases(prev => prev.map(kb => {
+      if (kb.campaigns.includes(campaignId)) {
+        return {
+          ...kb,
+          campaigns: kb.campaigns.filter(id => id !== campaignId)
+        };
+      }
+      return kb;
+    }));
+    
+    toast({
+      title: "Campaign Deleted",
+      description: "Campaign has been deleted successfully."
+    });
   };
   
   const updateCampaignStatus = (campaignId: string, status: Campaign['status']) => {
@@ -574,6 +617,8 @@ export const createCampaignActions = (
 
   return {
     createCampaign,
+    updateCampaign,
+    deleteCampaign,
     updateCampaignStatus,
     addFollowUpToCampaign,
     updateFollowUp,

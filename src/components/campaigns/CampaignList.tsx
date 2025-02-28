@@ -17,15 +17,14 @@ import { formatDistance } from 'date-fns';
 
 interface CampaignListProps {
   campaigns: Campaign[];
-  onSelect: (campaign: Campaign) => void;
+  onSelect: (campaignId: string) => void;
+  onUpdateStatus: (campaignId: string, status: Campaign['status']) => void;
 }
 
-const CampaignList: React.FC<CampaignListProps> = ({ campaigns, onSelect }) => {
-  const { updateCampaignStatus } = useApp();
-
+const CampaignList: React.FC<CampaignListProps> = ({ campaigns, onSelect, onUpdateStatus }) => {
   const handleStatusChange = (e: React.MouseEvent, campaign: Campaign, status: Campaign['status']) => {
     e.stopPropagation();
-    updateCampaignStatus(campaign.id, status);
+    onUpdateStatus(campaign.id, status);
   };
 
   const getStatusBadge = (status: Campaign['status']) => {
@@ -108,7 +107,7 @@ const CampaignList: React.FC<CampaignListProps> = ({ campaigns, onSelect }) => {
           key={campaign.id}
           className="cursor-pointer"
           animationDelay={index * 100}
-          onClick={() => onSelect(campaign)}
+          onClick={() => onSelect(campaign.id)}
         >
           <div className="flex items-center justify-between">
             <div>
@@ -132,7 +131,7 @@ const CampaignList: React.FC<CampaignListProps> = ({ campaigns, onSelect }) => {
             <div className="flex items-center space-x-2 text-sm text-muted-foreground">
               <Clock className="h-4 w-4" />
               <span>
-                {campaign.sendingWindow.startTime} - {campaign.sendingWindow.endTime}
+                {campaign.sendingWindow?.startTime || "N/A"} - {campaign.sendingWindow?.endTime || "N/A"}
               </span>
             </div>
           </div>
