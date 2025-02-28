@@ -162,7 +162,13 @@ const FollowUpFlowBuilder: React.FC<FollowUpFlowBuilderProps> = ({
                     </div>
                     
                     {localFollowUps.length > 0 ? (
-                      <Select defaultValue={localFollowUps[0].id}>
+                      <Select 
+                        defaultValue={localFollowUps[0]?.id}
+                        onValueChange={(value) => {
+                          // This would require a connection in the parent component
+                          console.log("Selected first follow-up:", value);
+                        }}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Select follow-up" />
                         </SelectTrigger>
@@ -236,6 +242,25 @@ const FollowUpFlowBuilder: React.FC<FollowUpFlowBuilderProps> = ({
                       {/* Follow-up settings */}
                       <div className="mt-3 text-sm grid grid-cols-2 gap-4">
                         <div className="space-y-1">
+                          <label className="text-muted-foreground">Template</label>
+                          <Select 
+                            value={followUp.templateId}
+                            onValueChange={(value) => handleUpdateFollowUp(followUp.id, { templateId: value })}
+                          >
+                            <SelectTrigger className="h-8">
+                              <SelectValue placeholder="Select template" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {templates.map(template => (
+                                <SelectItem key={template.id} value={template.id}>
+                                  {template.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        
+                        <div className="space-y-1">
                           <label className="text-muted-foreground">Condition</label>
                           <Select 
                             value={followUp.condition}
@@ -261,6 +286,16 @@ const FollowUpFlowBuilder: React.FC<FollowUpFlowBuilderProps> = ({
                             value={followUp.delayDays}
                             onChange={(e) => handleUpdateFollowUp(followUp.id, { delayDays: parseInt(e.target.value) || 1 })}
                           />
+                        </div>
+                        
+                        <div className="space-y-1">
+                          <label className="text-muted-foreground">Enabled</label>
+                          <div className="pt-1">
+                            <Switch 
+                              checked={followUp.enabled}
+                              onCheckedChange={(checked) => handleUpdateFollowUp(followUp.id, { enabled: checked })}
+                            />
+                          </div>
                         </div>
                       </div>
                     </CardContent>
@@ -449,12 +484,30 @@ const FollowUpFlowBuilder: React.FC<FollowUpFlowBuilderProps> = ({
                           </div>
                           
                           <div className="p-3 bg-muted rounded-md">
-                            <div className="flex items-center justify-between">
-                              <Badge variant="outline">{getTemplateName(followUp.templateId)}</Badge>
-                              <Switch
-                                checked={followUp.enabled}
-                                onCheckedChange={(checked) => handleUpdateFollowUp(followUp.id, { enabled: checked })}
-                              />
+                            <div className="flex flex-col gap-2">
+                              <div className="flex items-center justify-between">
+                                <label className="text-sm text-muted-foreground">Template</label>
+                                <Switch
+                                  checked={followUp.enabled}
+                                  onCheckedChange={(checked) => handleUpdateFollowUp(followUp.id, { enabled: checked })}
+                                />
+                              </div>
+                              
+                              <Select 
+                                value={followUp.templateId}
+                                onValueChange={(value) => handleUpdateFollowUp(followUp.id, { templateId: value })}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select template" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {templates.map(template => (
+                                    <SelectItem key={template.id} value={template.id}>
+                                      {template.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
                             </div>
                           </div>
                           

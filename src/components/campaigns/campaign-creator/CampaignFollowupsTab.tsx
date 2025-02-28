@@ -24,14 +24,20 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
 }) => {
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <Label htmlFor="followups-enabled">Enable Follow-ups</Label>
+      <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
+        <div>
+          <Label htmlFor="followups-enabled" className="text-base font-medium">Enable Follow-ups</Label>
+          <p className="text-sm text-muted-foreground mt-1">
+            Automatically send follow-up messages to contacts who haven't responded.
+          </p>
+        </div>
         <Switch
           id="followups-enabled"
           checked={isFollowUpsEnabled}
           onCheckedChange={setIsFollowUpsEnabled}
         />
       </div>
+      
       {isFollowUpsEnabled && (
         <FollowUpFlowBuilder
           initialTemplateId={selectedTemplateId || templates[0]?.id || ""}
