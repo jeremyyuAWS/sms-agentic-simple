@@ -70,7 +70,7 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
     },
     { 
       name: 'phoneNumber', 
-      description: 'Phone number. Supports various formats: US format (555-111-1212), international with country code (+15551111212), with parentheses (555) 111-1212, or plain digits (5551111212)', 
+      description: 'Phone number. Supports various formats:\n• US format (555-111-1212)\n• International with country code (+15551111212)\n• With parentheses (555) 111-1212\n• Plain digits (5551111212)', 
       required: true, 
       example: '555-111-1212', 
       synonyms: ['phone', 'mobile', 'cell', 'telephone', 'contact number', 'mobile number', 'cell phone', 'phone no', 'tel'],
