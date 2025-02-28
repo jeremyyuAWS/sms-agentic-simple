@@ -5,7 +5,7 @@ import { Contact, ContactList } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { BookUser, FileText, Import, Info, ListFilter, Users, Plus, Edit, Trash2, List, Filter, X } from 'lucide-react';
+import { BookUser, FileText, Import, Info, ListFilter, Users, Plus, Edit, Trash2, List, Filter, X, AlertCircle } from 'lucide-react';
 import CSVUploader from '@/components/contacts/CSVUploader';
 import PDFUploader from '@/components/contacts/PDFUploader';
 import KnowledgeBaseList from '@/components/contacts/KnowledgeBaseList';
@@ -23,6 +23,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import {
   Select,
   SelectContent,
@@ -43,7 +53,8 @@ const Contacts: React.FC = () => {
     contactLists,
     createContactList,
     updateContactList,
-    deleteContactList
+    deleteContactList,
+    deleteContactImport
   } = useApp();
   
   const { toast } = useToast();
@@ -55,6 +66,12 @@ const Contacts: React.FC = () => {
   const [selectedContactIds, setSelectedContactIds] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSourceFilter, setSelectedSourceFilter] = useState<string>('all');
+  
+  // For delete import confirmation dialog
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deletingImportId, setDeletingImportId] = useState<string | null>(null);
+  const [deleteImportWithContacts, setDeleteImportWithContacts] = useState(false);
+  const [deletingImportName, setDeletingImportName] = useState('');
 
   const handleContactsUploaded = (
     newContacts: Contact[], 
@@ -186,6 +203,29 @@ const Contacts: React.FC = () => {
     setSelectedContactIds([]);
     setIsContactListDialogOpen(true);
     setSelectedSourceFilter('all');
+  };
+
+  // Prompt to delete an import
+  const handleDeleteImportPrompt = (batchId: string, name: string) => {
+    setDeletingImportId(batchId);
+    setDeletingImportName(name);
+    setDeleteImportWithContacts(false);
+    setIsDeleteDialogOpen(true);
+  };
+
+  // Actually delete the import
+  const handleDeleteImport = () => {
+    if (!deletingImportId) return;
+    
+    // Call the deleteContactImport function
+    if (deleteContactImport) {
+      deleteContactImport(deletingImportId, deleteImportWithContacts);
+    }
+    
+    // Reset state and close dialog
+    setDeletingImportId(null);
+    setDeletingImportName('');
+    setIsDeleteDialogOpen(false);
   };
 
   // Filter contacts based on search query and source filter
@@ -335,7 +375,7 @@ const Contacts: React.FC = () => {
                         <TableHead>Source</TableHead>
                         <TableHead>Date</TableHead>
                         <TableHead>Contacts</TableHead>
-                        <TableHead>Actions</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -366,17 +406,33 @@ const Contacts: React.FC = () => {
                             <Badge>{groupContacts.length}</Badge>
                           </TableCell>
                           <TableCell>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedSourceFilter(groupName);
-                                setNewListName(`Contacts from "${groupName}"`);
-                                setIsContactListDialogOpen(true);
-                              }}
-                            >
-                              Create List
-                            </Button>
+                            <div className="flex items-center justify-end gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedSourceFilter(groupName);
+                                  setNewListName(`Contacts from "${groupName}"`);
+                                  setIsContactListDialogOpen(true);
+                                }}
+                              >
+                                Create List
+                              </Button>
+                              
+                              {groupContacts[0]?.source?.batchId && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                  onClick={() => handleDeleteImportPrompt(
+                                    groupContacts[0].source.batchId,
+                                    groupName
+                                  )}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              )}
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -730,6 +786,57 @@ const Contacts: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Import Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertCircle className="h-5 w-5" />
+              Delete Import History
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete the import "{deletingImportName}"?
+              <div className="mt-4 p-3 bg-amber-50 border border-amber-100 rounded-md">
+                <div className="flex items-start gap-2">
+                  <Info className="h-4 w-4 text-amber-600 mt-0.5" />
+                  <div className="text-amber-800 text-sm">
+                    <p className="font-medium">Note about contacts</p>
+                    <p className="mt-1">
+                      You can choose to keep the contacts in your database or delete them along with the import history.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="mt-2 space-y-4">
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="deleteContacts"
+                checked={deleteImportWithContacts}
+                onChange={(e) => setDeleteImportWithContacts(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300"
+              />
+              <label htmlFor="deleteContacts" className="text-sm font-medium text-gray-900">
+                Also delete contacts from this import
+              </label>
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteImport}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              {deleteImportWithContacts 
+                ? "Delete Import & Contacts" 
+                : "Delete Import Only"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

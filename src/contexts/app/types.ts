@@ -59,6 +59,7 @@ export interface AppContextProps {
   ) => void;
   getContactsByImport?: (batchId: string) => Contact[];
   getContactImports?: () => ContactImport[];
+  deleteContactImport?: (batchId: string, removeContacts?: boolean) => boolean;
   createContactList?: (list: Omit<ContactList, 'id' | 'createdAt'>) => void;
   updateContactList?: (id: string, updates: Partial<Omit<ContactList, 'id' | 'createdAt'>>) => void;
   deleteContactList?: (id: string) => void;

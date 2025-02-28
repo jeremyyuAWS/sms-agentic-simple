@@ -1,4 +1,3 @@
-
 import { Contact, ContactTag, ContactSegment, ContactFilter, ContactImport, FieldMapping } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
@@ -129,6 +128,54 @@ export const createContactActions = (
    */
   const getContactImports = (): ContactImport[] => {
     return contactImports;
+  };
+
+  /**
+   * Delete import history record and optionally remove associated contacts
+   */
+  const deleteContactImport = (batchId: string, removeContacts: boolean = false) => {
+    // First, find the import record to delete
+    const importToDelete = contactImports.find(imp => imp.id === batchId);
+    if (!importToDelete) return false;
+    
+    // Remove the import record
+    contactImports = contactImports.filter(imp => imp.id !== batchId);
+    
+    // Optionally remove the contacts associated with this import
+    if (removeContacts) {
+      setContacts(prev => prev.filter(contact => 
+        !contact.source || contact.source.batchId !== batchId
+      ));
+      
+      toast({
+        title: "Import Deleted",
+        description: `Import "${importToDelete.name}" and its ${importToDelete.contactCount} contacts have been removed.`,
+      });
+    } else {
+      // If not removing contacts, we need to update their source information
+      setContacts(prev => prev.map(contact => {
+        if (contact.source && contact.source.batchId === batchId) {
+          // Keep the contact but remove/update its source information
+          const { source, ...contactWithoutSource } = contact;
+          return {
+            ...contactWithoutSource,
+            source: {
+              ...source,
+              name: 'Untracked (Import deleted)',
+              type: 'manual'
+            }
+          };
+        }
+        return contact;
+      }));
+      
+      toast({
+        title: "Import Deleted",
+        description: `Import "${importToDelete.name}" has been removed from history. Contacts remain in your database.`,
+      });
+    }
+    
+    return true;
   };
 
   const createContactTag = (tagData: Omit<ContactTag, 'id' | 'count'>) => {
@@ -263,6 +310,7 @@ export const createContactActions = (
     uploadContacts,
     getContactsByImport,
     getContactImports,
+    deleteContactImport,
     createContactTag,
     assignTagToContacts,
     removeTagFromContacts,
