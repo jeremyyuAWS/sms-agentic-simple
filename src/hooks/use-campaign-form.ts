@@ -1,7 +1,15 @@
 
 import { useState, useEffect } from 'react';
-import { Campaign, TimeWindow, CampaignTemplate } from '@/lib/types';
+import { Campaign, TimeWindow } from '@/lib/types';
 import { useToast } from './use-toast';
+
+// Import the CampaignTemplate interface from the TemplateSelector component
+// or define it inline since it's a simple interface
+interface CampaignTemplate {
+  id: string;
+  name: string;
+  body: string;
+}
 
 export interface CampaignFormState {
   name: string;
