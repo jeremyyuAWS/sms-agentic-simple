@@ -5,7 +5,7 @@ import { Switch } from '@/components/ui/switch';
 import FollowUpFlowBuilder from '../FollowUpFlowBuilder';
 import { Template, FollowUpCondition } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { Sparkles, AlertCircle, MessageSquare, ThumbsUp, ThumbsDown, Search, Clock, Calendar, ArrowRight } from 'lucide-react';
+import { Sparkles, AlertCircle, MessageSquare, ThumbsUp, ThumbsDown, Search, Clock, Calendar, ArrowRight, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { 
   Tooltip,
@@ -25,6 +25,7 @@ interface CampaignFollowupsTabProps {
   onFollowUpsChange: (followUps: any[]) => void;
   knowledgeBaseId?: string;
   knowledgeBases?: any[];
+  onComplete?: () => void;
 }
 
 const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
@@ -34,9 +35,11 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
   selectedTemplateId,
   templates,
   onFollowUpsChange,
+  onComplete,
 }) => {
   const { toast } = useToast();
   const [selectedView, setSelectedView] = useState<string>("visual");
+  const [approved, setApproved] = useState(false);
 
   // Find first template if none selected
   const initialTemplate = selectedTemplateId 
@@ -82,6 +85,20 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
       onFollowUpsChange(defaultFollowUps);
     }
   }, [isFollowUpsEnabled, followUps.length, templates, selectedTemplateId, onFollowUpsChange]);
+
+  const handleApproveSequence = () => {
+    setApproved(true);
+    toast({
+      title: "Follow-up Sequence Approved",
+      description: "Your message sequence has been approved. You can now complete the campaign setup.",
+    });
+  };
+
+  const handleCompleteSetup = () => {
+    if (onComplete) {
+      onComplete();
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -144,8 +161,21 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
                           {getTemplatePreview(selectedTemplateId || templates[0]?.id || "")}
                         </div>
                       </CardContent>
-                      <CardFooter className="text-xs text-muted-foreground pt-0">
-                        Template: {initialTemplate?.name || "None selected"}
+                      <CardFooter className="text-xs text-muted-foreground pt-0 flex justify-between items-center">
+                        <span>Template: {initialTemplate?.name || "None selected"}</span>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="text-xs"
+                          onClick={() => {
+                            toast({
+                              title: "Template Preview",
+                              description: "View and edit templates from the Templates page",
+                            });
+                          }}
+                        >
+                          Preview
+                        </Button>
                       </CardFooter>
                     </Card>
                     
@@ -216,8 +246,21 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
                               </Button>
                             </div>
                           </CardContent>
-                          <CardFooter className="text-xs text-muted-foreground pt-0">
-                            Template: {template?.name || "None selected"}
+                          <CardFooter className="text-xs text-muted-foreground pt-0 flex justify-between items-center">
+                            <span>Template: {template?.name || "None selected"}</span>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="text-xs"
+                              onClick={() => {
+                                toast({
+                                  title: "Template Preview",
+                                  description: "View and edit templates from the Templates page",
+                                });
+                              }}
+                            >
+                              Preview
+                            </Button>
                           </CardFooter>
                         </Card>
                         
@@ -263,6 +306,42 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
               />
             </TabsContent>
           </Tabs>
+
+          {/* Approval and Completion Section */}
+          <div className="mt-8 border-t pt-4">
+            <div className="flex justify-between items-center">
+              <div>
+                <h3 className="font-semibold">Review and Approve</h3>
+                <p className="text-sm text-muted-foreground">
+                  Review your message sequence before finalizing the campaign.
+                </p>
+              </div>
+              <div className="flex gap-4">
+                {!approved ? (
+                  <Button 
+                    onClick={handleApproveSequence}
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    Approve Messages
+                  </Button>
+                ) : (
+                  <Button 
+                    onClick={handleCompleteSetup}
+                    className="bg-primary hover:bg-primary/90"
+                  >
+                    Complete Campaign Setup
+                  </Button>
+                )}
+              </div>
+            </div>
+            {approved && (
+              <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-md flex items-center gap-2 text-green-700">
+                <CheckCircle className="h-5 w-5" />
+                <span>Message sequence approved! You can now complete the campaign setup.</span>
+              </div>
+            )}
+          </div>
         </>
       )}
     </div>

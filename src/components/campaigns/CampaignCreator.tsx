@@ -148,11 +148,7 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
         return (
           <>
             <CampaignSetupGuide campaignType={campaignType} currentStep="details" />
-            <CampaignDetailsTab
-              knowledgeBaseId={formState.knowledgeBaseId}
-              knowledgeBases={knowledgeBases}
-              onKnowledgeBaseSelect={(value) => handleInputChange('knowledgeBaseId', value)}
-            />
+            <CampaignDetailsTab />
           </>
         );
       case 'contacts':
@@ -182,14 +178,6 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
                 selectedTemplateId={formState.templateId}
               />
             </div>
-            
-            {/* Then show the regular template selector */}
-            <TemplateSelector 
-              onSelect={(templateId) => handleInputChange('templateId', templateId)}
-              selectedTemplateId={formState.templateId}
-              knowledgeBaseId={formState.knowledgeBaseId}
-              knowledgeBases={knowledgeBases}
-            />
           </>
         );
       case 'schedule':
@@ -217,8 +205,7 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
               selectedTemplateId={formState.templateId}
               templates={templates}
               onFollowUpsChange={(followUps) => handleInputChange('followUps', followUps)}
-              knowledgeBaseId={formState.knowledgeBaseId}
-              knowledgeBases={knowledgeBases}
+              onComplete={handleSubmit}
             />
           </>
         );
@@ -271,8 +258,8 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
             {/* Tab content */}
             {renderTabContent()}
 
-            {/* Only show the create/save button on the last tab */}
-            {isLastTab && (
+            {/* Only show the create/save button on tabs other than the last tab */}
+            {!isLastTab && (
               <div className="flex justify-end mt-8">
                 <CampaignCreatorFooter
                   isEditing={!!campaign}
