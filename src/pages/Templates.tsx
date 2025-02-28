@@ -125,16 +125,16 @@ const Templates = () => {
   const [activeTab, setActiveTab] = useState('all');
 
   const availableColors = [
-    { name: 'Blue', value: 'blue' },
-    { name: 'Green', value: 'green' },
-    { name: 'Red', value: 'red' },
-    { name: 'Purple', value: 'purple' },
-    { name: 'Orange', value: 'orange' },
-    { name: 'Pink', value: 'pink' },
-    { name: 'Indigo', value: 'indigo' },
-    { name: 'Teal', value: 'teal' },
-    { name: 'Yellow', value: 'yellow' },
-    { name: 'Gray', value: 'gray' }
+    { name: 'Blue', value: 'blue', bg: '#EBF5FF', text: '#1E40AF', border: '#BFDBFE' },
+    { name: 'Green', value: 'green', bg: '#ECFDF5', text: '#047857', border: '#A7F3D0' },
+    { name: 'Red', value: 'red', bg: '#FEF2F2', text: '#B91C1C', border: '#FECACA' },
+    { name: 'Purple', value: 'purple', bg: '#F5F3FF', text: '#5B21B6', border: '#DDD6FE' },
+    { name: 'Orange', value: 'orange', bg: '#FFF7ED', text: '#C2410C', border: '#FDBA74' },
+    { name: 'Pink', value: 'pink', bg: '#FDF2F8', text: '#BE185D', border: '#FBCFE8' },
+    { name: 'Indigo', value: 'indigo', bg: '#EEF2FF', text: '#3730A3', border: '#C7D2FE' },
+    { name: 'Teal', value: 'teal', bg: '#F0FDFA', text: '#0F766E', border: '#99F6E4' },
+    { name: 'Yellow', value: 'yellow', bg: '#FEFCE8', text: '#A16207', border: '#FEF08A' },
+    { name: 'Gray', value: 'gray', bg: '#F9FAFB', text: '#374151', border: '#E5E7EB' }
   ];
 
   // Reset template form when closing dialog
@@ -521,20 +521,13 @@ const Templates = () => {
 
   // Get the color badge for a category
   const getCategoryColorClass = (color: string) => {
-    const colorMap: Record<string, string> = {
-      blue: 'bg-blue-100 text-blue-800 border-blue-200',
-      green: 'bg-green-100 text-green-800 border-green-200',
-      red: 'bg-red-100 text-red-800 border-red-200',
-      purple: 'bg-purple-100 text-purple-800 border-purple-200',
-      orange: 'bg-orange-100 text-orange-800 border-orange-200',
-      pink: 'bg-pink-100 text-pink-800 border-pink-200',
-      indigo: 'bg-indigo-100 text-indigo-800 border-indigo-200',
-      teal: 'bg-teal-100 text-teal-800 border-teal-200',
-      yellow: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      gray: 'bg-gray-100 text-gray-800 border-gray-200'
-    };
+    const colorObj = availableColors.find(c => c.value === color) || availableColors[0];
     
-    return colorMap[color] || 'bg-gray-100 text-gray-800 border-gray-200';
+    return {
+      backgroundColor: colorObj.bg,
+      color: colorObj.text,
+      borderColor: colorObj.border
+    };
   };
 
   // Available fields for display
@@ -559,7 +552,8 @@ const Templates = () => {
           <Badge 
             key={category.id} 
             variant="outline" 
-            className={cn("text-xs py-0 h-5", getCategoryColorClass(category.color))}
+            className="text-xs py-0 h-5"
+            style={getCategoryColorClass(category.color)}
           >
             {category.name}
           </Badge>
@@ -633,7 +627,8 @@ const Templates = () => {
                         <span className="text-sm">{category.name}</span>
                         <Badge 
                           variant="outline" 
-                          className={cn("ml-auto text-xs py-0 h-5", getCategoryColorClass(category.color))}
+                          className="ml-auto text-xs py-0 h-5"
+                          style={getCategoryColorClass(category.color)}
                         >
                           {templates.filter(t => t.categoryIds?.includes(category.id)).length}
                         </Badge>
@@ -713,172 +708,173 @@ const Templates = () => {
       ) : (
         <div className="grid gap-6 mb-6">
           {filteredTemplates.map(template => (
-            <React.Fragment key={template.id}>
-              <Card className="overflow-hidden">
-                <div className="p-6 pb-4">
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <h3 className="text-lg font-medium">{template.name}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Created {new Date(template.createdAt).toLocaleDateString()}
-                      </p>
-                      {getTemplateCategoriesDisplay(template)}
-                    </div>
-                    <div className="flex gap-2">
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button 
-                              variant="ghost" 
-                              size="icon"
-                              onClick={() => copyToClipboard(template.body)}
-                            >
-                              <Copy className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Copy template</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button 
-                              variant="ghost" 
-                              size="icon"
-                              onClick={() => handleEditTemplate(template)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Edit template</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <Tag className="h-4 w-4" />
+            <Card key={template.id} className="overflow-hidden">
+              <div className="p-6 pb-4">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h3 className="text-lg font-medium">{template.name}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Created {new Date(template.createdAt).toLocaleDateString()}
+                    </p>
+                    {getTemplateCategoriesDisplay(template)}
+                  </div>
+                  <div className="flex gap-2">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => copyToClipboard(template.body)}
+                          >
+                            <Copy className="h-4 w-4" />
                           </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-56">
-                          <div className="px-2 py-1.5 text-sm font-semibold">Assign Categories</div>
-                          {templateCategories.map(category => (
-                            <DropdownMenuItem 
-                              key={category.id}
-                              onSelect={(e) => {
-                                e.preventDefault();
-                                toggleTemplateCategory(template, category.id);
-                              }}
-                              className="flex items-center gap-2"
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Copy template</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => handleEditTemplate(template)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Edit template</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <Tag className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-56">
+                        <div className="px-2 py-1.5 text-sm font-semibold">Assign Categories</div>
+                        {templateCategories.map(category => (
+                          <DropdownMenuItem 
+                            key={category.id}
+                            onSelect={(e) => {
+                              e.preventDefault();
+                              toggleTemplateCategory(template, category.id);
+                            }}
+                            className="flex items-center gap-2"
+                          >
+                            <Checkbox 
+                              id={`cat-${category.id}-${template.id}`}
+                              checked={template.categoryIds?.includes(category.id)}
+                              onCheckedChange={() => toggleTemplateCategory(template, category.id)}
+                            />
+                            <Label htmlFor={`cat-${category.id}-${template.id}`} className="flex-1 cursor-pointer">
+                              {category.name}
+                            </Label>
+                            <div 
+                              className="text-xs py-0 h-5 px-2 rounded border flex items-center"
+                              style={getCategoryColorClass(category.color)}
                             >
-                              <Checkbox 
-                                id={`cat-${category.id}-${template.id}`}
-                                checked={template.categoryIds?.includes(category.id)}
-                                onCheckedChange={() => toggleTemplateCategory(template, category.id)}
-                              />
-                              <Label htmlFor={`cat-${category.id}-${template.id}`} className="flex-1 cursor-pointer">
-                                {category.name}
-                              </Label>
-                              <Badge variant="outline" className={cn("text-xs py-0 h-5", getCategoryColorClass(category.color))}>
-                                {templates.filter(t => t.categoryIds?.includes(category.id)).length}
-                              </Badge>
-                            </DropdownMenuItem>
-                          ))}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon"
-                                  onClick={() => setTemplateToDelete(template)}
+                              {templates.filter(t => t.categoryIds?.includes(category.id)).length}
+                            </div>
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                onClick={() => setTemplateToDelete(template)}
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete Template</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to delete "{template.name}"? This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel onClick={() => setTemplateToDelete(null)}>
+                                  Cancel
+                                </AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={handleDeleteTemplate}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                 >
-                                  <Trash2 className="h-4 w-4 text-destructive" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Delete Template</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Are you sure you want to delete "{template.name}"? This action cannot be undone.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel onClick={() => setTemplateToDelete(null)}>
-                                    Cancel
-                                  </AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={handleDeleteTemplate}
-                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                  >
-                                    Delete
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Delete template</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </div>
-                  </div>
-                  
-                  <div className="bg-muted/50 p-3 rounded-lg text-sm mb-4">
-                    {contacts.length > 0 ? (
-                      <>
-                        {generatePreview(template.body)}
-                        <p className="text-xs text-muted-foreground mt-2">
-                          Preview shows data from {contacts[0].name} ({contacts[0].company || "No company"})
-                        </p>
-                      </>
-                    ) : (
-                      template.body
-                    )}
-                  </div>
-                  
-                  <div className="flex flex-wrap gap-2">
-                    {template.variables.map(variable => (
-                      <Badge key={variable} variant="outline" className="bg-primary/5">
-                        <Tag className="h-3 w-3 mr-1" />
-                        {variable}
-                      </Badge>
-                    ))}
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Delete template</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                 </div>
                 
-                <CardFooter className="bg-muted/30 p-4 border-t flex justify-between items-center">
-                  <div className="text-sm text-muted-foreground">
-                    Used in campaigns: {/* This could be implemented if you track template usage */}
-                    Not currently tracked
-                  </div>
-                  <div className="flex gap-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => handleDuplicateTemplate(template.id)}
-                    >
-                      <Copy className="mr-2 h-4 w-4" />
-                      Duplicate
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => handlePreview(template)}
-                    >
-                      Preview
-                    </Button>
-                  </div>
-                </CardFooter>
-              </Card>
-            </React.Fragment>
+                <div className="bg-muted/50 p-3 rounded-lg text-sm mb-4">
+                  {contacts.length > 0 ? (
+                    <>
+                      {generatePreview(template.body)}
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Preview shows data from {contacts[0].name} ({contacts[0].company || "No company"})
+                      </p>
+                    </>
+                  ) : (
+                    template.body
+                  )}
+                </div>
+                
+                <div className="flex flex-wrap gap-2">
+                  {template.variables.map(variable => (
+                    <Badge key={variable} variant="outline" className="bg-primary/5">
+                      <Tag className="h-3 w-3 mr-1" />
+                      {variable}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+              
+              <CardFooter className="bg-muted/30 p-4 border-t flex justify-between items-center">
+                <div className="text-sm text-muted-foreground">
+                  Used in campaigns: {/* This could be implemented if you track template usage */}
+                  Not currently tracked
+                </div>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => handleDuplicateTemplate(template.id)}
+                  >
+                    <Copy className="mr-2 h-4 w-4" />
+                    Duplicate
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => handlePreview(template)}
+                  >
+                    Preview
+                  </Button>
+                </div>
+              </CardFooter>
+            </Card>
           ))}
         </div>
       )}
@@ -913,6 +909,7 @@ const Templates = () => {
                     key={category.id} 
                     variant={newTemplate.categoryIds.includes(category.id) ? "default" : "outline"}
                     className={newTemplate.categoryIds.includes(category.id) ? "" : "cursor-pointer hover:bg-primary/20"}
+                    style={newTemplate.categoryIds.includes(category.id) ? undefined : getCategoryColorClass(category.color)}
                     onClick={() => {
                       if (newTemplate.categoryIds.includes(category.id)) {
                         setNewTemplate({
@@ -1098,6 +1095,7 @@ const Templates = () => {
                       key={category.id} 
                       variant={editingTemplate.categoryIds?.includes(category.id) ? "default" : "outline"}
                       className={editingTemplate.categoryIds?.includes(category.id) ? "" : "cursor-pointer hover:bg-primary/20"}
+                      style={editingTemplate.categoryIds?.includes(category.id) ? undefined : getCategoryColorClass(category.color)}
                       onClick={() => {
                         if (editingTemplate.categoryIds?.includes(category.id)) {
                           setEditingTemplate({
@@ -1324,13 +1322,26 @@ const Templates = () => {
                 onValueChange={(value) => setNewCategory({...newCategory, color: value})}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a color" />
+                  <SelectValue placeholder="Select a color">
+                    <div className="flex items-center">
+                      {newCategory.color && (
+                        <div 
+                          className="w-3 h-3 rounded-full mr-2" 
+                          style={{backgroundColor: availableColors.find(c => c.value === newCategory.color)?.text}}
+                        />
+                      )}
+                      {availableColors.find(c => c.value === newCategory.color)?.name || "Select a color"}
+                    </div>
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {availableColors.map(color => (
                     <SelectItem key={color.value} value={color.value}>
                       <div className="flex items-center">
-                        <div className={cn("w-3 h-3 rounded-full mr-2", `bg-${color.value}-500`)} />
+                        <div 
+                          className="w-3 h-3 rounded-full mr-2" 
+                          style={{backgroundColor: color.text}}
+                        />
                         {color.name}
                       </div>
                     </SelectItem>
