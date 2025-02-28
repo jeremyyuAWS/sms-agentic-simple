@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/table';
 import { Info } from 'lucide-react';
 
-// Schema for field mapping form
+// Schema for field mapping form - make both fields required to match FieldMappingItem
 const fieldMappingSchema = z.object({
   fieldMappings: z.array(z.object({
     csvHeader: z.string(),
@@ -35,7 +35,7 @@ const fieldMappingSchema = z.object({
 type FieldMappingFormValues = z.infer<typeof fieldMappingSchema>;
 
 interface FieldMappingFormProps {
-  mappings: { csvHeader: string; mappedTo: string }[];
+  mappings: FieldMappingItem[]; // Use the proper type here
   typeInfo: TypeInfo[];
   onSubmit: (mappings: FieldMappingItem[]) => void;
   onCancel: () => void;
@@ -51,11 +51,17 @@ const FieldMappingForm: React.FC<FieldMappingFormProps> = ({
     resolver: zodResolver(fieldMappingSchema),
     defaultValues: {
       fieldMappings: mappings
-    }
+    },
   });
 
   const handleSubmit = (data: FieldMappingFormValues) => {
-    onSubmit(data.fieldMappings);
+    // Ensure all items in the array are FieldMappingItems (both fields are required)
+    const validatedMappings: FieldMappingItem[] = data.fieldMappings.map(item => ({
+      csvHeader: item.csvHeader,
+      mappedTo: item.mappedTo
+    }));
+    
+    onSubmit(validatedMappings);
   };
 
   return (

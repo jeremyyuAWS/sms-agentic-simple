@@ -94,7 +94,7 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
           .filter(row => row.length === headers.length);
         
         // Set form values with suggested mappings
-        const initialMappings = suggestedMappings.map(mapping => ({
+        const initialMappings: FieldMappingItem[] = suggestedMappings.map(mapping => ({
           csvHeader: mapping.csvHeader,
           mappedTo: mapping.mappedTo
         }));
@@ -184,9 +184,12 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
   const validRows = validationResults.filter(r => r.valid).length;
   const invalidRows = validationResults.filter(r => !r.valid).length;
   
-  // Get suggested mappings from header names
-  const suggestedMappings = headers.length > 0 
-    ? guessFieldMappings(headers).map(m => ({ csvHeader: m.csvHeader, mappedTo: m.mappedTo })) 
+  // Get suggested mappings from header names with properly typed result
+  const suggestedMappings: FieldMappingItem[] = headers.length > 0 
+    ? guessFieldMappings(headers).map(m => ({ 
+        csvHeader: m.csvHeader,
+        mappedTo: m.mappedTo 
+      }))
     : [];
 
   return (
