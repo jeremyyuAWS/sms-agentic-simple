@@ -1,708 +1,626 @@
+
 import React, { useState, useEffect } from 'react';
-import { useApp } from '@/contexts';
-import { Campaign, Template, KnowledgeBase, ContactFilter, FollowUp, ContactList, TimeWindow, CampaignGoal } from '@/lib/types';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
-import { CalendarIcon, PlusIcon, Trash2, X, Check, Clock, AlertCircle, Users, List, FileText, AlertTriangle, BarChart3 } from 'lucide-react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { format } from "date-fns";
-import { cn } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
-import TimeZoneSelector from './TimeZoneSelector';
-import TimeWindowSelector from './TimeWindowSelector';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { useApp } from '@/contexts';
+import { Campaign, Template, Contact, KnowledgeBase, FollowUp } from '@/lib/types';
 import CampaignContactSelection from './CampaignContactSelection';
+import CSVUploader from './CSVUploader';
+import ScheduleCampaign from './ScheduleCampaign';
+import TemplateList from '@/components/templates/TemplateList';
+import TemplateEditor from '@/components/templates/TemplateEditor';
+import KnowledgeBaseList from '@/components/contacts/KnowledgeBaseList';
+import CampaignDetailView from './CampaignDetailView';
 import FollowUpFlowBuilder from './FollowUpFlowBuilder';
+import { Check, ArrowRight, ListChecks, Calendar, Users, Pencil, BookOpen, MessageSquare, Save, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import CampaignGoalSelector from './CampaignGoalSelector';
+import { useToast } from '@/hooks/use-toast';
+import TemplateSelector from '@/components/templates/TemplateSelector';
 
-// Define props for the component
+type CampaignCreatorStep = 'template-selection' | 'contacts' | 'template' | 'message-content' | 'follow-ups' | 'schedule' | 'knowledge-base' | 'review' | 'goal';
+
 interface CampaignCreatorProps {
-  campaign?: Campaign;
-  contacts: any[];
-  contactLists: ContactList[];
-  templates: Template[];
-  knowledgeBases: KnowledgeBase[];
-  onCreateCampaign: (campaignData: any) => void;
-  onUpdateCampaign: (campaignId: string, campaignData: any) => void;
-  onCancel: () => void;
+  onComplete?: () => void;
+  initialStep?: CampaignCreatorStep;
+  existingCampaign?: Campaign; // For editing an existing campaign
 }
 
-// Define a temporary type for follow-ups without ID for form state
-type FollowUpDraft = Omit<FollowUp, 'id'> & { tempId?: string };
-
-const CampaignCreator: React.FC<CampaignCreatorProps> = ({
-  campaign,
-  contacts,
-  contactLists,
-  templates,
-  knowledgeBases,
-  onCreateCampaign,
-  onUpdateCampaign,
-  onCancel
+const CampaignCreator: React.FC<CampaignCreatorProps> = ({ 
+  onComplete, 
+  initialStep = 'template-selection',
+  existingCampaign 
 }) => {
   const { toast } = useToast();
+  const { 
+    contacts, 
+    templates, 
+    knowledgeBases,
+    createCampaign,
+    updateCampaign
+  } = useApp();
   
-  // Form state
-  const [name, setName] = useState(campaign?.name || '');
-  const [description, setDescription] = useState(campaign?.description || '');
-  const [templateId, setTemplateId] = useState(campaign?.templateId || '');
-  const [knowledgeBaseId, setKnowledgeBaseId] = useState(campaign?.knowledgeBaseId || '');
-  const [selectedContactIds, setSelectedContactIds] = useState<string[]>(campaign?.contactIds || []);
-  const [contactListId, setContactListId] = useState(campaign?.contactListId || '');
-  const [segmentId, setSegmentId] = useState(campaign?.segmentId || '');
-  const [customFilter, setCustomFilter] = useState<ContactFilter | undefined>(campaign?.customFilter);
-  const [timeZone, setTimeZone] = useState(campaign?.timeZone || '');
-  const [scheduledDate, setScheduledDate] = useState<Date | undefined>(
-    campaign?.scheduledStartDate ? new Date(campaign.scheduledStartDate) : undefined
-  );
-  const [activeTab, setActiveTab] = useState("details");
-  const [goal, setGoal] = useState<CampaignGoal | undefined>(campaign?.goal || {
-    type: 'lead-generation',
-    targetMetrics: {
-      responseRate: 0.2,
-      conversionRate: 0.1,
-      completionDays: 14,
-    }
-  });
+  // UI state
+  const [currentStep, setCurrentStep] = useState<CampaignCreatorStep>(initialStep);
+  const [isCreatingTemplate, setIsCreatingTemplate] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<Template | undefined>(undefined);
   
-  // Selected template (for display purposes)
-  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
+  // Campaign data state
+  const [campaignName, setCampaignName] = useState(existingCampaign?.name || '');
+  const [campaignDescription, setCampaignDescription] = useState(existingCampaign?.description || '');
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | undefined>(existingCampaign?.templateId);
+  const [selectedContacts, setSelectedContacts] = useState<Contact[]>([]);
+  const [selectedContactIds, setSelectedContactIds] = useState<string[]>(existingCampaign?.contactIds || []);
+  const [selectedContactListId, setSelectedContactListId] = useState<string | undefined>(existingCampaign?.contactListId);
+  const [selectedSegmentId, setSelectedSegmentId] = useState<string | undefined>(existingCampaign?.segmentId);
+  const [selectedKnowledgeBaseId, setSelectedKnowledgeBaseId] = useState<string | undefined>(existingCampaign?.knowledgeBaseId);
+  const [followUps, setFollowUps] = useState<FollowUp[]>(existingCampaign?.followUps || []);
+  const [scheduledStartDate, setScheduledStartDate] = useState<Date | undefined>(existingCampaign?.scheduledStartDate);
+  const [sendingWindow, setSendingWindow] = useState(existingCampaign?.sendingWindow);
+  const [timeZone, setTimeZone] = useState(existingCampaign?.timeZone || 'America/Los_Angeles');
+  const [campaignGoal, setCampaignGoal] = useState(existingCampaign?.goal);
   
-  // Selected contact list (for display purposes)
-  const [selectedContactList, setSelectedContactList] = useState<ContactList | null>(null);
-  
-  // Time window for sending
-  const [sendingWindow, setSendingWindow] = useState<TimeWindow | undefined>(
-    campaign?.sendingWindow || {
-      startTime: '09:00',
-      endTime: '17:00',
-      daysOfWeek: [1, 2, 3, 4, 5] // Monday to Friday
-    }
-  );
-  
-  // Using FollowUpDraft type for form state
-  const [followUps, setFollowUps] = useState<FollowUp[]>(
-    campaign?.followUps || []
-  );
-  
-  // Validation states
-  const [errors, setErrors] = useState({
-    name: false,
-    templateId: false,
-    contacts: false,
-    goal: false
-  });
-  
-  // Update selected template when templateId changes
+  // Update contacts when contactIds change
   useEffect(() => {
-    if (templateId) {
-      const template = templates.find(t => t.id === templateId);
-      setSelectedTemplate(template || null);
-    } else {
-      setSelectedTemplate(null);
-    }
-  }, [templateId, templates]);
-  
-  // Update selected contact list when contactListId changes
-  useEffect(() => {
-    if (contactListId) {
-      const contactList = contactLists.find(cl => cl.id === contactListId);
-      setSelectedContactList(contactList || null);
-      
-      // If a contact list is selected, set the contact IDs to that list's contacts
-      if (contactList) {
-        setSelectedContactIds(contactList.contactIds);
-      }
-    } else {
-      setSelectedContactList(null);
-    }
-  }, [contactListId, contactLists]);
-  
-  // Initialize goal if not set
-  useEffect(() => {
-    if (!goal) {
-      setGoal({
-        type: 'lead-generation',
-        targetMetrics: {
-          responseRate: 0.2,
-          conversionRate: 0.1,
-          completionDays: 14,
-        }
-      });
-    }
-  }, []);
-  
-  // Validate the form
-  const validateForm = () => {
-    const newErrors = {
-      name: !name.trim(),
-      templateId: !templateId,
-      contacts: !hasContactSelection(),
-      goal: !goal
-    };
-    
-    setErrors(newErrors);
-    return !Object.values(newErrors).some(Boolean);
-  };
-  
-  // Check if any contact selection method is used
-  const hasContactSelection = () => {
-    return (selectedContactIds.length > 0 || contactListId || segmentId || customFilter);
-  };
-  
-  // Handle form submission
-  const handleSubmit = () => {
-    if (!validateForm()) {
-      toast({
-        title: "Validation Error",
-        description: "Please fill in all required fields.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    // Calculate contact count
-    let contactCount = 0;
-    
     if (selectedContactIds.length > 0) {
-      contactCount = selectedContactIds.length;
-    } else if (contactListId) {
-      const list = contactLists.find(cl => cl.id === contactListId);
-      contactCount = list?.contactIds.length || 0;
-    } else if (segmentId) {
-      // Example segment size (in a real app, this would be calculated)
-      contactCount = 24;
-    } else if (customFilter) {
-      // Example filtered count (in a real app, this would be calculated)
-      contactCount = 15;
-    }
-    
-    // Prepare campaign data
-    const campaignData = {
-      name,
-      description,
-      status: 'draft',
-      contactCount,
-      updatedAt: new Date(),
-      templateId,
-      knowledgeBaseId: knowledgeBaseId || undefined,
-      timeZone: timeZone || undefined,
-      scheduledStartDate: scheduledDate,
-      sendingWindow,
-      followUps,
-      contactIds: selectedContactIds.length > 0 ? selectedContactIds : undefined,
-      contactListId: contactListId || undefined,
-      segmentId: segmentId || undefined,
-      customFilter,
-      goal
-    };
-    
-    // Create or update the campaign
-    if (campaign) {
-      onUpdateCampaign(campaign.id, campaignData);
+      const contactsData = contacts.filter(contact => selectedContactIds.includes(contact.id));
+      setSelectedContacts(contactsData);
     } else {
-      onCreateCampaign(campaignData);
+      setSelectedContacts([]);
     }
-    
-    toast({
-      title: campaign ? "Campaign Updated" : "Campaign Created",
-      description: campaign ? "Your campaign has been updated successfully." : "Your campaign has been created successfully.",
-    });
+  }, [selectedContactIds, contacts]);
+  
+  // Get the selected template
+  const selectedTemplate = templates.find(template => template.id === selectedTemplateId);
+  
+  // Define the steps
+  const steps: { id: CampaignCreatorStep; label: string; icon: React.ReactNode }[] = [
+    { id: 'template-selection', label: 'Choose Template', icon: <Sparkles className="h-4 w-4" /> },
+    { id: 'contacts', label: 'Select Contacts', icon: <Users className="h-4 w-4" /> },
+    { id: 'message-content', label: 'Message', icon: <MessageSquare className="h-4 w-4" /> },
+    { id: 'follow-ups', label: 'Follow-ups', icon: <ListChecks className="h-4 w-4" /> },
+    { id: 'schedule', label: 'Schedule', icon: <Calendar className="h-4 w-4" /> },
+    { id: 'goal', label: 'Set Goal', icon: <Pencil className="h-4 w-4" /> },
+    { id: 'knowledge-base', label: 'Knowledge Base', icon: <BookOpen className="h-4 w-4" /> },
+    { id: 'review', label: 'Review', icon: <Check className="h-4 w-4" /> }
+  ];
+  
+  // Step completion status
+  const getStepStatus = (step: CampaignCreatorStep) => {
+    switch (step) {
+      case 'template-selection':
+        return !!selectedTemplateId;
+      case 'contacts':
+        return selectedContactIds.length > 0 || !!selectedContactListId || !!selectedSegmentId;
+      case 'message-content':
+        return !!selectedTemplateId;
+      case 'follow-ups':
+        return true; // Follow-ups are optional
+      case 'schedule':
+        return !!scheduledStartDate && !!sendingWindow;
+      case 'knowledge-base':
+        return true; // Knowledge base is optional
+      case 'goal':
+        return !!campaignGoal;
+      case 'review':
+        return campaignName.trim().length > 0;
+      default:
+        return false;
+    }
   };
   
-  // Handle updating follow-ups
+  // Handle template selection
+  const handleTemplateSelect = (templateId: string) => {
+    setSelectedTemplateId(templateId);
+  };
+  
+  // Handle contact selection
+  const handleContactSelect = (contacts: string[]) => {
+    setSelectedContactIds(contacts);
+  };
+  
+  // Handle list selection
+  const handleListSelect = (listId?: string) => {
+    setSelectedContactListId(listId);
+  };
+  
+  // Handle segment selection
+  const handleSegmentSelect = (segmentId?: string) => {
+    setSelectedSegmentId(segmentId);
+  };
+  
+  // Handle knowledge base selection
+  const handleKnowledgeBaseSelect = (knowledgeBaseId?: string) => {
+    setSelectedKnowledgeBaseId(knowledgeBaseId);
+  };
+  
+  // Handle follow-up updates
   const handleFollowUpsUpdate = (updatedFollowUps: FollowUp[]) => {
     setFollowUps(updatedFollowUps);
   };
   
-  // Get the name of a template by ID
-  const getTemplateNameById = (id: string) => {
-    const template = templates.find(t => t.id === id);
-    return template ? template.name : 'Unknown Template';
+  // Handle template creation/edition completion
+  const handleTemplateEditorClose = () => {
+    setIsCreatingTemplate(false);
+    setEditingTemplate(undefined);
   };
   
-  // Handle contact selection changes
-  const handleContactSelectionChange = (contactIds: string[]) => {
-    setSelectedContactIds(contactIds);
-    // If user manually selects contacts, clear the contact list selection
-    if (contactIds.length > 0) {
-      setContactListId('');
+  // Handle template edit
+  const handleEditTemplate = (templateId: string) => {
+    const template = templates.find(t => t.id === templateId);
+    if (template) {
+      setEditingTemplate(template);
     }
   };
   
-  // Handle contact list selection
-  const handleContactListChange = (listId: string) => {
-    setContactListId(listId);
+  // Process campaign template selection
+  const handleCampaignTemplateSelect = (template: any) => {
+    // First create a new message template if needed
+    const existingTemplate = templates.find(t => 
+      t.name === template.name && 
+      t.body === template.messageTemplateBody
+    );
     
-    // If a list is selected, use its contacts
-    if (listId) {
-      const list = contactLists.find(cl => cl.id === listId);
-      if (list) {
-        setSelectedContactIds(list.contactIds);
+    if (existingTemplate) {
+      // Use existing template
+      setSelectedTemplateId(existingTemplate.id);
+    } else {
+      // Create a new template based on the campaign template
+      const newTemplate: Omit<Template, 'id' | 'createdAt' | 'updatedAt'> = {
+        name: template.name,
+        body: template.messageTemplateBody,
+        variables: template.variables
+      };
+      
+      // Open template editor with pre-populated data
+      setEditingTemplate({
+        ...newTemplate,
+        id: '', // Will be generated on save
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+    }
+    
+    // Set campaign name and description based on template
+    setCampaignName(template.name);
+    setCampaignDescription(template.description);
+    
+    // Set follow-ups if available
+    if (template.followUps && template.followUps.length > 0) {
+      const newFollowUps: FollowUp[] = template.followUps.map((followUp: any, index: number) => ({
+        id: `follow-up-${Date.now()}-${index}`,
+        templateId: selectedTemplateId || '', // Will be updated after template creation
+        delayDays: followUp.delayDays,
+        enabled: true,
+        condition: followUp.condition
+      }));
+      
+      setFollowUps(newFollowUps);
+    }
+    
+    // Move to next step
+    setCurrentStep('contacts');
+  };
+  
+  // Navigation
+  const goToStep = (step: CampaignCreatorStep) => {
+    setCurrentStep(step);
+  };
+  
+  const goToNext = () => {
+    const currentIndex = steps.findIndex(step => step.id === currentStep);
+    if (currentIndex < steps.length - 1) {
+      setCurrentStep(steps[currentIndex + 1].id);
+    }
+  };
+  
+  const goToPrevious = () => {
+    const currentIndex = steps.findIndex(step => step.id === currentStep);
+    if (currentIndex > 0) {
+      setCurrentStep(steps[currentIndex - 1].id);
+    }
+  };
+  
+  // Check if the current step is valid before proceeding
+  const canProceed = () => {
+    return getStepStatus(currentStep);
+  };
+  
+  // Submit campaign
+  const handleSubmit = () => {
+    if (!selectedTemplateId) {
+      toast({
+        title: "Template Required",
+        description: "Please select a template for your campaign.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (!selectedContactIds.length && !selectedContactListId && !selectedSegmentId) {
+      toast({
+        title: "Contacts Required",
+        description: "Please select contacts, a contact list, or a segment for your campaign.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (!campaignName.trim()) {
+      toast({
+        title: "Campaign Name Required",
+        description: "Please provide a name for your campaign.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      // Create campaign data
+      const campaignData: Omit<Campaign, 'id' | 'createdAt' | 'updatedAt'> = {
+        name: campaignName,
+        description: campaignDescription,
+        status: 'draft',
+        templateId: selectedTemplateId,
+        contactIds: selectedContactIds,
+        contactListId: selectedContactListId,
+        segmentId: selectedSegmentId,
+        contactCount: selectedContacts.length,
+        knowledgeBaseId: selectedKnowledgeBaseId,
+        followUps,
+        scheduledStartDate,
+        sendingWindow,
+        timeZone,
+        goal: campaignGoal
+      };
+      
+      if (existingCampaign) {
+        // Update existing campaign
+        updateCampaign(existingCampaign.id, campaignData);
+        toast({
+          title: "Campaign Updated",
+          description: `Campaign "${campaignName}" has been updated successfully.`
+        });
+      } else {
+        // Create new campaign
+        createCampaign(campaignData);
+        toast({
+          title: "Campaign Created",
+          description: `Campaign "${campaignName}" has been created successfully.`
+        });
       }
+      
+      if (onComplete) {
+        onComplete();
+      }
+    } catch (error) {
+      console.error("Error creating campaign:", error);
+      toast({
+        title: "Error",
+        description: "There was an error creating your campaign. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+  
+  // Render the current step
+  const renderStep = () => {
+    switch (currentStep) {
+      case 'template-selection':
+        return (
+          <TemplateSelector onSelect={handleCampaignTemplateSelect} />
+        );
+      case 'contacts':
+        return (
+          <CampaignContactSelection
+            selectedContactIds={selectedContactIds}
+            selectedListId={selectedContactListId}
+            selectedSegmentId={selectedSegmentId}
+            onContactsSelect={handleContactSelect}
+            onListSelect={handleListSelect}
+            onSegmentSelect={handleSegmentSelect}
+          />
+        );
+      case 'template':
+        return (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold">Select a Message Template</h2>
+              <Button onClick={() => setIsCreatingTemplate(true)}>Create New Template</Button>
+            </div>
+            
+            <TemplateList
+              templates={templates}
+              onEdit={handleEditTemplate}
+              onDelete={() => {}} // Read-only in this context
+              selectedTemplateId={selectedTemplateId}
+              onSelect={handleTemplateSelect}
+            />
+          </div>
+        );
+      case 'message-content':
+        return selectedTemplate ? (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold">Message Content</h2>
+              <Button 
+                variant="outline" 
+                onClick={() => handleEditTemplate(selectedTemplate.id)}
+              >
+                Edit Template
+              </Button>
+            </div>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>{selectedTemplate.name}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="whitespace-pre-wrap">{selectedTemplate.body}</div>
+                
+                {selectedTemplate.variables.length > 0 && (
+                  <div className="mt-4">
+                    <h3 className="font-medium mb-2">Variables in this template:</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedTemplate.variables.map(variable => (
+                        <div key={variable} className="px-2 py-1 bg-secondary rounded text-sm">
+                          {variable}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <h3 className="text-lg font-medium">No template selected</h3>
+            <p className="text-muted-foreground mt-2">Please go back and select a template first.</p>
+            <Button 
+              className="mt-4" 
+              variant="secondary"
+              onClick={() => goToStep('template')}
+            >
+              Select Template
+            </Button>
+          </div>
+        );
+      case 'follow-ups':
+        return selectedTemplate ? (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold">Follow-up Messages</h2>
+            
+            <FollowUpFlowBuilder
+              initialTemplateId={selectedTemplate.id}
+              followUps={followUps}
+              templates={templates}
+              onUpdate={handleFollowUpsUpdate}
+            />
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <h3 className="text-lg font-medium">No template selected</h3>
+            <p className="text-muted-foreground mt-2">Please go back and select a template first.</p>
+            <Button 
+              className="mt-4" 
+              variant="secondary"
+              onClick={() => goToStep('template')}
+            >
+              Select Template
+            </Button>
+          </div>
+        );
+      case 'schedule':
+        return (
+          <ScheduleCampaign
+            scheduledStartDate={scheduledStartDate}
+            sendingWindow={sendingWindow}
+            timeZone={timeZone}
+            onScheduleChange={(date) => setScheduledStartDate(date)}
+            onSendingWindowChange={(window) => setSendingWindow(window)}
+            onTimeZoneChange={(zone) => setTimeZone(zone)}
+          />
+        );
+      case 'knowledge-base':
+        return (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold">Add Knowledge Base</h2>
+            <p className="text-muted-foreground">
+              Adding a knowledge base will help in responding to customer questions 
+              with accurate information from your documents.
+            </p>
+            
+            <KnowledgeBaseList
+              knowledgeBases={knowledgeBases}
+              selectedKnowledgeBaseId={selectedKnowledgeBaseId}
+              onSelect={handleKnowledgeBaseSelect}
+            />
+          </div>
+        );
+      case 'goal':
+        return (
+          <CampaignGoalSelector
+            selectedGoal={campaignGoal}
+            onChange={setCampaignGoal}
+          />
+        );
+      case 'review':
+        return (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold">Review Campaign</h2>
+            
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="campaign-name">Campaign Name</Label>
+                <Input
+                  id="campaign-name"
+                  value={campaignName}
+                  onChange={(e) => setCampaignName(e.target.value)}
+                  placeholder="Enter campaign name"
+                  className="mt-1"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="campaign-description">Description (optional)</Label>
+                <Textarea
+                  id="campaign-description"
+                  value={campaignDescription}
+                  onChange={(e) => setCampaignDescription(e.target.value)}
+                  placeholder="Enter campaign description"
+                  className="mt-1"
+                />
+              </div>
+            </div>
+            
+            <CampaignDetailView
+              campaign={{
+                id: existingCampaign?.id || 'new-campaign',
+                name: campaignName,
+                description: campaignDescription,
+                status: 'draft',
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                contactCount: selectedContacts.length,
+                templateId: selectedTemplateId,
+                contactIds: selectedContactIds,
+                contactListId: selectedContactListId,
+                segmentId: selectedSegmentId,
+                knowledgeBaseId: selectedKnowledgeBaseId,
+                followUps,
+                scheduledStartDate,
+                sendingWindow,
+                timeZone,
+                goal: campaignGoal
+              }}
+              templates={templates}
+              contacts={contacts}
+              selectedTemplate={selectedTemplate}
+              selectedContacts={selectedContacts}
+              selectedKnowledgeBase={knowledgeBases.find(kb => kb.id === selectedKnowledgeBaseId)}
+              isReview={true}
+            />
+          </div>
+        );
+      default:
+        return null;
     }
   };
   
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>{campaign ? 'Edit Campaign' : 'Create New Campaign'}</CardTitle>
-          <CardDescription>
-            {campaign 
-              ? 'Update your campaign settings, audience, and schedule' 
-              : 'Set up a new outreach campaign to connect with your contacts'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="details" value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid grid-cols-5 mb-6">
-              <TabsTrigger value="details" className="flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                <span>Campaign Details</span>
-              </TabsTrigger>
-              <TabsTrigger value="goal" className="flex items-center gap-2">
-                <BarChart3 className="h-4 w-4" />
-                <span>Goal</span>
-              </TabsTrigger>
-              <TabsTrigger value="audience" className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                <span>Target Audience</span>
-              </TabsTrigger>
-              <TabsTrigger value="schedule" className="flex items-center gap-2">
-                <Clock className="h-4 w-4" />
-                <span>Schedule</span>
-              </TabsTrigger>
-              <TabsTrigger value="followups" className="flex items-center gap-2">
-                <List className="h-4 w-4" />
-                <span>Follow-ups</span>
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="details" className="space-y-6">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name" className={errors.name ? 'text-destructive' : ''}>
-                    Campaign Name*
-                  </Label>
-                  <Input 
-                    id="name" 
-                    value={name} 
-                    onChange={(e) => setName(e.target.value)} 
-                    placeholder="Summer Conference Outreach"
-                    className={errors.name ? 'border-destructive' : ''}
-                  />
-                  {errors.name && (
-                    <p className="text-sm text-destructive">Campaign name is required</p>
-                  )}
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="description">Description (Optional)</Label>
-                  <Textarea 
-                    id="description" 
-                    value={description} 
-                    onChange={(e) => setDescription(e.target.value)} 
-                    placeholder="Campaign targeting attendees of the summer tech conference"
-                    className="resize-none"
-                    rows={3}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="template" className={errors.templateId ? 'text-destructive' : ''}>
-                    Initial Message Template*
-                  </Label>
-                  
-                  {/* Template selection with card display */}
-                  <div className="space-y-2">
-                    <Select 
-                      value={templateId} 
-                      onValueChange={(value) => {
-                        console.log("Template selected:", value);
-                        setTemplateId(value);
-                      }}
-                    >
-                      <SelectTrigger id="template" className={cn(
-                        errors.templateId ? 'border-destructive' : '',
-                        "w-full"
-                      )}>
-                        <SelectValue placeholder="Select a message template" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {templates.length === 0 ? (
-                          <div className="p-2 text-center text-muted-foreground">
-                            No templates available
-                          </div>
-                        ) : (
-                          templates.map((template) => (
-                            <SelectItem key={template.id} value={template.id}>
-                              {template.name}
-                            </SelectItem>
-                          ))
-                        )}
-                      </SelectContent>
-                    </Select>
-                    
-                    {errors.templateId && (
-                      <p className="text-sm text-destructive">A message template is required</p>
-                    )}
-                    
-                    {/* Preview selected template */}
-                    {selectedTemplate && (
-                      <Card className="border-primary/20 bg-primary/5 mt-4">
-                        <CardHeader className="py-3 px-4">
-                          <CardTitle className="text-base flex items-center gap-2">
-                            <Check className="h-4 w-4 text-green-600" />
-                            Selected Template: {selectedTemplate.name}
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="py-3 px-4 border-t">
-                          <div className="text-sm text-muted-foreground line-clamp-3">
-                            {selectedTemplate.body}
-                          </div>
-                          
-                          {selectedTemplate.variables && selectedTemplate.variables.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-2">
-                              {selectedTemplate.variables.map(variable => (
-                                <Badge key={variable} variant="outline" className="text-xs">
-                                  {variable}
-                                </Badge>
-                              ))}
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    )}
-                    
-                    {templates.length === 0 && (
-                      <div className="bg-amber-50 border border-amber-200 rounded-md p-3 mt-2">
-                        <div className="flex items-start gap-2">
-                          <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5" />
-                          <div>
-                            <p className="text-amber-800 font-medium">No templates available</p>
-                            <p className="text-amber-700 text-sm mt-1">
-                              Create templates first before starting a campaign.
-                            </p>
-                            <Button 
-                              variant="outline" 
-                              className="mt-2 border-amber-300 text-amber-700 hover:bg-amber-100" 
-                              size="sm"
-                              onClick={() => window.location.href = '/templates'}
-                            >
-                              Go to Templates
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="knowledgeBase">Knowledge Base (Optional)</Label>
-                  <Select value={knowledgeBaseId} onValueChange={setKnowledgeBaseId}>
-                    <SelectTrigger id="knowledgeBase">
-                      <SelectValue placeholder="Select a knowledge base" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">None</SelectItem>
-                      {knowledgeBases.map((kb) => (
-                        <SelectItem key={kb.id} value={kb.id}>
-                          {kb.title}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">
-                    Knowledge bases provide context for AI-generated messages and responses.
-                  </p>
-                </div>
-                
-                <div className="flex justify-end mt-4">
-                  <Button 
-                    onClick={() => setActiveTab("goal")}
-                    className="bg-[#9b87f5] hover:bg-[#8B5CF6] text-white"
-                  >
-                    Continue to Goal
-                  </Button>
-                </div>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="goal" className="space-y-6">
-              <div className="space-y-4">
-                <CampaignGoalSelector 
-                  value={goal} 
-                  onChange={setGoal} 
-                />
-                
-                {errors.goal && (
-                  <p className="text-sm text-destructive">Please select a campaign goal</p>
+    <div className="space-y-8">
+      {/* Progress indicator */}
+      <div className="hidden sm:flex justify-between items-center">
+        {steps.map((step, index) => (
+          <React.Fragment key={step.id}>
+            <div 
+              className={`flex flex-col items-center cursor-pointer ${
+                index <= steps.findIndex(s => s.id === currentStep) 
+                  ? "text-primary" 
+                  : "text-muted-foreground"
+              }`}
+              onClick={() => goToStep(step.id)}
+            >
+              <div 
+                className={`flex items-center justify-center w-10 h-10 rounded-full mb-2 ${
+                  currentStep === step.id 
+                    ? "bg-primary text-primary-foreground" 
+                    : index < steps.findIndex(s => s.id === currentStep)
+                      ? "bg-primary/20 text-primary" 
+                      : "bg-muted text-muted-foreground"
+                }`}
+              >
+                {getStepStatus(step.id) && index < steps.findIndex(s => s.id === currentStep) ? (
+                  <Check className="h-5 w-5" />
+                ) : (
+                  step.icon
                 )}
-                
-                <div className="flex justify-between mt-4">
-                  <Button variant="outline" onClick={() => setActiveTab("details")}>
-                    Back to Details
-                  </Button>
-                  <Button 
-                    onClick={() => setActiveTab("audience")}
-                    className="bg-[#9b87f5] hover:bg-[#8B5CF6] text-white"
-                  >
-                    Continue to Audience
-                  </Button>
-                </div>
               </div>
-            </TabsContent>
+              <span className="text-xs font-medium text-center">{step.label}</span>
+            </div>
             
-            <TabsContent value="audience" className="space-y-6">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="contactList" className={errors.contacts ? 'text-destructive' : ''}>
-                    Select Contact List
-                  </Label>
-                  
-                  <Select value={contactListId} onValueChange={handleContactListChange}>
-                    <SelectTrigger id="contactList" className={cn(
-                      errors.contacts && !hasContactSelection() ? 'border-destructive' : '',
-                      "w-full"
-                    )}>
-                      <SelectValue placeholder="Choose a contact list" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="individual">None (Select individual contacts)</SelectItem>
-                      {contactLists.map((list) => (
-                        <SelectItem key={list.id} value={list.id}>
-                          {list.name} ({list.contactIds.length} contacts)
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  
-                  {/* Preview selected contact list */}
-                  {selectedContactList && (
-                    <Card className="border-primary/20 bg-primary/5 mt-4">
-                      <CardHeader className="py-3 px-4">
-                        <CardTitle className="text-base flex items-center gap-2">
-                          <Check className="h-4 w-4 text-green-600" />
-                          Selected List: {selectedContactList.name}
-                        </CardTitle>
-                        <CardDescription>
-                          {selectedContactList.contactIds.length} contacts
-                        </CardDescription>
-                      </CardHeader>
-                      {selectedContactList.description && (
-                        <CardContent className="py-3 px-4 border-t text-sm text-muted-foreground">
-                          {selectedContactList.description}
-                        </CardContent>
-                      )}
-                    </Card>
-                  )}
-                  
-                  {contactLists.length === 0 && (
-                    <div className="bg-amber-50 border border-amber-200 rounded-md p-3 mt-2">
-                      <div className="flex items-start gap-2">
-                        <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5" />
-                        <div>
-                          <p className="text-amber-800 font-medium">No contact lists available</p>
-                          <p className="text-amber-700 text-sm mt-1">
-                            Create a contact list first or select individual contacts below.
-                          </p>
-                          <Button 
-                            variant="outline" 
-                            className="mt-2 border-amber-300 text-amber-700 hover:bg-amber-100" 
-                            size="sm"
-                            onClick={() => window.location.href = '/contacts'}
-                          >
-                            Go to Contacts
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                
-                <div className="border-t pt-4">
-                  <Label className={errors.contacts ? 'text-destructive' : ''}>
-                    Or Select Individual Contacts
-                  </Label>
-                  
-                  <CampaignContactSelection
-                    contacts={contacts}
-                    selectedContactIds={selectedContactIds}
-                    onSelectionChange={handleContactSelectionChange}
-                    segmentId={segmentId}
-                    onSegmentChange={setSegmentId}
-                    customFilter={customFilter}
-                    onFilterChange={setCustomFilter}
-                  />
-                  
-                  {errors.contacts && !hasContactSelection() && (
-                    <p className="text-sm text-destructive mt-2">
-                      Please select contacts or a contact list for your campaign
-                    </p>
-                  )}
-                </div>
-                
-                <div className="flex justify-between mt-4">
-                  <Button variant="outline" onClick={() => setActiveTab("goal")}>
-                    Back to Goal
-                  </Button>
-                  <Button 
-                    onClick={() => setActiveTab("schedule")}
-                    className="bg-[#9b87f5] hover:bg-[#8B5CF6] text-white"
-                  >
-                    Continue to Schedule
-                  </Button>
-                </div>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="schedule" className="space-y-6">
-              <div className="space-y-4">
-                <div>
-                  <Label>Sending Schedule</Label>
-                  <div className="mt-2 space-y-4">
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium">Start Date (Optional)</p>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "w-full justify-start text-left font-normal",
-                              !scheduledDate && "text-muted-foreground"
-                            )}
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {scheduledDate ? format(scheduledDate, "PPP") : "Select a start date"}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={scheduledDate}
-                            onSelect={setScheduledDate}
-                            initialFocus
-                            disabled={(date) => date < new Date()}
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      <p className="text-xs text-muted-foreground">
-                        If no date is selected, the campaign will start when manually activated.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                
-                <TimeZoneSelector 
-                  value={timeZone} 
-                  onChange={setTimeZone} 
-                />
-                
-                <TimeWindowSelector
-                  value={sendingWindow}
-                  onChange={setSendingWindow}
-                />
-              </div>
-              
-              <div className="flex justify-between mt-6">
-                <Button variant="outline" onClick={() => setActiveTab("audience")}>
-                  Back to Audience
-                </Button>
-                <Button 
-                  onClick={() => setActiveTab("followups")}
-                  className="bg-[#9b87f5] hover:bg-[#8B5CF6] text-white"
-                >
-                  Continue to Follow-ups
-                </Button>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="followups" className="space-y-6">
-              {!templateId ? (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
-                  <div className="flex items-start gap-3">
-                    <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
-                    <div>
-                      <h3 className="font-medium text-yellow-800">Template Required</h3>
-                      <p className="text-sm text-yellow-700 mt-1">
-                        You must select an initial template before configuring follow-ups.
-                      </p>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => setActiveTab("details")}
-                        className="mt-2 border-yellow-300 text-yellow-700 hover:bg-yellow-100"
-                      >
-                        Go back to select a template
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <FollowUpFlowBuilder
-                  initialTemplateId={templateId}
-                  followUps={followUps}
-                  templates={templates}
-                  onUpdate={handleFollowUpsUpdate}
-                />
-              )}
-              
-              <div className="flex justify-between mt-6">
-                <Button variant="outline" onClick={() => setActiveTab("schedule")}>
-                  Back to Schedule
-                </Button>
-                <Button 
-                  onClick={handleSubmit}
-                  className="bg-[#8B5CF6] hover:bg-[#7E69AB] text-white"
-                >
-                  {campaign ? 'Update Campaign' : 'Create Campaign'}
-                </Button>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-        <CardFooter className="flex justify-between border-t pt-6">
-          <Button variant="outline" onClick={onCancel}>
-            Cancel
-          </Button>
+            {index < steps.length - 1 && (
+              <div 
+                className={`flex-1 h-0.5 mx-2 ${
+                  index < steps.findIndex(s => s.id === currentStep) 
+                    ? "bg-primary" 
+                    : "bg-muted"
+                }`}
+              ></div>
+            )}
+          </React.Fragment>
+        ))}
+      </div>
+      
+      {/* Mobile step indicator */}
+      <div className="sm:hidden">
+        <div className="flex items-center justify-between mb-4">
+          <div className="text-sm font-medium">
+            Step {steps.findIndex(s => s.id === currentStep) + 1} of {steps.length}
+          </div>
+          <div className="text-sm font-medium">
+            {steps.find(s => s.id === currentStep)?.label}
+          </div>
+        </div>
+        <div className="w-full bg-muted h-2 rounded-full overflow-hidden">
+          <div 
+            className="bg-primary h-full rounded-full"
+            style={{ width: `${((steps.findIndex(s => s.id === currentStep) + 1) / steps.length) * 100}%` }}
+          ></div>
+        </div>
+      </div>
+      
+      {/* Content */}
+      <div className="min-h-[300px]">
+        {renderStep()}
+      </div>
+      
+      {/* Template editor modal */}
+      {(isCreatingTemplate || editingTemplate) && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-background rounded-lg w-full max-w-2xl max-h-[90vh] overflow-auto">
+            <TemplateEditor
+              template={editingTemplate}
+              onClose={handleTemplateEditorClose}
+            />
+          </div>
+        </div>
+      )}
+      
+      {/* Navigation buttons */}
+      <div className="flex justify-between pt-4 border-t">
+        <Button 
+          variant="outline" 
+          onClick={goToPrevious}
+          disabled={currentStep === 'template-selection'}
+        >
+          <ChevronLeft className="h-4 w-4 mr-2" />
+          Back
+        </Button>
+        
+        {currentStep === 'review' ? (
           <Button 
             onClick={handleSubmit}
-            className="bg-[#8B5CF6] hover:bg-[#7E69AB] text-white"
+            disabled={!canProceed()}
           >
-            {campaign ? 'Update Campaign' : 'Create Campaign'}
+            <Save className="h-4 w-4 mr-2" />
+            {existingCampaign ? 'Update Campaign' : 'Create Campaign'}
           </Button>
-        </CardFooter>
-      </Card>
+        ) : (
+          <Button 
+            onClick={goToNext}
+            disabled={!canProceed()}
+          >
+            Next
+            <ChevronRight className="h-4 w-4 ml-2" />
+          </Button>
+        )}
+      </div>
     </div>
   );
 };
