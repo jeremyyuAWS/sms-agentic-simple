@@ -11,7 +11,8 @@ import {
   ContactFilter,
   ContactTag,
   ContactSegment,
-  ContactImport
+  ContactImport,
+  ContactList
 } from '@/lib/types';
 import React from 'react';
 
@@ -25,6 +26,7 @@ export interface AppContextProps {
   knowledgeBases: KnowledgeBase[];
   contactTags: ContactTag[];
   contactSegments: ContactSegment[];
+  contactLists: ContactList[];
   activeCampaign: Campaign | null;
   activeConversation: Conversation | null;
   activeTemplate: Template | null;
@@ -40,6 +42,7 @@ export interface AppContextProps {
   setKnowledgeBases: React.Dispatch<React.SetStateAction<KnowledgeBase[]>>;
   setContactTags: React.Dispatch<React.SetStateAction<ContactTag[]>>;
   setContactSegments: React.Dispatch<React.SetStateAction<ContactSegment[]>>;
+  setContactLists: React.Dispatch<React.SetStateAction<ContactList[]>>;
   setActiveCampaign: (campaign: Campaign | null) => void;
   setActiveConversation: (conversation: Conversation | null) => void;
   setActiveTemplate: (template: Template | null) => void;
@@ -56,6 +59,9 @@ export interface AppContextProps {
   ) => void;
   getContactsByImport?: (batchId: string) => Contact[];
   getContactImports?: () => ContactImport[];
+  createContactList?: (list: Omit<ContactList, 'id' | 'createdAt'>) => void;
+  updateContactList?: (id: string, updates: Partial<Omit<ContactList, 'id' | 'createdAt'>>) => void;
+  deleteContactList?: (id: string) => void;
   uploadKnowledgeBase: (knowledgeBase: KnowledgeBase) => void;
   deleteKnowledgeBase: (id: string) => void;
   createCampaign: (campaign: Omit<Campaign, 'id' | 'createdAt'>) => void;

@@ -1,9 +1,9 @@
 
 import React, { useState } from 'react';
 import { useApp } from '@/contexts';
-import { Campaign, Template, FollowUp, Contact, KnowledgeBase } from '@/lib/types';
+import { Campaign, Template, FollowUp, Contact, KnowledgeBase, ContactList } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Edit, Check, X, Calendar, Trash2, ArrowRight, Clock, Users, Tag, Mail, Info } from 'lucide-react';
+import { PlusCircle, Edit, Check, X, Calendar, Trash2, ArrowRight, Clock, Users, Tag, Mail, Info, List } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -39,9 +39,10 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import CampaignContactSelection from '@/components/campaigns/CampaignContactSelection';
 import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 const Campaigns = () => {
-  const { campaigns, templates, contacts, knowledgeBases, createCampaign, updateCampaignStatus, addFollowUpToCampaign, removeFollowUp } = useApp();
+  const { campaigns, templates, contacts, knowledgeBases, contactLists, createCampaign, updateCampaignStatus, addFollowUpToCampaign, removeFollowUp } = useApp();
   const { toast } = useToast();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
@@ -53,6 +54,8 @@ const Campaigns = () => {
     enabled: true,
     condition: 'no-response'
   });
+
+  const [contactSelectionMethod, setContactSelectionMethod] = useState<'individual' | 'list'>('individual');
   
   // Create campaign form
   const form = useForm({
@@ -62,18 +65,31 @@ const Campaigns = () => {
       templateId: '',
       knowledgeBaseId: '',
       contactIds: [] as string[],
+      contactListId: ''
     }
   });
 
   // Function to handle campaign creation
   const handleCreateCampaign = (values: any) => {
-    // Count selected contacts
-    const contactCount = values.contactIds.length;
+    let contactIds: string[] = [];
+    let contactCount = 0;
+
+    // Get contacts based on selection method
+    if (contactSelectionMethod === 'individual' && values.contactIds.length > 0) {
+      contactIds = values.contactIds;
+      contactCount = contactIds.length;
+    } else if (contactSelectionMethod === 'list' && values.contactListId) {
+      const selectedList = contactLists.find(list => list.id === values.contactListId);
+      if (selectedList) {
+        contactIds = selectedList.contactIds;
+        contactCount = selectedList.contactIds.length;
+      }
+    }
     
     if (contactCount === 0) {
       toast({
         title: "Error",
-        description: "You need to select at least one contact for the campaign.",
+        description: "You need to select at least one contact or a contact list for the campaign.",
         variant: "destructive"
       });
       return;
@@ -99,12 +115,14 @@ const Campaigns = () => {
       updatedAt: new Date(),
       templateId: values.templateId,
       knowledgeBaseId: values.knowledgeBaseId || undefined,
-      contactIds: values.contactIds,
+      contactIds: contactSelectionMethod === 'individual' ? contactIds : undefined,
+      contactListId: contactSelectionMethod === 'list' ? values.contactListId : undefined,
       followUps: []
     };
     
     createCampaign(newCampaign);
     form.reset();
+    setContactSelectionMethod('individual');
     setIsCreateOpen(false);
     
     toast({
@@ -189,6 +207,11 @@ const Campaigns = () => {
   // Function to get contact by ID
   const getContactById = (contactId: string): Contact | undefined => {
     return contacts.find(c => c.id === contactId);
+  };
+
+  // Function to get contact list by ID
+  const getContactListById = (listId: string): ContactList | undefined => {
+    return contactLists.find(list => list.id === listId);
   };
 
   // Function to get knowledge base by ID
@@ -387,6 +410,12 @@ const Campaigns = () => {
                           With Knowledge Base
                         </Badge>
                       )}
+                      {campaign.contactListId && (
+                        <Badge variant="outline" className="bg-green-50">
+                          <List className="h-3 w-3 mr-1" />
+                          {getContactListById(campaign.contactListId)?.name || 'Contact List'}
+                        </Badge>
+                      )}
                     </div>
                   </CardContent>
                   <CardFooter className="bg-muted/30 p-4 border-t flex justify-between items-center">
@@ -479,6 +508,14 @@ const Campaigns = () => {
                         <p className="text-xs text-muted-foreground mb-1">Created</p>
                         <p className="text-sm font-medium">{format(new Date(campaign.createdAt), 'MMM d, yyyy')}</p>
                       </div>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {campaign.contactListId && (
+                        <Badge variant="outline" className="bg-green-50">
+                          <List className="h-3 w-3 mr-1" />
+                          {getContactListById(campaign.contactListId)?.name || 'Contact List'}
+                        </Badge>
+                      )}
                     </div>
                   </CardContent>
                   <CardFooter className="bg-muted/30 p-4 border-t flex justify-between items-center">
@@ -703,26 +740,126 @@ const Campaigns = () => {
                 />
               )}
               
-              <FormField
-                control={form.control}
-                name="contactIds"
-                render={({ field }) => (
-                  <FormItem className="border rounded-md p-4">
-                    <FormLabel className="text-base">Select Contacts</FormLabel>
-                    <FormDescription className="mt-1 mb-3">
-                      Choose the contacts that will receive messages in this campaign.
-                    </FormDescription>
-                    <FormControl>
-                      <CampaignContactSelection
-                        contacts={contacts}
-                        selectedContactIds={field.value}
-                        onChange={field.onChange}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+              {/* Contact Selection Method */}
+              <div className="border rounded-md p-4 space-y-4">
+                <div>
+                  <Label className="text-base font-medium">Select Contacts</Label>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Choose how you want to select contacts for this campaign.
+                  </p>
+                </div>
+                
+                <RadioGroup
+                  defaultValue="individual"
+                  value={contactSelectionMethod}
+                  onValueChange={(value) => setContactSelectionMethod(value as 'individual' | 'list')}
+                  className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3"
+                >
+                  <div className={cn(
+                    "flex items-center space-x-2 border rounded-lg p-4 cursor-pointer transition-colors",
+                    contactSelectionMethod === 'individual' && "border-primary bg-primary/5"
+                  )}>
+                    <RadioGroupItem value="individual" id="individual" />
+                    <Label htmlFor="individual" className="cursor-pointer font-normal">
+                      <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4 text-primary" />
+                        <span>Select Individual Contacts</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Choose specific contacts from your contact database.
+                      </p>
+                    </Label>
+                  </div>
+                  
+                  <div className={cn(
+                    "flex items-center space-x-2 border rounded-lg p-4 cursor-pointer transition-colors",
+                    contactSelectionMethod === 'list' && "border-primary bg-primary/5"
+                  )}>
+                    <RadioGroupItem value="list" id="list" />
+                    <Label htmlFor="list" className="cursor-pointer font-normal">
+                      <div className="flex items-center gap-2">
+                        <List className="h-4 w-4 text-primary" />
+                        <span>Use a Contact List</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Select an existing contact list for your campaign.
+                      </p>
+                    </Label>
+                  </div>
+                </RadioGroup>
+                
+                {contactSelectionMethod === 'individual' ? (
+                  <FormField
+                    control={form.control}
+                    name="contactIds"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <CampaignContactSelection
+                            contacts={contacts}
+                            selectedContactIds={field.value}
+                            onChange={field.onChange}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                ) : (
+                  <FormField
+                    control={form.control}
+                    name="contactListId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Select Contact List</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Choose a contact list" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {contactLists.length === 0 ? (
+                              <SelectItem value="no-lists" disabled>
+                                No contact lists available. Create one first.
+                              </SelectItem>
+                            ) : (
+                              contactLists.map(list => (
+                                <SelectItem key={list.id} value={list.id}>
+                                  {list.name} ({list.contactIds.length} contacts)
+                                </SelectItem>
+                              ))
+                            )}
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          All contacts in the selected list will be included in this campaign.
+                        </FormDescription>
+                        {field.value && (
+                          <div className="mt-2 p-2 bg-muted rounded-md">
+                            <p className="text-sm font-medium">
+                              {getContactListById(field.value)?.name}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {getContactListById(field.value)?.description}
+                            </p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Users className="h-3 w-3 text-muted-foreground" />
+                              <p className="text-xs">
+                                {getContactListById(field.value)?.contactIds.length} contacts
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 )}
-              />
+              </div>
               
               <DialogFooter className="sticky bottom-0 bg-background pt-4 z-10">
                 <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>
@@ -782,6 +919,31 @@ const Campaigns = () => {
                   </CardContent>
                 </Card>
               </div>
+              
+              {/* Contact List Information */}
+              {selectedCampaign.contactListId && (
+                <div className="space-y-3">
+                  <h3 className="text-lg font-semibold">Contact List</h3>
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <List className="h-4 w-4 text-primary" />
+                            <p className="font-medium">{getContactListById(selectedCampaign.contactListId)?.name || 'Unknown List'}</p>
+                          </div>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {getContactListById(selectedCampaign.contactListId)?.description || 'No description'}
+                          </p>
+                        </div>
+                        <Badge variant="outline" className="bg-primary/10">
+                          {getContactListById(selectedCampaign.contactListId)?.contactIds.length || 0} contacts
+                        </Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
               
               {/* Initial Message */}
               <div className="space-y-3">

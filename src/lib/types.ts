@@ -19,6 +19,16 @@ export interface Contact {
   [key: string]: any; // Allow for flexible fields
 }
 
+export interface ContactList {
+  id: string;
+  name: string;
+  description?: string;
+  contactIds: string[];
+  createdAt: Date;
+  updatedAt?: Date;
+  source?: string;
+}
+
 export interface ContactTag {
   id: string;
   name: string;
@@ -93,6 +103,7 @@ export interface Campaign {
   scheduledStartDate?: Date; // When to start sending the initial messages
   followUps?: FollowUp[]; // List of follow-up messages
   contactIds?: string[]; // Specific contact IDs to include
+  contactListId?: string; // Reference to a contact list
   segmentId?: string; // Reference to a saved segment
   customFilter?: ContactFilter; // Custom filter criteria
 }
