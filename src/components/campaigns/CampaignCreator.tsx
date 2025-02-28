@@ -8,27 +8,21 @@ import {
   KnowledgeBase, 
 } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import CampaignContactSelection from './CampaignContactSelection';
-import TemplateSelector from '@/components/templates/TemplateSelector';
-import ScheduleCampaign from './ScheduleCampaign';
 import LoadingState from '@/components/ui/loading-state';
 import { useCampaignForm } from '@/hooks/use-campaign-form';
+import { Badge } from '@/components/ui/badge';
+import { Check } from 'lucide-react';
 
 // Import subcomponents
 import CampaignDetailsTab from './campaign-creator/CampaignDetailsTab';
 import CampaignFollowupsTab from './campaign-creator/CampaignFollowupsTab';
 import CampaignCreatorHeader from './campaign-creator/CampaignCreatorHeader';
-import CampaignCreatorFooter from './campaign-creator/CampaignCreatorFooter';
 import RecommendedTemplatesList from './RecommendedTemplatesList';
-import CampaignSetupGuide from './CampaignSetupGuide';
+import CampaignScheduleTab from './campaign-creator/CampaignScheduleTab';
 import { CampaignType } from './CampaignTypeSelector';
-import { Badge } from '@/components/ui/badge';
-import { Check, CheckCircle, InfoIcon } from 'lucide-react';
 
 interface CampaignCreatorProps {
   campaign?: Campaign;
@@ -197,48 +191,12 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
               <div className="mt-6 px-2">
                 {/* Details Tab */}
                 <TabsContent value="details" className="space-y-6 mt-0">
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="name" className="text-base font-medium">Campaign Name</Label>
-                      <Input
-                        type="text"
-                        id="name"
-                        placeholder="Enter campaign name"
-                        value={formState.name}
-                        onChange={(e) => handleInputChange('name', e.target.value)}
-                        required
-                        aria-required="true"
-                        className="w-full"
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="description" className="text-base font-medium">Description</Label>
-                      <Textarea
-                        id="description"
-                        placeholder="Enter campaign description"
-                        value={formState.description}
-                        onChange={(e) => handleInputChange('description', e.target.value)}
-                        className="min-h-[120px] w-full"
-                      />
-                    </div>
-                  </div>
-                  
-                  {/* Best Practices */}
-                  <div className="p-4 bg-blue-50 border border-blue-100 rounded-lg mt-6">
-                    <h3 className="text-lg font-medium mb-2 text-blue-700 flex items-center">
-                      <InfoIcon className="h-5 w-5 mr-2" />
-                      Campaign Best Practices
-                    </h3>
-                    <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 pl-5 text-sm text-blue-700 list-disc">
-                      <li>Keep messages concise: SMS messages should be brief and to the point</li>
-                      <li>Include a clear call-to-action in each message</li>
-                      <li>Personalize messages with recipient's name when possible</li>
-                      <li>Always identify yourself or your company in the first message</li>
-                      <li>Send during business hours to maximize response rates</li>
-                      <li>Follow up strategically - the sequence is pre-configured for optimal engagement</li>
-                    </ul>
-                  </div>
+                  <CampaignDetailsTab 
+                    name={formState.name}
+                    description={formState.description}
+                    onNameChange={(value) => handleInputChange('name', value)}
+                    onDescriptionChange={(value) => handleInputChange('description', value)}
+                  />
                 </TabsContent>
 
                 {/* Contacts Tab */}
@@ -278,17 +236,14 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
 
                 {/* Schedule Tab */}
                 <TabsContent value="schedule" className="space-y-6 mt-0">
-                  <div className="border rounded-lg p-6">
-                    <h2 className="text-lg font-semibold mb-4">Campaign Schedule</h2>
-                    <ScheduleCampaign
-                      startDate={formState.scheduledStartDate}
-                      window={formState.sendingWindow}
-                      timezone={formState.timeZone}
-                      onScheduleChange={(date) => handleInputChange('scheduledStartDate', date)}
-                      onSendingWindowChange={(window) => handleInputChange('sendingWindow', window)}
-                      onTimeZoneChange={(timezone) => handleInputChange('timeZone', timezone)}
-                    />
-                  </div>
+                  <CampaignScheduleTab
+                    startDate={formState.scheduledStartDate}
+                    window={formState.sendingWindow}
+                    timezone={formState.timeZone}
+                    onScheduleChange={(date) => handleInputChange('scheduledStartDate', date)}
+                    onSendingWindowChange={(window) => handleInputChange('sendingWindow', window)}
+                    onTimeZoneChange={(timezone) => handleInputChange('timeZone', timezone)}
+                  />
                 </TabsContent>
               </div>
             </Tabs>
