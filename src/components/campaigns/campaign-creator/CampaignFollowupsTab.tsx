@@ -279,7 +279,7 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
                                     updatedFollowUps[index].enabled = checked;
                                     onFollowUpsChange(updatedFollowUps);
                                   }}
-                                  size="sm"
+                                  className="scale-75 origin-left"
                                 />
                               </div>
                               <Button 
