@@ -38,16 +38,18 @@ import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import CampaignContactSelection from '@/components/campaigns/CampaignContactSelection';
+import ScheduleCampaign from '@/components/campaigns/ScheduleCampaign';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 const Campaigns = () => {
-  const { campaigns, templates, contacts, knowledgeBases, contactLists, createCampaign, updateCampaignStatus, addFollowUpToCampaign, removeFollowUp } = useApp();
+  const { campaigns, templates, contacts, knowledgeBases, contactLists, createCampaign, updateCampaignStatus, addFollowUpToCampaign, removeFollowUp, updateCampaignSchedule } = useApp();
   const { toast } = useToast();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
   const [showCampaignDetails, setShowCampaignDetails] = useState(false);
   const [addingFollowUp, setAddingFollowUp] = useState(false);
+  const [isSchedulingCampaign, setIsSchedulingCampaign] = useState(false);
   const [newFollowUp, setNewFollowUp] = useState<Partial<FollowUp>>({
     templateId: '',
     delayDays: 2,
@@ -197,6 +199,28 @@ const Campaigns = () => {
       title: "Status Updated",
       description: `Campaign status changed to ${newStatus}.`
     });
+  };
+
+  // Handler for schedule update
+  const handleScheduleUpdate = (
+    campaignId: string,
+    scheduledStartDate: Date,
+    timeZone?: string,
+    sendingWindow?: {
+      startTime: string;
+      endTime: string;
+      daysOfWeek: number[];
+    }
+  ) => {
+    updateCampaignSchedule(campaignId, scheduledStartDate, timeZone, sendingWindow);
+    
+    // Refresh selected campaign
+    const updatedCampaign = campaigns.find(c => c.id === campaignId);
+    if (updatedCampaign) {
+      setSelectedCampaign(updatedCampaign);
+    }
+    
+    setIsSchedulingCampaign(false);
   };
 
   // Function to get template by ID
@@ -416,6 +440,12 @@ const Campaigns = () => {
                           {getContactListById(campaign.contactListId)?.name || 'Contact List'}
                         </Badge>
                       )}
+                      {campaign.scheduledStartDate && (
+                        <Badge variant="outline" className="bg-amber-50">
+                          <Calendar className="h-3 w-3 mr-1" />
+                          Scheduled: {format(new Date(campaign.scheduledStartDate), 'MMM d, yyyy')}
+                        </Badge>
+                      )}
                     </div>
                   </CardContent>
                   <CardFooter className="bg-muted/30 p-4 border-t flex justify-between items-center">
@@ -514,6 +544,12 @@ const Campaigns = () => {
                         <Badge variant="outline" className="bg-green-50">
                           <List className="h-3 w-3 mr-1" />
                           {getContactListById(campaign.contactListId)?.name || 'Contact List'}
+                        </Badge>
+                      )}
+                      {campaign.scheduledStartDate && (
+                        <Badge variant="outline" className="bg-amber-50">
+                          <Calendar className="h-3 w-3 mr-1" />
+                          Scheduled: {format(new Date(campaign.scheduledStartDate), 'MMM d, yyyy')}
                         </Badge>
                       )}
                     </div>
@@ -920,6 +956,82 @@ const Campaigns = () => {
                 </Card>
               </div>
               
+              {/* Campaign Schedule */}
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <Calendar className="h-5 w-5 text-primary" />
+                    Campaign Schedule
+                  </h3>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => setIsSchedulingCampaign(true)}
+                    disabled={selectedCampaign.status === 'completed'}
+                  >
+                    {selectedCampaign.scheduledStartDate ? 'Edit Schedule' : 'Schedule Campaign'}
+                  </Button>
+                </div>
+                
+                {selectedCampaign.scheduledStartDate ? (
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                          <div>
+                            <p className="text-xs text-muted-foreground mb-1">Start Date</p>
+                            <p className="text-sm font-medium">
+                              {format(new Date(selectedCampaign.scheduledStartDate), 'MMMM d, yyyy')}
+                            </p>
+                          </div>
+                          {selectedCampaign.timeZone && (
+                            <div>
+                              <p className="text-xs text-muted-foreground mb-1">Time Zone</p>
+                              <p className="text-sm font-medium">
+                                {selectedCampaign.timeZone.replace('_', ' ')}
+                              </p>
+                            </div>
+                          )}
+                          {selectedCampaign.sendingWindow && (
+                            <div>
+                              <p className="text-xs text-muted-foreground mb-1">Sending Hours</p>
+                              <p className="text-sm font-medium">
+                                {selectedCampaign.sendingWindow.startTime} - {selectedCampaign.sendingWindow.endTime}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {selectedCampaign.sendingWindow && selectedCampaign.sendingWindow.daysOfWeek.length > 0 && (
+                          <div>
+                            <p className="text-xs text-muted-foreground mb-1">Sending Days</p>
+                            <div className="flex flex-wrap gap-2">
+                              {selectedCampaign.sendingWindow.daysOfWeek.map(day => {
+                                const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                                return (
+                                  <Badge key={day} variant="outline" className="bg-muted">
+                                    {days[day]}
+                                  </Badge>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Card className="bg-muted/30">
+                    <CardContent className="p-6 text-center">
+                      <p className="text-muted-foreground mb-3">No schedule configured</p>
+                      <p className="text-sm text-muted-foreground">
+                        Set a schedule to specify when this campaign should start sending messages.
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+              
               {/* Contact List Information */}
               {selectedCampaign.contactListId && (
                 <div className="space-y-3">
@@ -1199,6 +1311,29 @@ const Campaigns = () => {
               Add Follow-up
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Schedule Campaign Dialog */}
+      <Dialog open={isSchedulingCampaign} onOpenChange={setIsSchedulingCampaign}>
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="sticky top-0 bg-background z-10 pb-4">
+            <DialogTitle>Schedule Campaign</DialogTitle>
+            <DialogDescription>
+              Set when your campaign should start and specify sending windows.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedCampaign && (
+            <div className="py-4">
+              <ScheduleCampaign 
+                campaign={selectedCampaign}
+                onScheduleUpdate={(date, timeZone, sendingWindow) => 
+                  handleScheduleUpdate(selectedCampaign.id, date, timeZone, sendingWindow)
+                }
+              />
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

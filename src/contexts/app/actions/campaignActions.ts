@@ -1,5 +1,5 @@
 
-import { Campaign, KnowledgeBase, FollowUp, FollowUpCondition, Message } from '@/lib/types';
+import { Campaign, KnowledgeBase, FollowUp, FollowUpCondition, Message, TimeWindow } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
 export const createCampaignActions = (
@@ -161,7 +161,7 @@ export const createCampaignActions = (
     });
   };
   
-  const updateCampaignSchedule = (campaignId: string, scheduledStartDate: Date) => {
+  const updateCampaignSchedule = (campaignId: string, scheduledStartDate: Date, timeZone?: string, sendingWindow?: TimeWindow) => {
     const now = new Date();
     
     setCampaigns(prev => {
@@ -172,6 +172,8 @@ export const createCampaignActions = (
         updated[campaignIndex] = {
           ...updated[campaignIndex],
           scheduledStartDate,
+          timeZone: timeZone || updated[campaignIndex].timeZone,
+          sendingWindow: sendingWindow || updated[campaignIndex].sendingWindow,
           updatedAt: now
         };
       }
@@ -179,9 +181,23 @@ export const createCampaignActions = (
       return updated;
     });
     
+    let description = `Campaign scheduled to start on ${scheduledStartDate.toLocaleString()}`;
+    if (timeZone) {
+      description += ` (${timeZone})`;
+    }
+    
+    if (sendingWindow) {
+      const daysOfWeek = sendingWindow.daysOfWeek.map(day => {
+        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        return days[day];
+      }).join(', ');
+      
+      description += ` between ${sendingWindow.startTime} and ${sendingWindow.endTime} on ${daysOfWeek}`;
+    }
+    
     toast({
       title: "Campaign Schedule Updated",
-      description: `Campaign scheduled to start on ${scheduledStartDate.toLocaleString()}.`
+      description
     });
   };
 
