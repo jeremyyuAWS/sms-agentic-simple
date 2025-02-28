@@ -22,9 +22,10 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
-import { Info, AlertCircle } from 'lucide-react';
+import { Info, AlertCircle, Check, AlertTriangle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from "@/components/ui/separator";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 // Schema for field mapping form - make both fields required to match FieldMappingItem
 const fieldMappingSchema = z.object({
@@ -93,6 +94,22 @@ const FieldMappingForm: React.FC<FieldMappingFormProps> = ({
     }
   };
 
+  // Check if sample value is valid for the selected field
+  const checkValueValidity = (value: string, fieldKey: string): boolean => {
+    if (!value || fieldKey === 'ignore-column' || fieldKey.startsWith('custom-')) return true;
+    
+    const field = knownFields.find(f => f.key === fieldKey);
+    if (!field) return true;
+    
+    // If the field has a validator, use it
+    if (field.validator) {
+      return field.validator(value);
+    }
+    
+    // Default to true if no validator
+    return true;
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between mb-4">
@@ -150,6 +167,8 @@ const FieldMappingForm: React.FC<FieldMappingFormProps> = ({
                   const headerInfo = typeInfo.find(t => t.csvHeader === mapping.csvHeader);
                   const field = knownFields.find(f => f.key === mapping.mappedTo);
                   const isRequired = field?.required;
+                  const sampleValue = headerInfo?.sampleValue || '';
+                  const isValidFormat = checkValueValidity(sampleValue, mapping.mappedTo);
                   
                   return (
                     <TableRow key={index} className={isRequired && !mapping.mappedTo ? "bg-amber-50" : ""}>
@@ -162,54 +181,80 @@ const FieldMappingForm: React.FC<FieldMappingFormProps> = ({
                         </div>
                       </TableCell>
                       <TableCell>
-                        <FormField
-                          control={form.control}
-                          name={`fieldMappings.${index}.mappedTo`}
-                          render={({ field }) => (
-                            <Select 
-                              value={field.value} 
-                              onValueChange={field.onChange}
-                            >
-                              <SelectTrigger className={`w-full ${isRequired && !field.value ? "border-amber-500" : ""}`}>
-                                <SelectValue placeholder="Select field" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="ignore-column">-- Ignore this column --</SelectItem>
-                                
-                                {/* Group: Required Fields */}
-                                <div className="py-1 px-2 text-xs font-bold text-muted-foreground">
-                                  Required Fields
+                        <div className="flex items-center gap-2">
+                          <FormField
+                            control={form.control}
+                            name={`fieldMappings.${index}.mappedTo`}
+                            render={({ field }) => (
+                              <div className="relative w-full">
+                                <Select 
+                                  value={field.value} 
+                                  onValueChange={field.onChange}
+                                >
+                                  <SelectTrigger 
+                                    className={`w-full ${isRequired && !field.value ? "border-amber-500" : ""}`}
+                                  >
+                                    <SelectValue placeholder="Select field" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="ignore-column">-- Ignore this column --</SelectItem>
+                                    
+                                    {/* Group: Required Fields */}
+                                    <div className="py-1 px-2 text-xs font-bold text-muted-foreground">
+                                      Required Fields
+                                    </div>
+                                    <Separator className="my-1" />
+                                    {knownFields.filter(f => f.required).map((knownField) => (
+                                      <SelectItem key={knownField.key} value={knownField.key} className="font-medium">
+                                        {knownField.displayName} *
+                                      </SelectItem>
+                                    ))}
+                                    
+                                    {/* Group: Optional Fields */}
+                                    <div className="py-1 px-2 text-xs font-bold text-muted-foreground mt-1">
+                                      Optional Fields
+                                    </div>
+                                    <Separator className="my-1" />
+                                    {knownFields.filter(f => !f.required).map((knownField) => (
+                                      <SelectItem key={knownField.key} value={knownField.key}>
+                                        {knownField.displayName}
+                                      </SelectItem>
+                                    ))}
+                                    
+                                    {/* Group: Custom */}
+                                    <div className="py-1 px-2 text-xs font-bold text-muted-foreground mt-1">
+                                      Custom
+                                    </div>
+                                    <Separator className="my-1" />
+                                    <SelectItem value={`custom-${mapping.csvHeader}`}>
+                                      Custom: "{mapping.csvHeader}"
+                                    </SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            )}
+                          />
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="flex-shrink-0">
+                                  {mapping.mappedTo !== 'ignore-column' && mapping.mappedTo !== '' && isValidFormat && (
+                                    <Check className="h-5 w-5 text-green-500" />
+                                  )}
+                                  {mapping.mappedTo !== 'ignore-column' && mapping.mappedTo !== '' && !isValidFormat && (
+                                    <AlertTriangle className="h-5 w-5 text-amber-500" />
+                                  )}
                                 </div>
-                                <Separator className="my-1" />
-                                {knownFields.filter(f => f.required).map((knownField) => (
-                                  <SelectItem key={knownField.key} value={knownField.key} className="font-medium">
-                                    {knownField.displayName} *
-                                  </SelectItem>
-                                ))}
-                                
-                                {/* Group: Optional Fields */}
-                                <div className="py-1 px-2 text-xs font-bold text-muted-foreground mt-1">
-                                  Optional Fields
-                                </div>
-                                <Separator className="my-1" />
-                                {knownFields.filter(f => !f.required).map((knownField) => (
-                                  <SelectItem key={knownField.key} value={knownField.key}>
-                                    {knownField.displayName}
-                                  </SelectItem>
-                                ))}
-                                
-                                {/* Group: Custom */}
-                                <div className="py-1 px-2 text-xs font-bold text-muted-foreground mt-1">
-                                  Custom
-                                </div>
-                                <Separator className="my-1" />
-                                <SelectItem value={`custom-${mapping.csvHeader}`}>
-                                  Custom: "{mapping.csvHeader}"
-                                </SelectItem>
-                              </SelectContent>
-                            </Select>
-                          )}
-                        />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {isValidFormat 
+                                  ? "Valid format for this field" 
+                                  : `Sample value doesn't match the expected format for ${field?.displayName}`
+                                }
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
                       </TableCell>
                       <TableCell className="text-sm font-mono">
                         {headerInfo?.sampleValue || ''}
