@@ -101,6 +101,8 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
           <TemplateSelector 
             onSelect={handleTemplateSelect} 
             selectedTemplateId={formState.templateId}
+            knowledgeBaseId={formState.knowledgeBaseId}
+            knowledgeBases={knowledgeBases}
           />
         );
       case 'schedule':
@@ -123,6 +125,8 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
             selectedTemplateId={formState.templateId}
             templates={templates}
             onFollowUpsChange={(followUps) => handleInputChange('followUps', followUps)}
+            knowledgeBaseId={formState.knowledgeBaseId}
+            knowledgeBases={knowledgeBases}
           />
         );
       default:
