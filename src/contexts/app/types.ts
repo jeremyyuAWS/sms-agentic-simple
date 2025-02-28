@@ -20,6 +20,32 @@ import {
 } from '@/lib/types';
 import React from 'react';
 
+// New interface for guided workflow
+export interface WorkflowState {
+  active: boolean;
+  currentStep: 'contacts' | 'template' | 'campaign' | 'schedule' | 'review';
+  contactsData?: {
+    importId?: string;
+    contactIds?: string[];
+    listId?: string;
+    segmentId?: string;
+  };
+  templateData?: {
+    selectedTemplateId?: string;
+    draftTemplateBody?: string;
+  };
+  campaignData?: {
+    name?: string;
+    description?: string;
+    knowledgeBaseId?: string;
+  };
+  scheduleData?: {
+    scheduledStartDate?: Date;
+    timeZone?: string;
+    sendingWindow?: TimeWindow;
+  };
+}
+
 export interface AppContextProps {
   // State
   campaigns: Campaign[];
@@ -37,6 +63,9 @@ export interface AppContextProps {
   activeTemplate: Template | null;
   sidebarOpen: boolean;
   
+  // New workflow state
+  workflow: WorkflowState;
+  
   // State setters
   toggleSidebar: () => void;
   setCampaigns: React.Dispatch<React.SetStateAction<Campaign[]>>;
@@ -52,6 +81,13 @@ export interface AppContextProps {
   setActiveCampaign: (campaign: Campaign | null) => void;
   setActiveConversation: (conversation: Conversation | null) => void;
   setActiveTemplate: (template: Template | null) => void;
+  
+  // New workflow actions
+  startWorkflow: () => void;
+  continueWorkflow: (nextStep: WorkflowState['currentStep']) => void;
+  updateWorkflowData: (data: Partial<WorkflowState>) => void;
+  completeWorkflow: () => void;
+  cancelWorkflow: () => void;
   
   // Actions
   sendMessage: (contactId: string, message: string, campaignId?: string) => void;
