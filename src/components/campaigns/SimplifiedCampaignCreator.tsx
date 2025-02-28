@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useApp } from '@/contexts';
 import { Button } from '@/components/ui/button';
@@ -23,8 +22,7 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
     contactLists, 
     templates, 
     createCampaign, 
-    updateCampaign,
-    knowledgeBases 
+    updateCampaign
   } = useApp();
   
   const [step, setStep] = useState<'type-selection' | 'campaign-creation'>('type-selection');
@@ -438,7 +436,6 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
       contacts={contacts}
       contactLists={contactLists}
       templates={templates}
-      knowledgeBases={knowledgeBases}
       onCreateCampaign={handleCreateCampaign}
       onUpdateCampaign={handleUpdateCampaign}
       onCancel={handleBack}

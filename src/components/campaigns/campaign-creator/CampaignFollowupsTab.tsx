@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import FollowUpFlowBuilder from '../FollowUpFlowBuilder';
-import { Template, KnowledgeBase, FollowUpCondition } from '@/lib/types';
+import { Template, FollowUpCondition } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Sparkles, AlertCircle, MessageSquare, ThumbsUp, ThumbsDown, Search, Clock, Calendar, ArrowRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -24,7 +24,7 @@ interface CampaignFollowupsTabProps {
   templates: Template[];
   onFollowUpsChange: (followUps: any[]) => void;
   knowledgeBaseId?: string;
-  knowledgeBases?: KnowledgeBase[];
+  knowledgeBases?: any[];
 }
 
 const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
@@ -34,69 +34,14 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
   selectedTemplateId,
   templates,
   onFollowUpsChange,
-  knowledgeBaseId,
-  knowledgeBases = []
 }) => {
   const { toast } = useToast();
-  const [isGenerating, setIsGenerating] = useState(false);
   const [selectedView, setSelectedView] = useState<string>("visual");
-  const selectedKnowledgeBase = knowledgeBaseId 
-    ? knowledgeBases.find(kb => kb.id === knowledgeBaseId) 
-    : undefined;
 
   // Find first template if none selected
   const initialTemplate = selectedTemplateId 
     ? templates.find(t => t.id === selectedTemplateId) 
     : templates[0];
-
-  // Helper function to generate smart follow-ups based on knowledge base and initial template
-  const generateSmartFollowUps = () => {
-    setIsGenerating(true);
-    
-    // Simulation of AI-generated follow-ups (in a real app, this would use actual AI processing)
-    setTimeout(() => {
-      
-      if (initialTemplate && selectedKnowledgeBase) {
-        // Create follow-up recommendation based on the content and initial template
-        const newFollowUps = [
-          {
-            id: `followup-${Date.now()}-1`,
-            templateId: selectedTemplateId || templates[0]?.id,
-            delayDays: 3,
-            enabled: true,
-            condition: 'no-response',
-            conditions: [{ type: 'no-response' as FollowUpCondition['type'] }]
-          },
-          {
-            id: `followup-${Date.now()}-2`,
-            templateId: templates.length > 1 ? templates[1].id : selectedTemplateId || templates[0]?.id,
-            delayDays: 7,
-            enabled: true,
-            condition: 'no-response',
-            conditions: [
-              { type: 'no-response' as FollowUpCondition['type'] },
-              { type: 'negative-response' as FollowUpCondition['type'] }
-            ]
-          }
-        ];
-        
-        onFollowUpsChange(newFollowUps);
-        
-        toast({
-          title: "Follow-up sequence generated",
-          description: `Created a smart follow-up sequence based on "${selectedKnowledgeBase.title}"`,
-        });
-      } else {
-        toast({
-          title: "Couldn't generate follow-ups",
-          description: "Please select a valid template and knowledge base first",
-          variant: "destructive"
-        });
-      }
-      
-      setIsGenerating(false);
-    }, 1500);
-  };
 
   // Helper to get template preview
   const getTemplatePreview = (templateId: string) => {
@@ -106,7 +51,7 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
 
   // Generate follow-ups if none exist
   useEffect(() => {
-    if (isFollowUpsEnabled && followUps.length === 0 && templates.length > 0 && !isGenerating) {
+    if (isFollowUpsEnabled && followUps.length === 0 && templates.length > 0) {
       // Create default follow-up sequence with first two templates
       const defaultFollowUps = [
         {
@@ -136,7 +81,7 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
       
       onFollowUpsChange(defaultFollowUps);
     }
-  }, [isFollowUpsEnabled, followUps.length, templates, selectedTemplateId, onFollowUpsChange, isGenerating]);
+  }, [isFollowUpsEnabled, followUps.length, templates, selectedTemplateId, onFollowUpsChange]);
 
   return (
     <div className="space-y-4">
@@ -156,42 +101,18 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
       
       {isFollowUpsEnabled && (
         <>
-          {selectedKnowledgeBase && (
-            <div className="flex justify-between items-center mb-2">
-              <div className="text-sm flex items-center gap-2">
-                <MessageSquare className="h-4 w-4 text-primary" />
-                <span>Using knowledge base: <span className="font-medium">{selectedKnowledgeBase.title}</span></span>
-              </div>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={generateSmartFollowUps}
-                      disabled={isGenerating}
-                      className="flex items-center gap-1"
-                    >
-                      <Sparkles className="h-4 w-4" />
-                      {isGenerating ? "Generating..." : "Generate Smart Sequence"}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="max-w-xs">
-                      Generate a multi-stage follow-up sequence optimized for your knowledge base content
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-          )}
-          
-          {!selectedKnowledgeBase && (
-            <div className="text-sm flex items-center gap-2 text-amber-600 mb-2">
-              <AlertCircle className="h-4 w-4" />
-              <span>No knowledge base selected. Adding one improves follow-up suggestions.</span>
-            </div>
-          )}
+          <div className="text-sm space-y-2 mt-2 mb-4">
+            <p className="font-medium">Pre-configured follow-up sequence:</p>
+            <p>This campaign includes a strategic 3-step messaging sequence optimized for maximum engagement and response rates:</p>
+            <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
+              <li><strong>Initial message:</strong> Sent immediately when the campaign starts</li>
+              <li><strong>Follow-up #1:</strong> Sent 3 days after initial message if no response</li>
+              <li><strong>Follow-up #2:</strong> Sent 7 days after initial message if no response or negative response</li>
+            </ul>
+            <p className="text-sm mt-2">
+              <span className="font-medium">Why this approach works:</span> Research shows that 80% of sales require 5+ follow-ups, yet 44% of salespeople give up after just one attempt. This strategic sequence ensures you maintain contact through the critical decision-making window.
+            </p>
+          </div>
 
           <Tabs defaultValue="visual" className="mb-4" onValueChange={setSelectedView}>
             <TabsList className="grid w-full grid-cols-2">
@@ -331,12 +252,6 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
                     Add Another Follow-up Message
                   </Button>
                 </div>
-                
-                <div className="mt-6 pt-4 border-t">
-                  <p className="text-sm">
-                    <span className="font-medium">Why this approach works:</span> Research shows that 80% of sales require 5+ follow-ups, yet 44% of salespeople give up after just one attempt. This strategic sequence ensures you maintain contact through the critical decision-making window.
-                  </p>
-                </div>
               </div>
             </TabsContent>
             <TabsContent value="advanced" className="mt-4">
@@ -345,8 +260,6 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
                 followUps={followUps}
                 templates={templates}
                 onUpdate={onFollowUpsChange}
-                knowledgeBaseId={knowledgeBaseId}
-                knowledgeBases={knowledgeBases}
               />
             </TabsContent>
           </Tabs>
