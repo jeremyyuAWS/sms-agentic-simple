@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { FollowUp, Template } from '@/lib/types';
+import { FollowUp, Template, FollowUpCondition } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
+import AdvancedConditionEditor from './AdvancedConditionEditor';
 
 interface FollowUpDraft extends Omit<FollowUp, 'id'> {
   tempId?: string;
@@ -52,6 +53,7 @@ const FollowUpFlowBuilder: React.FC<FollowUpFlowBuilderProps> = ({
   const [isCreatingConnection, setIsCreatingConnection] = useState(false);
   const [connectionSource, setConnectionSource] = useState<string | null>(null);
   const [connectionType, setConnectionType] = useState<'onResponse' | 'onNoResponse' | null>(null);
+  const [activeTab, setActiveTab] = useState<string>('basic');
 
   // Initialize the flow with the existing follow-ups
   useEffect(() => {
@@ -169,6 +171,18 @@ const FollowUpFlowBuilder: React.FC<FollowUpFlowBuilderProps> = ({
 
     // Update parent component
     updateFollowUps(updatedNodes);
+  };
+
+  // Handle advanced conditions update
+  const handleConditionsUpdate = (conditions: FollowUpCondition[]) => {
+    if (!editingNodeData) return;
+    
+    const updatedData = {
+      ...editingNodeData,
+      conditions
+    };
+    
+    updateNodeData(updatedData);
   };
 
   // Convert the nodes to follow-ups for the parent component
@@ -440,7 +454,7 @@ const FollowUpFlowBuilder: React.FC<FollowUpFlowBuilderProps> = ({
               
               {node.type === 'followup' && (
                 <div className="flow-node-details text-sm">
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <Badge variant="outline" className="bg-blue-50">
                       Day +{(node.data as FollowUpDraft).delayDays || 0}
                     </Badge>
@@ -454,6 +468,12 @@ const FollowUpFlowBuilder: React.FC<FollowUpFlowBuilderProps> = ({
                         {(node.data as FollowUpDraft).condition === 'no-response' 
                           ? "No Response" 
                           : "All Contacts"}
+                      </Badge>
+                    )}
+                    
+                    {(node.data as FollowUpDraft).conditions && (node.data as FollowUpDraft).conditions.length > 0 && (
+                      <Badge variant="outline" className="bg-purple-50">
+                        {(node.data as FollowUpDraft).conditions.length} Advanced Condition{(node.data as FollowUpDraft).conditions.length !== 1 ? 's' : ''}
                       </Badge>
                     )}
                     
@@ -508,7 +528,7 @@ const FollowUpFlowBuilder: React.FC<FollowUpFlowBuilderProps> = ({
         
         {/* Properties Panel */}
         {selectedNode && (
-          <div className="properties-panel w-[300px] ml-4 border rounded-md bg-white overflow-y-auto">
+          <div className="properties-panel w-[350px] ml-4 border rounded-md bg-white overflow-y-auto">
             <div className="p-4">
               <h3 className="font-medium mb-3">
                 {nodes.find(n => n.id === selectedNode)?.type === 'initial' 
@@ -529,112 +549,107 @@ const FollowUpFlowBuilder: React.FC<FollowUpFlowBuilderProps> = ({
               ) : (
                 editingNodeData && (
                   <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="template">Message Template</Label>
-                      <Select 
-                        value={editingNodeData.templateId} 
-                        onValueChange={(value) => updateNodeData({...editingNodeData, templateId: value})}
-                      >
-                        <SelectTrigger id="template">
-                          <SelectValue placeholder="Select Template" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {templates.map(template => (
-                            <SelectItem key={template.id} value={template.id}>
-                              {template.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="delay">Delay (days)</Label>
-                      <Input 
-                        id="delay" 
-                        type="number" 
-                        min="1" 
-                        value={editingNodeData.delayDays || 2} 
-                        onChange={(e) => updateNodeData({
-                          ...editingNodeData, 
-                          delayDays: parseInt(e.target.value) || 1
-                        })}
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Days to wait after the previous message before sending this one.
-                      </p>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="condition">Send Condition</Label>
-                      <Select 
-                        value={editingNodeData.condition || 'no-response'} 
-                        onValueChange={(value: 'no-response' | 'all') => updateNodeData({
-                          ...editingNodeData, 
-                          condition: value
-                        })}
-                      >
-                        <SelectTrigger id="condition">
-                          <SelectValue placeholder="When to send" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="no-response">Only if no response</SelectItem>
-                          <SelectItem value="all">Send to all contacts</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="priority">Priority</Label>
-                      <Input 
-                        id="priority" 
-                        type="number" 
-                        min="1" 
-                        max="10" 
-                        value={editingNodeData.priority || 1} 
-                        onChange={(e) => updateNodeData({
-                          ...editingNodeData, 
-                          priority: parseInt(e.target.value) || 1
-                        })}
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Higher priority follow-ups will be sent first if multiple conditions are met.
-                      </p>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2 pt-2">
-                      <Switch 
-                        id="enabled" 
-                        checked={editingNodeData.enabled !== false}
-                        onCheckedChange={(checked) => updateNodeData({
-                          ...editingNodeData, 
-                          enabled: checked
-                        })}
-                      />
-                      <Label htmlFor="enabled">Enabled</Label>
-                    </div>
-                    
-                    <Tabs defaultValue="basic">
+                    <Tabs defaultValue="basic" value={activeTab} onValueChange={setActiveTab}>
                       <TabsList className="w-full grid grid-cols-2">
                         <TabsTrigger value="basic">Basic</TabsTrigger>
                         <TabsTrigger value="advanced">Advanced</TabsTrigger>
                       </TabsList>
-                      <TabsContent value="basic" className="mt-2">
-                        <p className="text-xs text-muted-foreground mb-2">
-                          Basic settings are currently being shown.
-                        </p>
-                      </TabsContent>
-                      <TabsContent value="advanced" className="mt-2">
+                      
+                      <TabsContent value="basic" className="space-y-4 mt-4">
                         <div className="space-y-2">
-                          <Label className="text-sm">Advanced Conditions</Label>
-                          <p className="text-xs text-muted-foreground mb-1">
-                            Configure more specific conditions for when this follow-up should be sent.
-                          </p>
-                          <Button variant="outline" size="sm" className="w-full">
-                            <PlusCircle className="h-3 w-3 mr-1" />
-                            Add Condition
-                          </Button>
+                          <Label htmlFor="template">Message Template</Label>
+                          <Select 
+                            value={editingNodeData.templateId} 
+                            onValueChange={(value) => updateNodeData({...editingNodeData, templateId: value})}
+                          >
+                            <SelectTrigger id="template">
+                              <SelectValue placeholder="Select Template" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {templates.map(template => (
+                                <SelectItem key={template.id} value={template.id}>
+                                  {template.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor="delay">Delay (days)</Label>
+                          <Input 
+                            id="delay" 
+                            type="number" 
+                            min="1" 
+                            value={editingNodeData.delayDays || 2} 
+                            onChange={(e) => updateNodeData({
+                              ...editingNodeData, 
+                              delayDays: parseInt(e.target.value) || 1
+                            })}
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Days to wait after the previous message before sending this one.
+                          </p>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor="condition">Basic Condition</Label>
+                          <Select 
+                            value={editingNodeData.condition || 'no-response'} 
+                            onValueChange={(value: 'no-response' | 'all') => updateNodeData({
+                              ...editingNodeData, 
+                              condition: value
+                            })}
+                          >
+                            <SelectTrigger id="condition">
+                              <SelectValue placeholder="When to send" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="no-response">Only if no response</SelectItem>
+                              <SelectItem value="all">Send to all contacts</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <p className="text-xs text-muted-foreground">
+                            For more complex conditions, use the Advanced tab.
+                          </p>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor="priority">Priority</Label>
+                          <Input 
+                            id="priority" 
+                            type="number" 
+                            min="1" 
+                            max="10" 
+                            value={editingNodeData.priority || 1} 
+                            onChange={(e) => updateNodeData({
+                              ...editingNodeData, 
+                              priority: parseInt(e.target.value) || 1
+                            })}
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Higher priority follow-ups will be sent first if multiple conditions are met.
+                          </p>
+                        </div>
+                        
+                        <div className="flex items-center space-x-2 pt-2">
+                          <Switch 
+                            id="enabled" 
+                            checked={editingNodeData.enabled !== false}
+                            onCheckedChange={(checked) => updateNodeData({
+                              ...editingNodeData, 
+                              enabled: checked
+                            })}
+                          />
+                          <Label htmlFor="enabled">Enabled</Label>
+                        </div>
+                      </TabsContent>
+                      
+                      <TabsContent value="advanced" className="mt-4">
+                        <AdvancedConditionEditor 
+                          conditions={editingNodeData.conditions || []}
+                          onChange={handleConditionsUpdate}
+                        />
                       </TabsContent>
                     </Tabs>
                   </div>
