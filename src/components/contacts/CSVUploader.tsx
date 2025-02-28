@@ -108,23 +108,67 @@ const CSVUploader: React.FC = () => {
           setHeaders(result.headers || []);
           
           // Generate some basic field mappings from headers
-          const suggestedMappings = (result.headers || []).map(header => ({
-            header,
-            field: header.toLowerCase().includes('email') ? 'email' :
-                   header.toLowerCase().includes('name') && header.toLowerCase().includes('first') ? 'firstName' :
-                   header.toLowerCase().includes('name') && header.toLowerCase().includes('last') ? 'lastName' :
-                   header.toLowerCase().includes('name') ? 'name' :
-                   header.toLowerCase().includes('phone') ? 'phone' :
-                   header.toLowerCase().includes('company') ? 'company' :
-                   header.toLowerCase().includes('title') || header.toLowerCase().includes('position') ? 'jobTitle' :
-                   header.toLowerCase().includes('linked') ? 'linkedIn' :
-                   header.toLowerCase().includes('twitter') ? 'twitter' :
-                   header.toLowerCase().includes('note') ? 'notes' :
-                   header.toLowerCase().includes('country') ? 'country' :
-                   header.toLowerCase().includes('state') || header.toLowerCase().includes('province') ? 'state' :
-                   header.toLowerCase().includes('city') ? 'city' :
-                   "skip" // Default to skip instead of empty string
-          }));
+          const suggestedMappings = (result.headers || []).map(header => {
+            const lowerHeader = header.toLowerCase();
+            let field = "skip";
+            
+            // Email detection
+            if (lowerHeader.includes('email') || lowerHeader.includes('e-mail') || lowerHeader === 'e mail') {
+              field = 'email';
+            }
+            // Name detection
+            else if (lowerHeader.includes('first') && lowerHeader.includes('name')) {
+              field = 'firstName';
+            }
+            else if (lowerHeader.includes('last') && lowerHeader.includes('name')) {
+              field = 'lastName';
+            }
+            else if (lowerHeader.includes('full') && lowerHeader.includes('name')) {
+              field = 'name';
+            }
+            else if (lowerHeader === 'name' || (lowerHeader.includes('name') && !lowerHeader.includes('company'))) {
+              field = 'name';
+            }
+            // Phone detection
+            else if (lowerHeader.includes('phone') || lowerHeader.includes('mobile') || lowerHeader.includes('cell')) {
+              field = 'phone';
+            }
+            // Company detection
+            else if (lowerHeader.includes('company') || lowerHeader.includes('organization') || lowerHeader.includes('employer')) {
+              field = 'company';
+            }
+            // Job title detection
+            else if (lowerHeader.includes('title') || lowerHeader.includes('position') || lowerHeader.includes('role') || lowerHeader.includes('job')) {
+              field = 'jobTitle';
+            }
+            // LinkedIn detection
+            else if (lowerHeader.includes('linkedin') || lowerHeader.includes('linked in') || lowerHeader.includes('linked-in')) {
+              field = 'linkedIn';
+            }
+            // Twitter detection
+            else if (lowerHeader.includes('twitter') || lowerHeader.includes('tweet')) {
+              field = 'twitter';
+            }
+            // Notes detection
+            else if (lowerHeader.includes('note') || lowerHeader.includes('comment')) {
+              field = 'notes';
+            }
+            // Location detection
+            else if (lowerHeader.includes('country')) {
+              field = 'country';
+            }
+            else if (lowerHeader.includes('state') || lowerHeader.includes('province')) {
+              field = 'state';
+            }
+            else if (lowerHeader.includes('city') || lowerHeader.includes('town')) {
+              field = 'city';
+            }
+            
+            return {
+              header,
+              field
+            };
+          });
           
           setMappings(suggestedMappings);
           

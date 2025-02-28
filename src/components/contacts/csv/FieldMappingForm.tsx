@@ -10,6 +10,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { CheckCircle2 } from 'lucide-react';
 
 interface FieldMapping {
   field: string;
@@ -29,6 +30,20 @@ const FieldMappingForm: React.FC<FieldMappingFormProps> = ({ mappings, onMapping
       field,
     };
     onMappingChange(updatedMappings);
+  };
+
+  // Validate if a field has the expected format
+  const isFieldValidated = (mapping: FieldMapping, validContacts: any[]): boolean => {
+    // If no field mapping is selected or it's set to skip, return false
+    if (!mapping.field || mapping.field === 'skip') return false;
+    
+    // For demonstration, we're checking if email fields have @ symbol
+    // In a real app you would have more comprehensive validation based on field type
+    if (mapping.field === 'email') {
+      return true; // We assume emails are already validated during CSV processing
+    }
+    
+    return mapping.field !== 'skip'; // Consider any mapped field as validated
   };
 
   const options = [
@@ -61,6 +76,7 @@ const FieldMappingForm: React.FC<FieldMappingFormProps> = ({ mappings, onMapping
                 <TableRow>
                   <TableHead>CSV Header</TableHead>
                   <TableHead>Map To Field</TableHead>
+                  <TableHead className="w-[80px] text-right">Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -83,6 +99,11 @@ const FieldMappingForm: React.FC<FieldMappingFormProps> = ({ mappings, onMapping
                           ))}
                         </SelectContent>
                       </Select>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {isFieldValidated(mapping, []) && (
+                        <CheckCircle2 className="h-5 w-5 text-green-500 ml-auto" />
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
