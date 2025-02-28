@@ -484,7 +484,7 @@ const Templates = () => {
       )}
 
       {/* Color legend */}
-      <div className="mb-6 p-4 bg-muted/20 rounded-lg">
+      <div className="mb-16 p-4 bg-muted/20 rounded-lg">
         <h3 className="text-sm font-medium mb-2">Template Color Guide</h3>
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
@@ -500,8 +500,8 @@ const Templates = () => {
 
       {/* Create Template Dialog */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="sticky top-0 bg-background z-10 pb-4">
             <DialogTitle>Create New Template</DialogTitle>
             <DialogDescription>
               Create a reusable message template with personalization variables using {"{variable}"} syntax.
@@ -597,6 +597,7 @@ const Templates = () => {
                 placeholder="Hi {name}, I'm Alex from Taikis. Do you have 5 minutes to discuss our opportunity?"
                 rows={6}
                 required
+                className="min-h-[120px]"
               />
               <p className="text-xs text-muted-foreground">
                 Use {"{variable}"} syntax for personalization (e.g., {"{name}"}, {"{company}"})
@@ -634,7 +635,7 @@ const Templates = () => {
             </div>
           </div>
           
-          <DialogFooter>
+          <DialogFooter className="sticky bottom-0 bg-background pt-4 z-10">
             <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
               Cancel
             </Button>
@@ -647,8 +648,8 @@ const Templates = () => {
 
       {/* Template Preview Dialog */}
       <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="sticky top-0 bg-background z-10 pb-4">
             <DialogTitle>{selectedTemplate?.name}</DialogTitle>
             <DialogDescription>
               Preview how your template will look with different variable values.
@@ -681,7 +682,7 @@ const Templates = () => {
             </div>
           )}
           
-          <DialogFooter>
+          <DialogFooter className="sticky bottom-0 bg-background pt-4 z-10">
             <Button variant="outline" onClick={() => setIsPreviewOpen(false)}>
               Close
             </Button>
@@ -695,8 +696,8 @@ const Templates = () => {
 
       {/* Scheduling Dialog */}
       <Dialog open={showScheduling} onOpenChange={setShowScheduling}>
-        <DialogContent className="sm:max-w-[450px]">
-          <DialogHeader>
+        <DialogContent className="sm:max-w-[450px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="sticky top-0 bg-background z-10 pb-4">
             <DialogTitle>Schedule Template Send</DialogTitle>
             <DialogDescription>
               Set when you want to send this template to your contacts.
@@ -797,7 +798,7 @@ const Templates = () => {
             )}
           </div>
           
-          <DialogFooter>
+          <DialogFooter className="sticky bottom-0 bg-background pt-4 z-10">
             <Button variant="outline" onClick={() => setShowScheduling(false)}>
               Cancel
             </Button>
