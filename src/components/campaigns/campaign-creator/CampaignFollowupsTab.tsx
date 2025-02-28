@@ -5,7 +5,7 @@ import { Switch } from '@/components/ui/switch';
 import FollowUpFlowBuilder from '../FollowUpFlowBuilder';
 import { Template, KnowledgeBase, FollowUpCondition } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { Sparkles, AlertCircle, MessageSquare, ThumbsUp, ThumbsDown, Search } from 'lucide-react';
+import { Sparkles, AlertCircle, MessageSquare, ThumbsUp, ThumbsDown, Search, Clock, Calendar, ArrowRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { 
   Tooltip,
@@ -13,6 +13,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface CampaignFollowupsTabProps {
   isFollowUpsEnabled: boolean;
@@ -37,9 +39,15 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
 }) => {
   const { toast } = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
+  const [selectedView, setSelectedView] = useState<string>("visual");
   const selectedKnowledgeBase = knowledgeBaseId 
     ? knowledgeBases.find(kb => kb.id === knowledgeBaseId) 
     : undefined;
+
+  // Find first template if none selected
+  const initialTemplate = selectedTemplateId 
+    ? templates.find(t => t.id === selectedTemplateId) 
+    : templates[0];
 
   // Helper function to generate smart follow-ups based on knowledge base and initial template
   const generateSmartFollowUps = () => {
@@ -47,14 +55,13 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
     
     // Simulation of AI-generated follow-ups (in a real app, this would use actual AI processing)
     setTimeout(() => {
-      const initialTemplate = templates.find(t => t.id === selectedTemplateId);
       
       if (initialTemplate && selectedKnowledgeBase) {
         // Create follow-up recommendation based on the content and initial template
         const newFollowUps = [
           {
             id: `followup-${Date.now()}-1`,
-            templateId: selectedTemplateId,
+            templateId: selectedTemplateId || templates[0]?.id,
             delayDays: 3,
             enabled: true,
             condition: 'no-response',
@@ -62,7 +69,7 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
           },
           {
             id: `followup-${Date.now()}-2`,
-            templateId: templates.length > 1 ? templates[1].id : selectedTemplateId,
+            templateId: templates.length > 1 ? templates[1].id : selectedTemplateId || templates[0]?.id,
             delayDays: 7,
             enabled: true,
             condition: 'no-response',
@@ -90,6 +97,46 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
       setIsGenerating(false);
     }, 1500);
   };
+
+  // Helper to get template preview
+  const getTemplatePreview = (templateId: string) => {
+    const template = templates.find(t => t.id === templateId);
+    return template ? template.body : "No template selected";
+  };
+
+  // Generate follow-ups if none exist
+  useEffect(() => {
+    if (isFollowUpsEnabled && followUps.length === 0 && templates.length > 0 && !isGenerating) {
+      // Create default follow-up sequence with first two templates
+      const defaultFollowUps = [
+        {
+          id: `followup-${Date.now()}-1`,
+          templateId: selectedTemplateId || templates[0]?.id,
+          delayDays: 3,
+          enabled: true,
+          condition: 'no-response',
+          conditions: [{ type: 'no-response' as FollowUpCondition['type'] }]
+        }
+      ];
+      
+      // Only add second follow-up if we have more than one template
+      if (templates.length > 1) {
+        defaultFollowUps.push({
+          id: `followup-${Date.now()}-2`,
+          templateId: templates[1].id,
+          delayDays: 7,
+          enabled: true,
+          condition: 'no-response',
+          conditions: [
+            { type: 'no-response' as FollowUpCondition['type'] },
+            { type: 'negative-response' as FollowUpCondition['type'] }
+          ]
+        });
+      }
+      
+      onFollowUpsChange(defaultFollowUps);
+    }
+  }, [isFollowUpsEnabled, followUps.length, templates, selectedTemplateId, onFollowUpsChange, isGenerating]);
 
   return (
     <div className="space-y-4">
@@ -146,53 +193,163 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
             </div>
           )}
 
-          <div className="border rounded-lg p-4 mb-4">
-            <h3 className="font-semibold mb-3">Pre-configured Follow-up Sequence</h3>
-            <p className="text-sm mb-3">
-              Your campaign includes a strategic follow-up sequence designed to maximize engagement. Each step is fully customizable but optimized based on proven communication patterns:
-            </p>
-            
-            <div className="space-y-3 text-sm">
-              <div className="flex items-start gap-2">
-                <div className="mt-0.5 text-primary font-medium">Step 1:</div>
-                <div>
-                  <p className="font-medium">Initial Outreach</p>
-                  <p className="text-muted-foreground">Your primary message that introduces your offer or invitation.</p>
+          <Tabs defaultValue="visual" className="mb-4" onValueChange={setSelectedView}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="visual">Visual Sequence</TabsTrigger>
+              <TabsTrigger value="advanced">Advanced Builder</TabsTrigger>
+            </TabsList>
+            <TabsContent value="visual" className="mt-4">
+              <div className="border rounded-lg p-4">
+                <h3 className="font-semibold mb-3">Your Message Sequence</h3>
+                <p className="text-sm mb-4">
+                  This campaign includes a strategic messaging sequence designed to maximize engagement. You can customize each message or timing while maintaining proven communication patterns.
+                </p>
+                
+                <div className="space-y-6">
+                  {/* Initial message */}
+                  <div className="relative">
+                    <Card className="border-2 border-primary">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <Calendar className="h-4 w-4" />
+                          Initial Message
+                        </CardTitle>
+                        <CardDescription>
+                          Sent immediately when campaign starts
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="pb-2">
+                        <div className="bg-muted/40 rounded-md p-3 text-sm">
+                          {getTemplatePreview(selectedTemplateId || templates[0]?.id || "")}
+                        </div>
+                      </CardContent>
+                      <CardFooter className="text-xs text-muted-foreground pt-0">
+                        Template: {initialTemplate?.name || "None selected"}
+                      </CardFooter>
+                    </Card>
+                    
+                    {/* Visual connector */}
+                    {followUps.length > 0 && (
+                      <div className="absolute h-8 w-0.5 bg-border left-1/2 -bottom-8 transform -translate-x-1/2"></div>
+                    )}
+                  </div>
+                  
+                  {/* Follow-up messages */}
+                  {followUps.map((followUp, index) => {
+                    const template = templates.find(t => t.id === followUp.templateId);
+                    const conditions = followUp.conditions || 
+                      (followUp.condition === 'no-response' ? [{ type: 'no-response' as FollowUpCondition['type'] }] : 
+                       followUp.condition === 'all' ? [{ type: 'all' as FollowUpCondition['type'] }] : []);
+                    
+                    const hasNextFollowUp = index < followUps.length - 1;
+                    
+                    return (
+                      <div key={followUp.id} className="relative">
+                        <Card>
+                          <CardHeader className="pb-2">
+                            <CardTitle className="text-base flex items-center gap-2">
+                              <Clock className="h-4 w-4" />
+                              Follow-up {index + 1}: After {followUp.delayDays} days
+                            </CardTitle>
+                            <CardDescription>
+                              {conditions.map((condition, i) => (
+                                <span key={i} className="inline-flex items-center mr-2">
+                                  {condition.type === 'no-response' && "If no response"}
+                                  {condition.type === 'negative-response' && "If negative response"}
+                                  {condition.type === 'positive-response' && "If positive response"}
+                                  {condition.type === 'all' && "Always send"}
+                                  {condition.type === 'keyword' && "If keyword detected"}
+                                  {i < conditions.length - 1 && " or "}
+                                </span>
+                              ))}
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent className="pb-2">
+                            <div className="bg-muted/40 rounded-md p-3 text-sm">
+                              {getTemplatePreview(followUp.templateId)}
+                            </div>
+                            <div className="mt-2 flex justify-between">
+                              <div className="flex items-center gap-1">
+                                <Label htmlFor={`enabled-${followUp.id}`} className="text-xs">Enabled</Label>
+                                <Switch
+                                  id={`enabled-${followUp.id}`}
+                                  checked={followUp.enabled}
+                                  onCheckedChange={(checked) => {
+                                    const updatedFollowUps = [...followUps];
+                                    updatedFollowUps[index].enabled = checked;
+                                    onFollowUpsChange(updatedFollowUps);
+                                  }}
+                                  size="sm"
+                                />
+                              </div>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="text-xs h-7 px-2"
+                                onClick={() => {
+                                  const updatedFollowUps = followUps.filter((_, i) => i !== index);
+                                  onFollowUpsChange(updatedFollowUps);
+                                }}
+                              >
+                                Remove
+                              </Button>
+                            </div>
+                          </CardContent>
+                          <CardFooter className="text-xs text-muted-foreground pt-0">
+                            Template: {template?.name || "None selected"}
+                          </CardFooter>
+                        </Card>
+                        
+                        {/* Visual connector for next follow-up */}
+                        {hasNextFollowUp && (
+                          <div className="absolute h-8 w-0.5 bg-border left-1/2 -bottom-8 transform -translate-x-1/2"></div>
+                        )}
+                      </div>
+                    );
+                  })}
+                  
+                  {/* Add new follow-up button */}
+                  <Button 
+                    variant="outline" 
+                    className="w-full mt-4 border-dashed"
+                    onClick={() => {
+                      // Find a template not yet used, or reuse the first one
+                      const usedTemplateIds = new Set(followUps.map(f => f.templateId));
+                      let templateId = templates.find(t => !usedTemplateIds.has(t.id))?.id || templates[0]?.id;
+                      
+                      const newFollowUp = {
+                        id: `followup-${Date.now()}-${followUps.length + 1}`,
+                        templateId,
+                        delayDays: followUps.length > 0 ? followUps[followUps.length - 1].delayDays + 4 : 3,
+                        enabled: true,
+                        conditions: [{ type: 'no-response' as FollowUpCondition['type'] }]
+                      };
+                      
+                      onFollowUpsChange([...followUps, newFollowUp]);
+                    }}
+                  >
+                    Add Another Follow-up Message
+                  </Button>
+                </div>
+                
+                <div className="mt-6 pt-4 border-t">
+                  <p className="text-sm">
+                    <span className="font-medium">Why this approach works:</span> Research shows that 80% of sales require 5+ follow-ups, yet 44% of salespeople give up after just one attempt. This strategic sequence ensures you maintain contact through the critical decision-making window.
+                  </p>
                 </div>
               </div>
-              
-              <div className="flex items-start gap-2">
-                <div className="mt-0.5 text-primary font-medium">Step 2:</div>
-                <div>
-                  <p className="font-medium">First Follow-up (3 days later)</p>
-                  <p className="text-muted-foreground">Sent if no response is received. Gently reminds recipients about your initial message.</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start gap-2">
-                <div className="mt-0.5 text-primary font-medium">Step 3:</div>
-                <div>
-                  <p className="font-medium">Second Follow-up (7 days after initial)</p>
-                  <p className="text-muted-foreground">Triggered by continued non-response or negative responses. Provides additional value or addresses common objections.</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="mt-4 pt-3 border-t">
-              <p className="text-sm">
-                <span className="font-medium">Why this works:</span> Research shows that 80% of sales require 5+ follow-ups, yet 44% of salespeople give up after just one attempt. This sequence ensures you maintain contact through the critical decision-making window.
-              </p>
-            </div>
-          </div>
-          
-          <FollowUpFlowBuilder
-            initialTemplateId={selectedTemplateId || templates[0]?.id || ""}
-            followUps={followUps}
-            templates={templates}
-            onUpdate={onFollowUpsChange}
-            knowledgeBaseId={knowledgeBaseId}
-            knowledgeBases={knowledgeBases}
-          />
+            </TabsContent>
+            <TabsContent value="advanced" className="mt-4">
+              <FollowUpFlowBuilder
+                initialTemplateId={selectedTemplateId || templates[0]?.id || ""}
+                followUps={followUps}
+                templates={templates}
+                onUpdate={onFollowUpsChange}
+                knowledgeBaseId={knowledgeBaseId}
+                knowledgeBases={knowledgeBases}
+              />
+            </TabsContent>
+          </Tabs>
         </>
       )}
     </div>
