@@ -224,9 +224,9 @@ const PDFUploader: React.FC<PDFUploaderProps> = ({ onPDFUploaded }) => {
                       or <button className="text-primary hover:underline" onClick={handleOpenFileDialog}>select a file</button> from your computer
                     </p>
                   </div>
-                  <div className="mt-4 text-xs text-muted-foreground">
-                    <p>Upload a PDF that contains your campaign knowledge base:</p>
-                    <ul className="list-disc pl-5 mt-1">
+                  <div className="mt-4 text-xs text-muted-foreground text-left w-full max-w-xs mx-auto">
+                    <p className="text-left">Upload a PDF that contains your campaign knowledge base:</p>
+                    <ul className="list-disc pl-5 mt-1 text-left">
                       <li>Product FAQs</li>
                       <li>Promotion details</li>
                       <li>Sales scripts</li>
