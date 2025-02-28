@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import { useApp } from '@/contexts/app/AppContext';
+import { useNavigate } from 'react-router-dom';
 
 interface ImportFormProps {
   customImportName: string;
@@ -24,6 +25,7 @@ const ImportForm: React.FC<ImportFormProps> = ({
   onUpload
 }) => {
   const { startWorkflow, updateWorkflowData } = useApp();
+  const navigate = useNavigate();
   
   const handleContinueToCampaign = () => {
     // Start the workflow
@@ -36,6 +38,9 @@ const ImportForm: React.FC<ImportFormProps> = ({
         importId: `import-${Date.now()}`
       }
     });
+    
+    // Navigate to the template selection page
+    navigate('/templates/select');
   };
   
   return (
@@ -53,16 +58,20 @@ const ImportForm: React.FC<ImportFormProps> = ({
         </p>
       </div>
       
-      <div className="flex justify-between gap-3">
-        <Button onClick={onUpload} disabled={isUploading || !customImportName.trim()}>
+      <div className="flex flex-wrap justify-between gap-3">
+        <Button onClick={onUpload} disabled={isUploading || !customImportName.trim()} className="mb-2">
           {isUploading ? 'Uploading...' : `Upload ${contactCount} contacts`}
         </Button>
         
-        {/* Only show this button after upload is complete */}
-        {validContactIds && validContactIds.length > 0 && (
-          <Button variant="outline" onClick={handleContinueToCampaign}>
+        {/* Only show this button after successful import */}
+        {validContactIds && validContactIds.length > 0 && customImportName && (
+          <Button 
+            variant="outline" 
+            onClick={handleContinueToCampaign}
+            className="flex items-center gap-2 mb-2"
+          >
             Continue to Campaign Creation
-            <ArrowRight className="ml-2 h-4 w-4" />
+            <ArrowRight className="h-4 w-4" />
           </Button>
         )}
       </div>

@@ -1,7 +1,5 @@
 
 import React from 'react';
-import { ValidationResult } from './types';
-import { Contact } from '@/lib/types';
 import { 
   Accordion,
   AccordionContent,
@@ -22,20 +20,20 @@ import { Card } from '@/components/ui/card';
 import { Progress } from "@/components/ui/progress";
 
 interface ValidationSummaryProps {
-  validationResults: ValidationResult[];
-  contacts: Contact[];
+  validCount: number;
+  invalidCount: number;
   headers: string[];
+  invalidRows: any[]; // We'll use any here for simplicity
 }
 
 const ValidationSummary: React.FC<ValidationSummaryProps> = ({
-  validationResults,
-  contacts,
-  headers
+  validCount,
+  invalidCount,
+  headers,
+  invalidRows
 }) => {
-  const validRows = validationResults.filter(r => r.valid).length;
-  const invalidRows = validationResults.filter(r => !r.valid).length;
-  const totalRows = validationResults.length;
-  const successRate = Math.round((validRows / totalRows) * 100) || 0;
+  const totalRows = validCount + invalidCount;
+  const successRate = Math.round((validCount / totalRows) * 100) || 0;
 
   return (
     <Card className="p-4">
@@ -47,7 +45,7 @@ const ValidationSummary: React.FC<ValidationSummaryProps> = ({
       <div className="mb-6">
         <div className="flex justify-between items-center mb-2">
           <span className="text-sm font-medium">Validation success rate: {successRate}%</span>
-          <span className="text-xs text-muted-foreground">{validRows} of {totalRows} rows valid</span>
+          <span className="text-xs text-muted-foreground">{validCount} of {totalRows} rows valid</span>
         </div>
         <Progress value={successRate} className="h-2" />
       </div>
@@ -57,14 +55,14 @@ const ValidationSummary: React.FC<ValidationSummaryProps> = ({
           <CheckCircle className="h-5 w-5 text-green-500 mr-3" />
           <div>
             <div className="text-sm text-muted-foreground">Valid Rows</div>
-            <div className="text-xl font-semibold text-green-600">{validRows}</div>
+            <div className="text-xl font-semibold text-green-600">{validCount}</div>
           </div>
         </div>
         <div className="bg-red-50 border border-red-200 rounded-md p-3 flex items-center">
           <AlertCircle className="h-5 w-5 text-red-500 mr-3" />
           <div>
             <div className="text-sm text-muted-foreground">Invalid Rows</div>
-            <div className="text-xl font-semibold text-red-600">{invalidRows}</div>
+            <div className="text-xl font-semibold text-red-600">{invalidCount}</div>
           </div>
         </div>
         <div className="bg-blue-50 border border-blue-200 rounded-md p-3 flex items-center">
@@ -81,11 +79,11 @@ const ValidationSummary: React.FC<ValidationSummaryProps> = ({
           <AccordionTrigger className="hover:no-underline">
             <div className="flex items-center">
               <AlertCircle className="h-4 w-4 text-red-500 mr-2" />
-              <span>Invalid Rows ({invalidRows})</span>
+              <span>Invalid Rows ({invalidCount})</span>
             </div>
           </AccordionTrigger>
           <AccordionContent>
-            {invalidRows > 0 ? (
+            {invalidCount > 0 ? (
               <ScrollArea className="h-[300px]">
                 <Table>
                   <TableHeader>
@@ -96,82 +94,26 @@ const ValidationSummary: React.FC<ValidationSummaryProps> = ({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {validationResults
-                      .filter(result => !result.valid)
-                      .map((result) => (
-                        <TableRow key={result.rowIndex} className="bg-red-50/30">
-                          <TableCell>{result.rowIndex}</TableCell>
-                          <TableCell>
-                            <ul className="list-disc list-inside text-sm text-red-600">
-                              {result.errors.map((error, i) => (
-                                <li key={i}>{error}</li>
-                              ))}
-                            </ul>
-                          </TableCell>
-                          <TableCell className="font-mono text-xs truncate max-w-xs">
-                            {result.rawData.join(', ')}
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                    {invalidRows.map((row, index) => (
+                      <TableRow key={index} className="bg-red-50/30">
+                        <TableCell>{row.rowIndex || index + 1}</TableCell>
+                        <TableCell>
+                          <ul className="list-disc list-inside text-sm text-red-600">
+                            {row.errors?.map((error: string, i: number) => (
+                              <li key={i}>{error}</li>
+                            )) || <li>Invalid row</li>}
+                          </ul>
+                        </TableCell>
+                        <TableCell className="font-mono text-xs truncate max-w-xs">
+                          {row.rawData?.join(', ') || 'No data'}
+                        </TableCell>
+                      </TableRow>
+                    ))}
                   </TableBody>
                 </Table>
               </ScrollArea>
             ) : (
               <p className="text-center py-4 text-muted-foreground">No invalid rows found</p>
-            )}
-          </AccordionContent>
-        </AccordionItem>
-        
-        <AccordionItem value="valid-rows">
-          <AccordionTrigger className="hover:no-underline">
-            <div className="flex items-center">
-              <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-              <span>Valid Rows ({validRows})</span>
-            </div>
-          </AccordionTrigger>
-          <AccordionContent>
-            {validRows > 0 ? (
-              <ScrollArea className="h-[300px]">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[80px]">Row #</TableHead>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Phone</TableHead>
-                      <TableHead>Other Fields</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {validationResults
-                      .filter(result => result.valid)
-                      .map((result) => {
-                        // Find corresponding contact
-                        const contactIndex = contacts.findIndex(c => 
-                          c.id.includes(`-${result.rowIndex}`) || result.rawData.includes(c.name)
-                        );
-                        const contact = contactIndex !== -1 ? contacts[contactIndex] : null;
-                        
-                        return (
-                          <TableRow key={result.rowIndex} className="bg-green-50/30">
-                            <TableCell>{result.rowIndex}</TableCell>
-                            <TableCell className="font-medium">{contact?.name || '-'}</TableCell>
-                            <TableCell>{contact?.phoneNumber || '-'}</TableCell>
-                            <TableCell className="font-mono text-xs truncate max-w-xs">
-                              {contact ? 
-                                Object.entries(contact)
-                                  .filter(([key]) => !['id', 'name', 'phoneNumber'].includes(key))
-                                  .map(([key, value]) => `${key}: ${value}`)
-                                  .join(', ') 
-                                : '-'}
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                  </TableBody>
-                </Table>
-              </ScrollArea>
-            ) : (
-              <p className="text-center py-4 text-muted-foreground">No valid rows found</p>
             )}
           </AccordionContent>
         </AccordionItem>

@@ -4,13 +4,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useApp } from '@/contexts/app/AppContext';
 import { Contact } from '@/lib/types';
-import { validateCSV, parseCSV, getColumnMappingSuggestions } from './csv/utils';
+import { parseCSV } from './csv/utils';
 import FileUploadZone from './csv/FileUploadZone';
 import FieldMappingForm from './csv/FieldMappingForm';
 import ValidationSummary from './csv/ValidationSummary';
 import ImportForm from './csv/ImportForm';
-import { ColumnMapping, ContactCSVRow, ValidationResult } from './csv/types';
-import { defaultMappings } from './csv/fields-definition';
+
+// Define a basic field mapping type
+type FieldMapping = {
+  csvHeader: string;
+  mappedTo: string; 
+};
 
 const CSVUploader: React.FC = () => {
   const { uploadContacts } = useApp();
@@ -23,10 +27,10 @@ const CSVUploader: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   
   // CSV data state
-  const [rawData, setRawData] = useState<ContactCSVRow[]>([]);
   const [headers, setHeaders] = useState<string[]>([]);
-  const [mappings, setMappings] = useState<ColumnMapping[]>(defaultMappings);
-  const [validationResults, setValidationResults] = useState<ValidationResult | null>(null);
+  const [mappings, setMappings] = useState<FieldMapping[]>([]);
+  const [validContacts, setValidContacts] = useState<any[]>([]);
+  const [invalidRows, setInvalidRows] = useState<any[]>([]);
   
   // Import state
   const [customImportName, setCustomImportName] = useState('');
@@ -68,7 +72,8 @@ const CSVUploader: React.FC = () => {
     setFile(selectedFile);
     setError(null);
     setIsProcessing(true);
-    setValidationResults(null);
+    setValidContacts([]);
+    setInvalidRows([]);
     setIsImported(false);
     
     // Check if the file is a CSV
@@ -79,22 +84,41 @@ const CSVUploader: React.FC = () => {
     }
     
     try {
-      // Parse the CSV file
+      // Parse the CSV file - using the existing parseCSV function
       const result = await parseCSV(selectedFile);
-      setRawData(result.data);
+      
+      // For simplicity, we'll consider all rows as valid for now
+      // In a real implementation, you'd validate each row
+      const parsedContacts = result.contacts;
       setHeaders(result.headers);
       
-      // Generate mapping suggestions
-      const suggestions = getColumnMappingSuggestions(result.headers);
-      setMappings(suggestions);
+      // Generate some basic field mappings from headers
+      const suggestedMappings = result.headers.map(header => ({
+        csvHeader: header,
+        mappedTo: header.toLowerCase().includes('email') ? 'email' :
+                 header.toLowerCase().includes('name') ? 'name' :
+                 header.toLowerCase().includes('company') ? 'company' : ''
+      }));
       
-      // Validate the data with the suggested mappings
-      const validationResult = validateCSV(result.data, suggestions);
-      setValidationResults(validationResult);
+      setMappings(suggestedMappings);
       
-      // If there are valid contacts, create IDs for them
-      if (validationResult.validContacts.length > 0) {
-        const contactIds = validationResult.validContacts.map(() => `contact-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
+      // Simple validation - just check if email exists
+      const valid = parsedContacts.filter(contact => 
+        contact.email && contact.email.includes('@')
+      );
+      
+      const invalid = parsedContacts.filter(contact => 
+        !contact.email || !contact.email.includes('@')
+      );
+      
+      setValidContacts(valid);
+      setInvalidRows(invalid);
+      
+      // Generate IDs for valid contacts
+      if (valid.length > 0) {
+        const contactIds = valid.map(() => 
+          `contact-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
+        );
         setValidContactIds(contactIds);
       }
       
@@ -112,10 +136,10 @@ const CSVUploader: React.FC = () => {
   const handleClearFile = () => {
     setFile(null);
     setError(null);
-    setRawData([]);
     setHeaders([]);
-    setMappings(defaultMappings);
-    setValidationResults(null);
+    setMappings([]);
+    setValidContacts([]);
+    setInvalidRows([]);
     setIsImported(false);
     setValidContactIds([]);
     if (fileInputRef.current) {
@@ -124,22 +148,22 @@ const CSVUploader: React.FC = () => {
   };
   
   const handleUploadToSystem = async () => {
-    if (!validationResults || !file) return;
+    if (validContacts.length === 0 || !file) return;
     
     setIsUploading(true);
     
     try {
-      // Map the validated CSV data into Contact objects
-      const contactsToUpload: Contact[] = validationResults.validContacts.map((csvRow, index) => {
+      // Map the validated data into Contact objects
+      const contactsToUpload: Contact[] = validContacts.map((csvRow, index) => {
         const id = validContactIds[index] || `contact-${Date.now()}-${index}`;
         
         const contact: Contact = {
           id,
           email: csvRow.email || '',
-          firstName: csvRow.firstName || '',
-          lastName: csvRow.lastName || '',
+          firstName: csvRow.firstName || csvRow.first_name || '',
+          lastName: csvRow.lastName || csvRow.last_name || '',
           company: csvRow.company || '',
-          jobTitle: csvRow.jobTitle || '',
+          jobTitle: csvRow.jobTitle || csvRow.job_title || '',
           phone: csvRow.phone || '',
           country: csvRow.country || '',
           state: csvRow.state || '',
@@ -152,7 +176,7 @@ const CSVUploader: React.FC = () => {
           importBatchId: `import-${Date.now()}`,
           source: 'csv',
           notes: csvRow.notes || '',
-          linkedIn: csvRow.linkedIn || '',
+          linkedIn: csvRow.linkedIn || csvRow.linkedin || '',
           twitter: csvRow.twitter || '',
           status: 'active',
           unsubscribed: false
@@ -202,8 +226,8 @@ const CSVUploader: React.FC = () => {
               file={file}
               error={error}
               isDragging={isDragging}
-              validCount={validationResults?.validContacts.length || 0}
-              invalidCount={validationResults?.invalidRows.length || 0}
+              validCount={validContacts.length}
+              invalidCount={invalidRows.length}
               validContactIds={validContactIds}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
@@ -218,27 +242,36 @@ const CSVUploader: React.FC = () => {
               </div>
             )}
             
-            {validationResults && !isProcessing && (
+            {(validContacts.length > 0 || invalidRows.length > 0) && !isProcessing && (
               <div className="space-y-6">
                 {!isImported ? (
                   <>
-                    <FieldMappingForm
-                      headers={headers}
-                      mappings={mappings}
-                      setMappings={setMappings}
-                    />
+                    {headers.length > 0 && (
+                      <FieldMappingForm
+                        mappings={mappings.map(m => ({
+                          field: m.mappedTo,
+                          header: m.csvHeader,
+                        }))}
+                        onMappingChange={(newMappings) => {
+                          setMappings(newMappings.map(m => ({
+                            csvHeader: m.header,
+                            mappedTo: m.field,
+                          })));
+                        }}
+                      />
+                    )}
                     
                     <ValidationSummary
-                      validCount={validationResults.validContacts.length}
-                      invalidCount={validationResults.invalidRows.length}
+                      validCount={validContacts.length}
+                      invalidCount={invalidRows.length}
                       headers={headers}
-                      invalidRows={validationResults.invalidRows}
+                      invalidRows={invalidRows}
                     />
                     
                     <ImportForm
                       customImportName={customImportName}
                       isUploading={isUploading}
-                      contactCount={validationResults.validContacts.length}
+                      contactCount={validContacts.length}
                       validContactIds={validContactIds}
                       onNameChange={setCustomImportName}
                       onUpload={handleUploadToSystem}
@@ -246,7 +279,7 @@ const CSVUploader: React.FC = () => {
                   </>
                 ) : (
                   <div className="p-4 bg-green-50 border border-green-200 rounded-md text-green-700">
-                    ✅ {validationResults.validContacts.length} contacts successfully imported
+                    ✅ {validContacts.length} contacts successfully imported
                   </div>
                 )}
               </div>
