@@ -824,17 +824,12 @@ const FollowUpFlowBuilder: React.FC<FollowUpFlowBuilderProps> = ({
         )}
       </div>
 
-      {/* Sequence Legend */}
-      <div className="mt-6 p-3 bg-blue-50 border border-blue-200 rounded-md">
-        <div className="flex items-start gap-2">
-          <ListOrdered className="h-5 w-5 text-blue-600 mt-0.5" />
+      {/* Sequence Instructions as a footer on the same level as the "Enabled" toggle */}
+      <div className="mt-6 p-3 text-sm text-blue-600 font-medium">
+        <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-blue-800">Understanding the Follow-up Sequence</p>
-            <p className="text-sm text-blue-700 mt-1">
-              Follow-ups are evaluated in numerical order. Connections (arrows) show what happens after 
-              a follow-up, based on whether there's a response or not.
-            </p>
-            <ul className="text-sm text-blue-700 mt-2 space-y-1">
+            <p>Follow-ups are evaluated in numerical order. Connections (arrows) show what happens after a follow-up, based on whether there's a response or not.</p>
+            <ul className="mt-2 space-y-1">
               <li className="flex items-center gap-1">
                 <div className="h-4 w-4 rounded-full bg-primary/20 text-primary text-xs flex items-center justify-center">1</div>
                 <span>Number badges show the sequence order</span>
