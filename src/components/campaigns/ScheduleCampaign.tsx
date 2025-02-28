@@ -1,114 +1,133 @@
 
 import React, { useState } from 'react';
-import { Campaign, TimeWindow } from '@/lib/types';
-import { Label } from '@/components/ui/label';
+import { Calendar as CalendarIcon, Clock } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { TimeWindow } from '@/lib/types';
 import { format } from 'date-fns';
-import { CalendarIcon } from 'lucide-react';
-import TimeZoneSelector from './TimeZoneSelector';
 import TimeWindowSelector from './TimeWindowSelector';
+import TimeZoneSelector from './TimeZoneSelector';
 
 interface ScheduleCampaignProps {
-  campaign: Campaign;
-  onScheduleUpdate: (scheduledStartDate: Date, timeZone?: string, sendingWindow?: TimeWindow) => void;
-  onClose: () => void;
+  startDate?: Date;
+  window?: TimeWindow;
+  timezone?: string;
+  onScheduleChange: (date: Date) => void;
+  onSendingWindowChange: (window: TimeWindow | undefined) => void;
+  onTimeZoneChange: (zone: string) => void;
 }
 
 const ScheduleCampaign: React.FC<ScheduleCampaignProps> = ({
-  campaign,
-  onScheduleUpdate,
-  onClose
+  startDate,
+  window,
+  timezone = 'America/Los_Angeles',
+  onScheduleChange,
+  onSendingWindowChange,
+  onTimeZoneChange
 }) => {
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(
-    campaign.scheduledStartDate ? new Date(campaign.scheduledStartDate) : undefined
-  );
-  const [selectedTimeZone, setSelectedTimeZone] = useState<string>(
-    campaign.timeZone || 'America/Los_Angeles'
-  );
-  const [sendingWindow, setSendingWindow] = useState<TimeWindow | undefined>(
-    campaign.sendingWindow
-  );
+  const [date, setDate] = useState<Date | undefined>(startDate);
+  const [timeWindow, setTimeWindow] = useState<TimeWindow | undefined>(window);
+  const [timeZone, setTimeZone] = useState<string>(timezone);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!selectedDate) {
-      return;
+  // Handle date selection
+  const handleDateSelect = (selectedDate: Date | undefined) => {
+    if (selectedDate) {
+      setDate(selectedDate);
+      onScheduleChange(selectedDate);
     }
+  };
 
-    onScheduleUpdate(selectedDate, selectedTimeZone, sendingWindow);
+  // Handle time window selection
+  const handleTimeWindowChange = (selectedWindow: TimeWindow | undefined) => {
+    setTimeWindow(selectedWindow);
+    onSendingWindowChange(selectedWindow);
+  };
+
+  // Handle timezone selection
+  const handleTimezoneChange = (selectedTimezone: string) => {
+    setTimeZone(selectedTimezone);
+    onTimeZoneChange(selectedTimezone);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Schedule Campaign</CardTitle>
-          <CardDescription>
-            Set when your campaign should start and define sending windows
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-2">
-            <Label>Start Date</Label>
-            <div className="grid gap-2">
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={setSelectedDate}
-                disabled={(date) => date < new Date()}
-                className="rounded-md border"
-              />
-              {selectedDate && (
-                <p className="text-sm text-muted-foreground">
-                  Campaign will start on {format(selectedDate, 'EEEE, MMMM do, yyyy')}
-                </p>
-              )}
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold">Schedule Campaign</h2>
+      <p className="text-muted-foreground">
+        Choose when your campaign should start and during which hours messages should be sent.
+      </p>
+      
+      <div className="grid grid-cols-1 gap-6">
+        {/* Start Date */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <CalendarIcon className="h-5 w-5 mr-2" />
+              Start Date
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col sm:flex-row gap-4 items-start">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full sm:w-auto justify-start text-left font-normal"
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {date ? format(date, 'PPP') : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={date}
+                    onSelect={handleDateSelect}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+              
+              <div className="text-sm text-muted-foreground">
+                {date 
+                  ? `Your campaign will start on ${format(date, 'PPPP')}` 
+                  : "Select a start date for your campaign"}
+              </div>
             </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Time Zone</Label>
-            <TimeZoneSelector
-              value={selectedTimeZone}
-              onChange={setSelectedTimeZone}
-            />
-            <p className="text-sm text-muted-foreground">
-              All times will be relative to this time zone
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Sending Window</Label>
+          </CardContent>
+        </Card>
+        
+        {/* Time Window */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Clock className="h-5 w-5 mr-2" />
+              Sending Window
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
             <TimeWindowSelector
-              value={sendingWindow}
-              onChange={setSendingWindow}
+              value={timeWindow}
+              onChange={handleTimeWindowChange}
             />
-            <p className="text-sm text-muted-foreground">
-              Messages will only be sent during these hours
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="flex justify-between">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onClose}
-        >
-          Back
-        </Button>
-        <Button
-          type="submit"
-          disabled={!selectedDate}
-        >
-          Schedule Campaign
-        </Button>
+          </CardContent>
+        </Card>
+        
+        {/* Time Zone */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Time Zone</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <TimeZoneSelector
+              value={timeZone}
+              onChange={handleTimezoneChange}
+            />
+          </CardContent>
+        </Card>
       </div>
-    </form>
+    </div>
   );
 };
 

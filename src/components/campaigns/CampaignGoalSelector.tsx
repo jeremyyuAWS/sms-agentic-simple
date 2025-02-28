@@ -1,290 +1,185 @@
 
 import React from 'react';
-import { CampaignGoal, CampaignGoalType } from '@/lib/types';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Slider } from '@/components/ui/slider';
-import {
-  BarChart3,
-  CalendarClock,
-  CalendarHeart,
-  ListChecks,
-  Mail,
-  MessageSquareHeart,
-  Users,
-  PencilRuler,
-  AlertCircle,
-  MessageSquare,
-  BadgePercent,
-  Megaphone,
+  PhoneIcon, 
+  Calendar, 
+  Users, 
+  PartyPopper, 
+  Megaphone, 
+  MessageSquare, 
+  FileCheck,
+  BarChart 
 } from 'lucide-react';
-import { Badge } from '../ui/badge';
+import { CampaignGoal, CampaignGoalType } from '@/lib/types';
+import { cn } from '@/lib/utils';
 
 interface CampaignGoalSelectorProps {
-  value: CampaignGoal | undefined;
-  onChange: (goal: CampaignGoal) => void;
+  goal?: CampaignGoal;
+  onGoalChange: (goal: CampaignGoal) => void;
 }
 
-// Define goal types with descriptions and icons
-const goalTypes: {
-  value: CampaignGoalType;
-  label: string;
-  description: string;
-  icon: React.ReactNode;
-  suggestedResponseRate?: number;
-}[] = [
-  {
-    value: 'lead-generation',
-    label: 'Lead Generation',
-    description: 'Generate new leads and prospects for your sales pipeline',
-    icon: <Users className="h-4 w-4" />,
-    suggestedResponseRate: 0.15,
-  },
-  {
-    value: 'sales',
-    label: 'Sales Outreach',
-    description: 'Direct sales outreach to convert prospects into customers',
-    icon: <BadgePercent className="h-4 w-4" />,
-    suggestedResponseRate: 0.2,
-  },
-  {
-    value: 'event-promotion',
-    label: 'Event Promotion',
-    description: 'Promote an upcoming event and drive registrations',
-    icon: <CalendarHeart className="h-4 w-4" />,
-    suggestedResponseRate: 0.25,
-  },
-  {
-    value: 'customer-feedback',
-    label: 'Customer Feedback',
-    description: 'Collect feedback from existing customers',
-    icon: <MessageSquareHeart className="h-4 w-4" />,
-    suggestedResponseRate: 0.35,
-  },
-  {
-    value: 'event-follow-up',
-    label: 'Event Follow-up',
-    description: 'Follow up with contacts after an event',
-    icon: <CalendarClock className="h-4 w-4" />,
-    suggestedResponseRate: 0.3,
-  },
-  {
-    value: 'product-announcement',
-    label: 'Product Announcement',
-    description: 'Announce a new product or feature to your customers',
-    icon: <Megaphone className="h-4 w-4" />,
-    suggestedResponseRate: 0.25,
-  },
-  {
-    value: 'survey',
-    label: 'Survey',
-    description: 'Conduct a survey for market research or customer satisfaction',
-    icon: <ListChecks className="h-4 w-4" />,
-    suggestedResponseRate: 0.2,
-  },
-  {
-    value: 'webinar-invitation',
-    label: 'Webinar Invitation',
-    description: 'Invite contacts to attend a webinar',
-    icon: <Mail className="h-4 w-4" />,
-    suggestedResponseRate: 0.22,
-  },
-  {
-    value: 'newsletter',
-    label: 'Newsletter Opt-in',
-    description: 'Get contacts to subscribe to your newsletter',
-    icon: <MessageSquare className="h-4 w-4" />,
-    suggestedResponseRate: 0.18,
-  },
-  {
-    value: 'other',
-    label: 'Other',
-    description: 'Custom campaign goal',
-    icon: <PencilRuler className="h-4 w-4" />,
-  },
-];
+const CampaignGoalSelector: React.FC<CampaignGoalSelectorProps> = ({ 
+  goal, 
+  onGoalChange 
+}) => {
+  const goalOptions: {
+    type: CampaignGoalType;
+    title: string;
+    description: string;
+    icon: React.ReactNode;
+    metrics?: {
+      responseRate?: number;
+      conversionRate?: number;
+      completionDays?: number;
+    };
+  }[] = [
+    {
+      type: 'lead-generation',
+      title: 'Lead Generation',
+      description: 'Generate new leads and start conversations with potential customers',
+      icon: <Users className="h-10 w-10 text-blue-500" />,
+      metrics: {
+        responseRate: 15,
+        conversionRate: 5,
+        completionDays: 14
+      }
+    },
+    {
+      type: 'sales',
+      title: 'Sales Outreach',
+      description: 'Connect with potential customers to promote your products or services',
+      icon: <PhoneIcon className="h-10 w-10 text-green-500" />,
+      metrics: {
+        responseRate: 20,
+        conversionRate: 10,
+        completionDays: 7
+      }
+    },
+    {
+      type: 'event-promotion',
+      title: 'Event Promotion',
+      description: 'Invite contacts to upcoming events, webinars, or conferences',
+      icon: <Calendar className="h-10 w-10 text-purple-500" />,
+      metrics: {
+        responseRate: 25,
+        conversionRate: 15,
+        completionDays: 14
+      }
+    },
+    {
+      type: 'customer-feedback',
+      title: 'Customer Feedback',
+      description: 'Collect feedback from existing customers about your product or service',
+      icon: <MessageSquare className="h-10 w-10 text-pink-500" />,
+      metrics: {
+        responseRate: 30,
+        conversionRate: 20,
+        completionDays: 7
+      }
+    },
+    {
+      type: 'event-follow-up',
+      title: 'Event Follow-up',
+      description: 'Follow up with contacts after an event or webinar',
+      icon: <PartyPopper className="h-10 w-10 text-yellow-500" />,
+      metrics: {
+        responseRate: 35,
+        conversionRate: 15,
+        completionDays: 3
+      }
+    },
+    {
+      type: 'product-announcement',
+      title: 'Product Announcement',
+      description: 'Announce new products or features to your contacts',
+      icon: <Megaphone className="h-10 w-10 text-orange-500" />,
+      metrics: {
+        responseRate: 20,
+        conversionRate: 5,
+        completionDays: 7
+      }
+    },
+    {
+      type: 'survey',
+      title: 'Survey',
+      description: 'Send a survey to collect data and insights from your contacts',
+      icon: <FileCheck className="h-10 w-10 text-indigo-500" />,
+      metrics: {
+        responseRate: 15,
+        conversionRate: 10,
+        completionDays: 14
+      }
+    },
+    {
+      type: 'other',
+      title: 'Other',
+      description: 'Create a custom campaign with your own goals',
+      icon: <BarChart className="h-10 w-10 text-gray-500" />
+    }
+  ];
 
-const CampaignGoalSelector: React.FC<CampaignGoalSelectorProps> = ({ value, onChange }) => {
-  const selectedGoal = goalTypes.find(goal => goal.value === value?.type) || goalTypes[0];
-
-  const handleGoalTypeChange = (type: CampaignGoalType) => {
-    const goalType = goalTypes.find(g => g.value === type);
+  const handleSelect = (selectedGoal: CampaignGoalType) => {
+    const selectedOption = goalOptions.find(option => option.type === selectedGoal);
     
-    onChange({
-      type,
-      description: value?.description || '',
-      targetMetrics: {
-        responseRate: goalType?.suggestedResponseRate || value?.targetMetrics?.responseRate || 0.2,
-        conversionRate: value?.targetMetrics?.conversionRate || 0.1,
-        completionDays: value?.targetMetrics?.completionDays || 14,
-      },
-    });
-  };
-
-  const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    if (!value) return;
-    
-    onChange({
-      ...value,
-      description: e.target.value,
-    });
-  };
-
-  const handleMetricChange = (metric: keyof Required<CampaignGoal>['targetMetrics'], metricValue: number) => {
-    if (!value) return;
-    
-    onChange({
-      ...value,
-      targetMetrics: {
-        ...(value.targetMetrics || {}),
-        [metric]: metricValue,
-      },
+    onGoalChange({
+      type: selectedGoal,
+      description: selectedOption?.description,
+      targetMetrics: selectedOption?.metrics
     });
   };
 
   return (
-    <Card className="border-primary/20 bg-primary/5">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg flex items-center gap-2">
-          <BarChart3 className="h-5 w-5 text-primary" />
-          Campaign Goal
-        </CardTitle>
-        <CardDescription>
-          Define the primary goal of your campaign to help optimize your outreach
-        </CardDescription>
-      </CardHeader>
-
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="goal-type">Goal Type</Label>
-          <Select 
-            value={value?.type || 'lead-generation'} 
-            onValueChange={type => handleGoalTypeChange(type as CampaignGoalType)}
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold mb-2">Campaign Goal</h2>
+        <p className="text-muted-foreground">
+          Select a goal for your campaign to help track its success.
+        </p>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {goalOptions.map((option) => (
+          <Card 
+            key={option.type}
+            className={cn(
+              "cursor-pointer transition-all hover:border-primary hover:shadow-md",
+              goal?.type === option.type && "border-primary border-2 bg-primary/5"
+            )}
+            onClick={() => handleSelect(option.type)}
           >
-            <SelectTrigger id="goal-type" className="w-full">
-              <SelectValue placeholder="Select a goal type" />
-            </SelectTrigger>
-            <SelectContent>
-              {goalTypes.map(goal => (
-                <SelectItem key={goal.value} value={goal.value}>
-                  <div className="flex items-center gap-2">
-                    {goal.icon}
-                    <span>{goal.label}</span>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {selectedGoal && (
-          <div className="bg-muted/40 rounded-md p-3 mt-2 space-y-2">
-            <div className="flex items-start gap-2">
-              <div className="bg-primary/10 p-2 rounded-md mt-0.5">
-                {selectedGoal.icon}
+            <CardHeader className="pb-2">
+              <div className="flex justify-between items-start">
+                <div>{option.icon}</div>
+                {option.metrics && (
+                  <Badge variant="outline" className="text-xs">
+                    {option.metrics.responseRate}% Response Rate
+                  </Badge>
+                )}
               </div>
-              <div>
-                <h4 className="font-medium text-sm">{selectedGoal.label}</h4>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {selectedGoal.description}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div className="space-y-2 pt-2">
-          <Label htmlFor="goal-description">Specific Goal (Optional)</Label>
-          <Textarea
-            id="goal-description"
-            placeholder="Describe your specific goal for this campaign"
-            value={value?.description || ''}
-            onChange={handleDescriptionChange}
-            className="resize-none"
-            rows={2}
-          />
-        </div>
-
-        <div className="space-y-3 pt-2">
-          <Label>Target Metrics</Label>
-          
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-sm">Target Response Rate</span>
-                <Badge variant="outline">
-                  {(value?.targetMetrics?.responseRate ? value.targetMetrics.responseRate * 100 : 20).toFixed(0)}%
-                </Badge>
-              </div>
-              <Slider
-                value={[value?.targetMetrics?.responseRate ? value.targetMetrics.responseRate * 100 : 20]}
-                min={1}
-                max={50}
-                step={1}
-                onValueChange={values => handleMetricChange('responseRate', values[0] / 100)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-sm">Target Conversion Rate</span>
-                <Badge variant="outline">
-                  {(value?.targetMetrics?.conversionRate ? value.targetMetrics.conversionRate * 100 : 10).toFixed(0)}%
-                </Badge>
-              </div>
-              <Slider
-                value={[value?.targetMetrics?.conversionRate ? value.targetMetrics.conversionRate * 100 : 10]}
-                min={1}
-                max={40}
-                step={1}
-                onValueChange={values => handleMetricChange('conversionRate', values[0] / 100)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-sm">Campaign Duration (Days)</span>
-                <Badge variant="outline">
-                  {value?.targetMetrics?.completionDays || 14} days
-                </Badge>
-              </div>
-              <Slider
-                value={[value?.targetMetrics?.completionDays || 14]}
-                min={1}
-                max={60}
-                step={1}
-                onValueChange={values => handleMetricChange('completionDays', values[0])}
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-4 bg-blue-50 border border-blue-200 rounded-md p-3">
-          <div className="flex items-start gap-2">
-            <AlertCircle className="h-5 w-5 text-blue-500 mt-0.5" />
-            <div>
-              <p className="text-sm text-blue-700">
-                Setting clear goals will help us optimize your campaign and provide more relevant analytics.
+              <CardTitle className="mt-3">{option.title}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground mb-4">
+                {option.description}
               </p>
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+              
+              {option.metrics && (
+                <div className="text-xs space-y-1 text-muted-foreground">
+                  {option.metrics.conversionRate && (
+                    <div>Target Conversion: {option.metrics.conversionRate}%</div>
+                  )}
+                  {option.metrics.completionDays && (
+                    <div>Completion: {option.metrics.completionDays} days</div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
   );
 };
 

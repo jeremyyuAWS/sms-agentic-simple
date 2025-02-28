@@ -8,9 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { useApp } from '@/contexts';
-import { Campaign, Template, Contact, KnowledgeBase, FollowUp } from '@/lib/types';
+import { Campaign, Template, Contact, KnowledgeBase, FollowUp, ContactList } from '@/lib/types';
 import CampaignContactSelection from './CampaignContactSelection';
-import CSVUploader from './CSVUploader';
 import ScheduleCampaign from './ScheduleCampaign';
 import TemplateList from '@/components/templates/TemplateList';
 import TemplateEditor from '@/components/templates/TemplateEditor';
@@ -25,24 +24,43 @@ import TemplateSelector from '@/components/templates/TemplateSelector';
 type CampaignCreatorStep = 'template-selection' | 'contacts' | 'template' | 'message-content' | 'follow-ups' | 'schedule' | 'knowledge-base' | 'review' | 'goal';
 
 interface CampaignCreatorProps {
+  campaign?: Campaign; // Changed from existingCampaign to campaign to match usage
+  contacts?: Contact[];
+  contactLists?: ContactList[];
+  templates?: Template[];
+  knowledgeBases?: KnowledgeBase[];
+  onCreateCampaign?: (campaignData: any) => void;
+  onUpdateCampaign?: (campaignId: string, campaignData: any) => void;
+  onCancel?: () => void;
   onComplete?: () => void;
   initialStep?: CampaignCreatorStep;
-  existingCampaign?: Campaign; // For editing an existing campaign
 }
 
 const CampaignCreator: React.FC<CampaignCreatorProps> = ({ 
   onComplete, 
   initialStep = 'template-selection',
-  existingCampaign 
+  campaign, // Updated from existingCampaign to campaign
+  contacts: propContacts,
+  contactLists,
+  templates: propTemplates,
+  knowledgeBases: propKnowledgeBases,
+  onCreateCampaign,
+  onUpdateCampaign,
+  onCancel
 }) => {
   const { toast } = useToast();
   const { 
-    contacts, 
-    templates, 
-    knowledgeBases,
+    contacts: contextContacts, 
+    templates: contextTemplates, 
+    knowledgeBases: contextKnowledgeBases,
     createCampaign,
     updateCampaign
   } = useApp();
+  
+  // Use props if available, fallback to context
+  const contacts = propContacts || contextContacts;
+  const templates = propTemplates || contextTemplates;
+  const knowledgeBases = propKnowledgeBases || contextKnowledgeBases;
   
   // UI state
   const [currentStep, setCurrentStep] = useState<CampaignCreatorStep>(initialStep);
@@ -50,19 +68,19 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
   const [editingTemplate, setEditingTemplate] = useState<Template | undefined>(undefined);
   
   // Campaign data state
-  const [campaignName, setCampaignName] = useState(existingCampaign?.name || '');
-  const [campaignDescription, setCampaignDescription] = useState(existingCampaign?.description || '');
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string | undefined>(existingCampaign?.templateId);
+  const [campaignName, setCampaignName] = useState(campaign?.name || '');
+  const [campaignDescription, setCampaignDescription] = useState(campaign?.description || '');
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | undefined>(campaign?.templateId);
   const [selectedContacts, setSelectedContacts] = useState<Contact[]>([]);
-  const [selectedContactIds, setSelectedContactIds] = useState<string[]>(existingCampaign?.contactIds || []);
-  const [selectedContactListId, setSelectedContactListId] = useState<string | undefined>(existingCampaign?.contactListId);
-  const [selectedSegmentId, setSelectedSegmentId] = useState<string | undefined>(existingCampaign?.segmentId);
-  const [selectedKnowledgeBaseId, setSelectedKnowledgeBaseId] = useState<string | undefined>(existingCampaign?.knowledgeBaseId);
-  const [followUps, setFollowUps] = useState<FollowUp[]>(existingCampaign?.followUps || []);
-  const [scheduledStartDate, setScheduledStartDate] = useState<Date | undefined>(existingCampaign?.scheduledStartDate);
-  const [sendingWindow, setSendingWindow] = useState(existingCampaign?.sendingWindow);
-  const [timeZone, setTimeZone] = useState(existingCampaign?.timeZone || 'America/Los_Angeles');
-  const [campaignGoal, setCampaignGoal] = useState(existingCampaign?.goal);
+  const [selectedContactIds, setSelectedContactIds] = useState<string[]>(campaign?.contactIds || []);
+  const [selectedContactListId, setSelectedContactListId] = useState<string | undefined>(campaign?.contactListId);
+  const [selectedSegmentId, setSelectedSegmentId] = useState<string | undefined>(campaign?.segmentId);
+  const [selectedKnowledgeBaseId, setSelectedKnowledgeBaseId] = useState<string | undefined>(campaign?.knowledgeBaseId);
+  const [followUps, setFollowUps] = useState<FollowUp[]>(campaign?.followUps || []);
+  const [scheduledStartDate, setScheduledStartDate] = useState<Date | undefined>(campaign?.scheduledStartDate);
+  const [sendingWindow, setSendingWindow] = useState(campaign?.sendingWindow);
+  const [timeZone, setTimeZone] = useState(campaign?.timeZone || 'America/Los_Angeles');
+  const [campaignGoal, setCampaignGoal] = useState(campaign?.goal);
   
   // Update contacts when contactIds change
   useEffect(() => {
@@ -260,8 +278,8 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
     }
     
     try {
-      // Create campaign data
-      const campaignData: Omit<Campaign, 'id' | 'createdAt' | 'updatedAt'> = {
+      // Create campaign data including updatedAt since it's required
+      const campaignData: Omit<Campaign, 'id' | 'createdAt'> = {
         name: campaignName,
         description: campaignDescription,
         status: 'draft',
@@ -275,19 +293,28 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
         scheduledStartDate,
         sendingWindow,
         timeZone,
-        goal: campaignGoal
+        goal: campaignGoal,
+        updatedAt: new Date() // Add this to fix the type error
       };
       
-      if (existingCampaign) {
+      if (campaign) {
         // Update existing campaign
-        updateCampaign(existingCampaign.id, campaignData);
+        if (onUpdateCampaign) {
+          onUpdateCampaign(campaign.id, campaignData);
+        } else {
+          updateCampaign(campaign.id, campaignData);
+        }
         toast({
           title: "Campaign Updated",
           description: `Campaign "${campaignName}" has been updated successfully.`
         });
       } else {
         // Create new campaign
-        createCampaign(campaignData);
+        if (onCreateCampaign) {
+          onCreateCampaign(campaignData);
+        } else {
+          createCampaign(campaignData);
+        }
         toast({
           title: "Campaign Created",
           description: `Campaign "${campaignName}" has been created successfully.`
@@ -296,6 +323,8 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
       
       if (onComplete) {
         onComplete();
+      } else if (onCancel) {
+        onCancel();
       }
     } catch (error) {
       console.error("Error creating campaign:", error);
@@ -318,8 +347,8 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
         return (
           <CampaignContactSelection
             selectedContactIds={selectedContactIds}
-            selectedListId={selectedContactListId}
-            selectedSegmentId={selectedSegmentId}
+            contactListId={selectedContactListId} // Changed from selectedListId to contactListId
+            segmentId={selectedSegmentId} // Changed from selectedSegmentId to segmentId
             onContactsSelect={handleContactSelect}
             onListSelect={handleListSelect}
             onSegmentSelect={handleSegmentSelect}
@@ -418,9 +447,9 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
       case 'schedule':
         return (
           <ScheduleCampaign
-            scheduledStartDate={scheduledStartDate}
-            sendingWindow={sendingWindow}
-            timeZone={timeZone}
+            startDate={scheduledStartDate} // Changed from scheduledStartDate to startDate
+            window={sendingWindow} // Changed from sendingWindow to window
+            timezone={timeZone} // Changed from timeZone to timezone
             onScheduleChange={(date) => setScheduledStartDate(date)}
             onSendingWindowChange={(window) => setSendingWindow(window)}
             onTimeZoneChange={(zone) => setTimeZone(zone)}
@@ -437,7 +466,7 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
             
             <KnowledgeBaseList
               knowledgeBases={knowledgeBases}
-              selectedKnowledgeBaseId={selectedKnowledgeBaseId}
+              selectedId={selectedKnowledgeBaseId} // Changed from selectedKnowledgeBaseId to selectedId
               onSelect={handleKnowledgeBaseSelect}
             />
           </div>
@@ -445,8 +474,8 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
       case 'goal':
         return (
           <CampaignGoalSelector
-            selectedGoal={campaignGoal}
-            onChange={setCampaignGoal}
+            goal={campaignGoal} // Changed from selectedGoal to goal
+            onGoalChange={setCampaignGoal} // Changed from onChange to onGoalChange
           />
         );
       case 'review':
@@ -480,7 +509,7 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
             
             <CampaignDetailView
               campaign={{
-                id: existingCampaign?.id || 'new-campaign',
+                id: campaign?.id || 'new-campaign',
                 name: campaignName,
                 description: campaignDescription,
                 status: 'draft',
@@ -498,12 +527,9 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
                 timeZone,
                 goal: campaignGoal
               }}
-              templates={templates}
-              contacts={contacts}
-              selectedTemplate={selectedTemplate}
-              selectedContacts={selectedContacts}
-              selectedKnowledgeBase={knowledgeBases.find(kb => kb.id === selectedKnowledgeBaseId)}
-              isReview={true}
+              onClose={() => {}} // Placeholder function since we're in review mode
+              onStatusChange={() => {}} // Placeholder function since we're in review mode
+              onEdit={() => {}} // Placeholder function since we're in review mode
             />
           </div>
         );
@@ -609,7 +635,7 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
             disabled={!canProceed()}
           >
             <Save className="h-4 w-4 mr-2" />
-            {existingCampaign ? 'Update Campaign' : 'Create Campaign'}
+            {campaign ? 'Update Campaign' : 'Create Campaign'}
           </Button>
         ) : (
           <Button 

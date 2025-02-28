@@ -1,161 +1,108 @@
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { KnowledgeBase } from '@/lib/types';
-import { File, Trash2, Calendar, ArrowUpDown, Search, Eye } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { FileIcon, BookOpen, PlusIcon } from 'lucide-react';
 
 interface KnowledgeBaseListProps {
   knowledgeBases: KnowledgeBase[];
-  onDeleteKnowledgeBase: (id: string) => void;
+  selectedId?: string;
+  onSelect: (knowledgeBaseId?: string) => void;
+  onUpload?: () => void;
+  onDeleteKnowledgeBase?: (id: string) => void;
 }
 
-const KnowledgeBaseList: React.FC<KnowledgeBaseListProps> = ({ 
+const KnowledgeBaseList: React.FC<KnowledgeBaseListProps> = ({
   knowledgeBases,
+  selectedId,
+  onSelect,
+  onUpload,
   onDeleteKnowledgeBase
 }) => {
-  const { toast } = useToast();
-  const [selectedPdf, setSelectedPdf] = React.useState<KnowledgeBase | null>(null);
-
-  const handleDelete = (id: string) => {
-    onDeleteKnowledgeBase(id);
-    toast({
-      title: "Knowledge Base Deleted",
-      description: "The knowledge base document has been deleted successfully.",
-    });
-  };
-
-  const formatFileSize = (bytes: number) => {
-    if (bytes < 1024) return bytes + ' bytes';
-    else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
-    else return (bytes / 1048576).toFixed(1) + ' MB';
-  };
-
-  if (knowledgeBases.length === 0) {
-    return (
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <File className="h-5 w-5 text-primary" />
-            Knowledge Base
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-8 text-muted-foreground">
-            <File className="h-12 w-12 mx-auto mb-4 opacity-30" />
-            <p>No knowledge base documents uploaded yet.</p>
-            <p className="text-sm mt-1">Upload PDF documents to help shape your campaign messaging.</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
-    <Card className="mt-6">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <File className="h-5 w-5 text-primary" />
-          Knowledge Base ({knowledgeBases.length})
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Document</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead>Size</TableHead>
-              <TableHead>Uploaded</TableHead>
-              <TableHead>Campaigns</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {knowledgeBases.map((kb) => (
-              <TableRow key={kb.id}>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <File className="h-4 w-4 text-primary" />
-                    <span className="font-medium">{kb.fileName}</span>
-                  </div>
-                </TableCell>
-                <TableCell className="max-w-xs truncate">{kb.description}</TableCell>
-                <TableCell>{formatFileSize(kb.fileSize)}</TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                    <Calendar className="h-3 w-3" />
-                    {formatDistanceToNow(kb.dateUploaded, { addSuffix: true })}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  {kb.campaigns.length > 0 ? (
-                    <Badge variant="secondary">{kb.campaigns.length} campaigns</Badge>
-                  ) : (
-                    <span className="text-sm text-muted-foreground">Not used</span>
-                  )}
-                </TableCell>
-                <TableCell className="text-right">
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        onClick={() => setSelectedPdf(kb)}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-4xl max-h-[90vh]">
-                      <DialogHeader>
-                        <DialogTitle>{kb.fileName}</DialogTitle>
-                        <DialogDescription>{kb.description}</DialogDescription>
-                      </DialogHeader>
-                      <div className="mt-4 h-[60vh]">
-                        <iframe
-                          src={kb.content}
-                          title={kb.fileName}
-                          className="w-full h-full border rounded"
-                        />
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                  
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-medium">Available Knowledge Bases</h3>
+        {onUpload && (
+          <Button onClick={onUpload} variant="outline" size="sm">
+            <PlusIcon className="h-4 w-4 mr-2" />
+            Upload New
+          </Button>
+        )}
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {knowledgeBases.map(kb => (
+          <Card 
+            key={kb.id}
+            className={`cursor-pointer transition-all hover:border-primary ${
+              selectedId === kb.id ? 'border-primary border-2' : ''
+            }`}
+            onClick={() => onSelect(kb.id === selectedId ? undefined : kb.id)}
+          >
+            <CardHeader className="pb-2">
+              <div className="flex items-start justify-between">
+                <FileIcon className="h-6 w-6 text-blue-500" />
+                {kb.fileType === 'pdf' && <span className="text-xs bg-muted px-2 py-1 rounded">PDF</span>}
+              </div>
+              <CardTitle className="text-base mt-2">{kb.title}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground line-clamp-2">{kb.description}</p>
+              <div className="flex items-center justify-between mt-3">
+                <span className="text-xs text-muted-foreground">
+                  {new Date(kb.dateUploaded).toLocaleDateString()}
+                </span>
+                {onDeleteKnowledgeBase && (
                   <Button 
                     variant="ghost" 
-                    size="icon" 
-                    className="text-destructive hover:bg-destructive/10"
-                    onClick={() => handleDelete(kb.id)}
+                    size="sm" 
+                    className="h-8 w-8 p-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteKnowledgeBase(kb.id);
+                    }}
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <span className="sr-only">Delete</span>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={1.5}
+                      stroke="currentColor"
+                      className="w-4 h-4"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
+                      />
+                    </svg>
                   </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+        
+        {knowledgeBases.length === 0 && (
+          <div className="col-span-full text-center py-8 bg-muted/30 rounded-lg border border-dashed">
+            <BookOpen className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+            <h3 className="text-lg font-medium">No Knowledge Bases Available</h3>
+            <p className="text-sm text-muted-foreground mt-2 mb-4">
+              Upload documents to help answer customer questions
+            </p>
+            {onUpload && (
+              <Button onClick={onUpload} variant="outline" size="sm">
+                <PlusIcon className="h-4 w-4 mr-2" />
+                Upload New
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 
