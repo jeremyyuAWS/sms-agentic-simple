@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useApp } from '@/contexts';
 import { Template, Contact } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Edit, Trash2, Tag, Copy, HelpCircle, Info, Clock, CalendarIcon } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Tag, Copy, HelpCircle, Info } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -23,7 +23,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import {
   Table,
@@ -48,13 +47,6 @@ const Templates = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [previewData, setPreviewData] = useState<{[key: string]: string}>({});
-  
-  // Scheduling states
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-  const [selectedTime, setSelectedTime] = useState<string>("09:00");
-  const [showScheduling, setShowScheduling] = useState(false);
-  const [templateSchedules, setTemplateSchedules] = useState<{[templateId: string]: {date: Date, time: string, condition?: 'no-response' | 'all'}}>({});
-  const [selectedCondition, setSelectedCondition] = useState<'no-response' | 'all'>('all');
 
   // Get available contact fields for template variables
   const getAvailableContactFields = () => {
@@ -220,67 +212,6 @@ const Templates = () => {
     });
   };
 
-  // Scheduling functionality
-  const handleScheduleTemplate = (templateId: string) => {
-    setSelectedTemplate(templates.find(t => t.id === templateId) || null);
-    
-    // Initialize with existing schedule or defaults
-    if (templateSchedules[templateId]) {
-      setSelectedDate(templateSchedules[templateId].date);
-      setSelectedTime(templateSchedules[templateId].time);
-      setSelectedCondition(templateSchedules[templateId].condition || 'all');
-    } else {
-      setSelectedDate(undefined);
-      setSelectedTime("09:00");
-      setSelectedCondition('all');
-    }
-    
-    setShowScheduling(true);
-  };
-
-  const saveSchedule = () => {
-    if (!selectedTemplate || !selectedDate) {
-      toast({
-        title: "Error",
-        description: "Please select a valid date and time.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setTemplateSchedules(prev => ({
-      ...prev,
-      [selectedTemplate.id]: {
-        date: selectedDate,
-        time: selectedTime,
-        condition: selectedCondition
-      }
-    }));
-
-    setShowScheduling(false);
-    
-    toast({
-      title: "Success",
-      description: `Schedule set for "${selectedTemplate.name}".`
-    });
-  };
-
-  const removeSchedule = (templateId: string) => {
-    setTemplateSchedules(prev => {
-      const updated = { ...prev };
-      delete updated[templateId];
-      return updated;
-    });
-    
-    toast({
-      title: "Schedule Removed",
-      description: "The scheduled sending has been canceled."
-    });
-  };
-
-  // Get available fields for display
-  const availableFields = getAvailableContactFields();
-
   // Function to generate a preview with real contact data
   const generatePreview = (templateBody: string) => {
     if (!templateBody) return "";
@@ -316,26 +247,8 @@ const Templates = () => {
     }
   };
 
-  // Helper function to get border color based on condition
-  const getScheduleBorderClass = (templateId: string) => {
-    const schedule = templateSchedules[templateId];
-    if (!schedule) return "";
-    
-    if (schedule.condition === 'no-response') {
-      return "border-red-500 border-2"; // Red for no-response
-    } else {
-      return "border-blue-500 border-2"; // Blue for all/regular follow-up
-    }
-  };
-
-  // Helper function to get badge color based on condition
-  const getConditionBadgeClass = (condition?: 'no-response' | 'all') => {
-    if (condition === 'no-response') {
-      return "bg-red-100 text-red-800 border-red-300"; // Red for no-response
-    } else {
-      return "bg-blue-100 text-blue-800 border-blue-300"; // Blue for all/regular follow-up
-    }
-  };
+  // Available fields for display
+  const availableFields = getAvailableContactFields();
 
   return (
     <div className="container mx-auto py-6 max-w-6xl">
@@ -372,7 +285,7 @@ const Templates = () => {
         <div className="grid gap-6 mb-6">
           {templates.map(template => (
             <React.Fragment key={template.id}>
-              <Card className={cn("overflow-hidden", getScheduleBorderClass(template.id))}>
+              <Card className="overflow-hidden">
                 <div className="p-6 pb-4">
                   <div className="flex justify-between items-start mb-4">
                     <div>
@@ -441,40 +354,16 @@ const Templates = () => {
                 </div>
                 
                 <CardFooter className="bg-muted/30 p-4 border-t flex justify-between items-center">
-                  {templateSchedules[template.id] ? (
-                    <div className="flex items-center text-sm">
-                      <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
-                      <span>
-                        Scheduled: {format(templateSchedules[template.id].date, "MMM d, yyyy")} at {templateSchedules[template.id].time}
-                      </span>
-                      {templateSchedules[template.id].condition && (
-                        <Badge 
-                          variant="outline" 
-                          className={cn("ml-2", getConditionBadgeClass(templateSchedules[template.id].condition))}
-                        >
-                          {templateSchedules[template.id].condition === 'no-response' ? 'No Response' : 'Follow-up'}
-                        </Badge>
-                      )}
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => removeSchedule(template.id)}
-                        className="ml-2 h-7 text-xs"
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="text-sm text-muted-foreground">Not scheduled</div>
-                  )}
+                  <div className="text-sm text-muted-foreground">
+                    Used in campaigns: {/* This could be implemented if you track template usage */}
+                    Not currently tracked
+                  </div>
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    onClick={() => handleScheduleTemplate(template.id)}
-                    className="ml-auto"
+                    onClick={() => handlePreview(template)}
                   >
-                    <Clock className="h-4 w-4 mr-2" />
-                    {templateSchedules[template.id] ? "Reschedule" : "Schedule Send"}
+                    Preview & Edit
                   </Button>
                 </CardFooter>
               </Card>
@@ -482,21 +371,6 @@ const Templates = () => {
           ))}
         </div>
       )}
-
-      {/* Color legend */}
-      <div className="mb-16 p-4 bg-muted/20 rounded-lg">
-        <h3 className="text-sm font-medium mb-2">Template Color Guide</h3>
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded border-2 border-blue-500"></div>
-            <p className="text-sm">Blue outline: Regular follow-up (sent to all contacts)</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded border-2 border-red-500"></div>
-            <p className="text-sm">Red outline: No-response follow-up (only sent if no reply received)</p>
-          </div>
-        </div>
-      </div>
 
       {/* Create Template Dialog */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
@@ -689,121 +563,6 @@ const Templates = () => {
             <Button onClick={() => copyToClipboard(renderPreview())}>
               <Copy className="mr-2 h-4 w-4" />
               Copy Preview
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Scheduling Dialog */}
-      <Dialog open={showScheduling} onOpenChange={setShowScheduling}>
-        <DialogContent className="sm:max-w-[450px] max-h-[90vh] overflow-y-auto">
-          <DialogHeader className="sticky top-0 bg-background z-10 pb-4">
-            <DialogTitle>Schedule Template Send</DialogTitle>
-            <DialogDescription>
-              Set when you want to send this template to your contacts.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Send Date</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !selectedDate && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {selectedDate ? format(selectedDate, "PPP") : "Select a date"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={setSelectedDate}
-                    initialFocus
-                    disabled={(date) => date < new Date()}
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="sendTime">Send Time</Label>
-              <Input
-                id="sendTime"
-                type="time"
-                value={selectedTime}
-                onChange={(e) => setSelectedTime(e.target.value)}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="sendCondition">Send Condition</Label>
-              <div className="grid grid-cols-2 gap-4">
-                <div 
-                  className={cn(
-                    "border rounded-md p-3 cursor-pointer transition-all",
-                    selectedCondition === 'all' 
-                      ? "border-blue-500 bg-blue-50 text-blue-800" 
-                      : "border-gray-200 hover:border-blue-200"
-                  )}
-                  onClick={() => setSelectedCondition('all')}
-                >
-                  <p className="font-medium text-sm">Follow-up</p>
-                  <p className="text-xs mt-1 text-muted-foreground">Send to all contacts</p>
-                </div>
-                <div 
-                  className={cn(
-                    "border rounded-md p-3 cursor-pointer transition-all",
-                    selectedCondition === 'no-response' 
-                      ? "border-red-500 bg-red-50 text-red-800" 
-                      : "border-gray-200 hover:border-red-200"
-                  )}
-                  onClick={() => setSelectedCondition('no-response')}
-                >
-                  <p className="font-medium text-sm">No Response</p>
-                  <p className="text-xs mt-1 text-muted-foreground">Only if no reply received</p>
-                </div>
-              </div>
-            </div>
-            
-            {selectedTemplate && (
-              <div className="space-y-2 border-t pt-4 mt-4">
-                <Label>Template Preview</Label>
-                <div className="p-3 border rounded-md bg-muted/30 text-sm">
-                  {contacts.length > 0 ? generatePreview(selectedTemplate.body) : selectedTemplate.body}
-                </div>
-                {contacts.length > 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    Preview shows data from {contacts[0].name}
-                  </p>
-                )}
-                <div className="flex mt-3 gap-1 items-center">
-                  <div className={cn(
-                    "w-3 h-3 rounded-full",
-                    selectedCondition === 'no-response' ? "bg-red-500" : "bg-blue-500"
-                  )}></div>
-                  <p className="text-xs text-muted-foreground">
-                    {selectedCondition === 'no-response' 
-                      ? "This template will only be sent if no response is received" 
-                      : "This template will be sent to all relevant contacts"}
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-          
-          <DialogFooter className="sticky bottom-0 bg-background pt-4 z-10">
-            <Button variant="outline" onClick={() => setShowScheduling(false)}>
-              Cancel
-            </Button>
-            <Button onClick={saveSchedule}>
-              Schedule Send
             </Button>
           </DialogFooter>
         </DialogContent>
