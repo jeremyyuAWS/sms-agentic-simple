@@ -10,6 +10,7 @@ interface FileUploadZoneProps {
   isDragging: boolean;
   validCount: number;
   invalidCount: number;
+  validContactIds?: string[];
   onDragOver: (e: React.DragEvent<HTMLDivElement>) => void;
   onDragLeave: () => void;
   onDrop: (e: React.DragEvent<HTMLDivElement>) => void;
@@ -23,6 +24,7 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
   isDragging,
   validCount,
   invalidCount,
+  validContactIds,
   onDragOver,
   onDragLeave,
   onDrop,
