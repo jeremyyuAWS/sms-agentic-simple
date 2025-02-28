@@ -1,5 +1,5 @@
 
-import { Contact, ContactTag, ContactSegment, ContactFilter, ContactImport } from '@/lib/types';
+import { Contact, ContactTag, ContactSegment, ContactFilter, ContactImport, FieldMapping } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
 export const createContactActions = (
@@ -22,7 +22,7 @@ export const createContactActions = (
       type: 'csv' | 'manual' | 'import' | 'api';
       name: string;
       filename?: string;
-      customName?: string; // New parameter for custom import name
+      customName?: string; // Parameter for custom import name
     } = { type: 'manual', name: 'Manual Entry' }
   ) => {
     const batchId = `import-${Date.now()}`;
