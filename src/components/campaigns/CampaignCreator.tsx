@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { TimeZoneSelector } from './TimeZoneSelector';
-import { TimeWindowSelector } from './TimeWindowSelector';
+import TimeZoneSelector from './TimeZoneSelector';
+import TimeWindowSelector from './TimeWindowSelector';
 import {
   Select,
   SelectContent,
@@ -28,9 +28,10 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
-import { Campaign, TimeZoneOption, TimeWindowOption, FollowUp } from '@/lib/types';
-import { CalendarIcon, PlusCircle, Clock, Trash2, CalendarPlus, CheckCircle2 } from 'lucide-react';
+import { Campaign, TimeZoneOption, TimeWindowOption, FollowUp, Template, Contact } from '@/lib/types';
+import { CalendarIcon, PlusCircle, Clock, Trash2, CalendarPlus, CheckCircle2, Tag } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Switch } from "@/components/ui/switch";
@@ -44,7 +45,7 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
   onClose,
   isOpen
 }) => {
-  const { templates, createCampaign, knowledgeBases } = useApp();
+  const { templates, createCampaign, knowledgeBases, contacts } = useApp();
   const { toast } = useToast();
   
   const [campaignData, setCampaignData] = useState<Partial<Campaign>>({
@@ -74,6 +75,7 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
     enabled: true,
     condition: 'no-response'
   });
+  const [previewTemplate, setPreviewTemplate] = useState<string>("");
   
   // Reset the form when the dialog is opened
   useEffect(() => {
@@ -103,8 +105,23 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
         enabled: true,
         condition: 'no-response'
       });
+      
+      // Initialize preview template if templates exist
+      if (templates.length > 0) {
+        setPreviewTemplate(templates[0].body);
+      }
     }
   }, [isOpen, templates]);
+  
+  // Update preview template when selected template changes
+  useEffect(() => {
+    if (campaignData.templateId) {
+      const selectedTemplate = templates.find(t => t.id === campaignData.templateId);
+      if (selectedTemplate) {
+        setPreviewTemplate(selectedTemplate.body);
+      }
+    }
+  }, [campaignData.templateId, templates]);
   
   const handleTimeZoneSelect = (timeZone: TimeZoneOption) => {
     setSelectedTimeZone(timeZone);
@@ -279,6 +296,51 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
     return template ? template.name : 'Unknown template';
   };
   
+  // Function to generate a preview with real contact data if available
+  const generatePreview = () => {
+    if (!previewTemplate) return "";
+    
+    // Check if we have contacts to use in the preview
+    if (contacts.length > 0) {
+      // Use the first contact for preview
+      const sampleContact = contacts[0];
+      let preview = previewTemplate;
+      
+      // Replace all variables with contact data
+      Object.keys(sampleContact).forEach(key => {
+        const regex = new RegExp(`{${key}}`, 'g');
+        const value = sampleContact[key] || `[${key}]`;
+        preview = preview.replace(regex, String(value));
+      });
+      
+      // Find any remaining variables that weren't replaced
+      const remainingVariables = [...preview.matchAll(/{([^}]+)}/g)];
+      
+      if (remainingVariables.length > 0) {
+        // Replace remaining variables with placeholders
+        remainingVariables.forEach(match => {
+          const variable = match[1];
+          preview = preview.replace(new RegExp(`{${variable}}`, 'g'), `[${variable}]`);
+        });
+      }
+      
+      return preview;
+    } else {
+      // No contacts available, just show placeholder variables
+      return previewTemplate.replace(/{([^}]+)}/g, (_, variable) => `[${variable}]`);
+    }
+  };
+  
+  // Get all available variables from the selected template
+  const getTemplateVariables = () => {
+    if (!campaignData.templateId) return [];
+    
+    const selectedTemplate = templates.find(t => t.id === campaignData.templateId);
+    if (!selectedTemplate) return [];
+    
+    return selectedTemplate.variables;
+  };
+  
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
@@ -341,6 +403,31 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
                 </p>
               )}
             </div>
+            
+            {/* Template preview with real contact data */}
+            {campaignData.templateId && (
+              <div className="space-y-2 pt-2">
+                <div className="flex justify-between items-center">
+                  <Label className="text-sm">Message Preview</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {getTemplateVariables().map(variable => (
+                      <Badge key={variable} variant="outline" className="bg-primary/5">
+                        <Tag className="h-3 w-3 mr-1" />
+                        {variable}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+                <div className="p-3 border rounded-md bg-muted/30 text-sm">
+                  {generatePreview()}
+                </div>
+                {contacts.length > 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    Preview shows actual data from {contacts[0].name} ({contacts[0].company || "No company"})
+                  </p>
+                )}
+              </div>
+            )}
             
             <div className="space-y-2">
               <Label htmlFor="knowledgeBase">Knowledge Base (Optional)</Label>
