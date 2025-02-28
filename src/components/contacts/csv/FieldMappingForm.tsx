@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/table';
 import { Info, AlertCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Separator } from "@/components/ui/separator";
 
 // Schema for field mapping form - make both fields required to match FieldMappingItem
 const fieldMappingSchema = z.object({
@@ -173,27 +174,36 @@ const FieldMappingForm: React.FC<FieldMappingFormProps> = ({
                                 <SelectValue placeholder="Select field" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="">-- Ignore this column --</SelectItem>
-                                <SelectItem value="divider-required" disabled className="py-1 text-xs font-bold text-muted-foreground">
+                                <SelectItem value="ignore-column">-- Ignore this column --</SelectItem>
+                                
+                                {/* Group: Required Fields */}
+                                <div className="py-1 px-2 text-xs font-bold text-muted-foreground">
                                   Required Fields
-                                </SelectItem>
+                                </div>
+                                <Separator className="my-1" />
                                 {knownFields.filter(f => f.required).map((knownField) => (
                                   <SelectItem key={knownField.key} value={knownField.key} className="font-medium">
                                     {knownField.displayName} *
                                   </SelectItem>
                                 ))}
-                                <SelectItem value="divider-optional" disabled className="py-1 text-xs font-bold text-muted-foreground">
+                                
+                                {/* Group: Optional Fields */}
+                                <div className="py-1 px-2 text-xs font-bold text-muted-foreground mt-1">
                                   Optional Fields
-                                </SelectItem>
+                                </div>
+                                <Separator className="my-1" />
                                 {knownFields.filter(f => !f.required).map((knownField) => (
                                   <SelectItem key={knownField.key} value={knownField.key}>
                                     {knownField.displayName}
                                   </SelectItem>
                                 ))}
-                                <SelectItem value="divider-custom" disabled className="py-1 text-xs font-bold text-muted-foreground">
+                                
+                                {/* Group: Custom */}
+                                <div className="py-1 px-2 text-xs font-bold text-muted-foreground mt-1">
                                   Custom
-                                </SelectItem>
-                                <SelectItem value={mapping.csvHeader}>
+                                </div>
+                                <Separator className="my-1" />
+                                <SelectItem value={`custom-${mapping.csvHeader}`}>
                                   Custom: "{mapping.csvHeader}"
                                 </SelectItem>
                               </SelectContent>

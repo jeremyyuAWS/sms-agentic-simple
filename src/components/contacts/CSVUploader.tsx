@@ -81,7 +81,7 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
         setCsvText(content); // Store CSV text for later processing
         
         // Parse headers only at this stage
-        const lines = content.split('\n');
+        const lines = content.split(/\r?\n/);
         const headers = lines[0].split(',').map(header => header.trim());
         setHeaders(headers);
         
@@ -96,7 +96,7 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
         // Set form values with suggested mappings
         const initialMappings: FieldMappingItem[] = suggestedMappings.map(mapping => ({
           csvHeader: mapping.csvHeader,
-          mappedTo: mapping.mappedTo
+          mappedTo: mapping.mappedTo || "ignore-column" // Use non-empty string for empty mappings
         }));
         
         // Show mapping interface
@@ -107,18 +107,32 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
         setTypeInfo(typeInfo);
         
       } catch (err) {
-        console.error(err);
-        setError('An error occurred while parsing the CSV file.');
+        console.error("CSV Processing Error:", err);
+        setError('An error occurred while parsing the CSV file. Please check the file format.');
         setContacts([]);
       }
     };
+    
+    reader.onerror = () => {
+      setError('Failed to read the file. Please try again.');
+    };
+    
     reader.readAsText(file);
   };
 
   const handleSubmitMapping = (mappings: FieldMappingItem[]) => {
     try {
+      // Process mappings before parsing CSV
+      const processedMappings = mappings.map(mapping => ({
+        csvHeader: mapping.csvHeader,
+        // Convert "ignore-column" to empty string or custom values to actual field names
+        mappedTo: mapping.mappedTo === "ignore-column" ? "" : 
+                 mapping.mappedTo.startsWith("custom-") ? mapping.mappedTo.replace("custom-", "") : 
+                 mapping.mappedTo
+      }));
+      
       // Now parse the full CSV with mappings
-      const { contacts: parsedContacts, validationResults, typeInfo } = parseCSV(csvText, mappings);
+      const { contacts: parsedContacts, validationResults, typeInfo } = parseCSV(csvText, processedMappings);
       
       setValidationResults(validationResults);
       setTypeInfo(typeInfo);
@@ -146,8 +160,8 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
         });
       }
     } catch (err) {
-      console.error(err);
-      setError('An error occurred while processing the CSV file.');
+      console.error("Mapping Error:", err);
+      setError('An error occurred while processing the CSV file. Please try again.');
       setContacts([]);
     }
   };
@@ -188,7 +202,7 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
   const suggestedMappings: FieldMappingItem[] = headers.length > 0 
     ? guessFieldMappings(headers).map(m => ({ 
         csvHeader: m.csvHeader,
-        mappedTo: m.mappedTo 
+        mappedTo: m.mappedTo || "ignore-column" // Use non-empty string for empty mappings
       }))
     : [];
 
