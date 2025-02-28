@@ -67,6 +67,7 @@ const Contacts: React.FC = () => {
   const [selectedContactIds, setSelectedContactIds] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSourceFilter, setSelectedSourceFilter] = useState<string>('all');
+  const [selectedKnowledgeBaseId, setSelectedKnowledgeBaseId] = useState<string | undefined>(undefined);
   
   // For delete import confirmation dialog
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -83,6 +84,11 @@ const Contacts: React.FC = () => {
     }
   ) => {
     uploadContacts(newContacts, source);
+  };
+
+  // Handle knowledge base selection
+  const handleKnowledgeBaseSelect = (knowledgeBaseId?: string) => {
+    setSelectedKnowledgeBaseId(knowledgeBaseId);
   };
 
   // Group contacts by their source
@@ -534,6 +540,8 @@ const Contacts: React.FC = () => {
           <PDFUploader onPDFUploaded={uploadKnowledgeBase} />
           <KnowledgeBaseList 
             knowledgeBases={knowledgeBases}
+            selectedId={selectedKnowledgeBaseId}
+            onSelect={handleKnowledgeBaseSelect}
             onDeleteKnowledgeBase={deleteKnowledgeBase}
           />
         </TabsContent>
