@@ -53,7 +53,7 @@ const Templates = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTime, setSelectedTime] = useState<string>("09:00");
   const [showScheduling, setShowScheduling] = useState(false);
-  const [templateSchedules, setTemplateSchedules] = useState<{[templateId: string]: {date: Date, time: string}}>({});
+  const [templateSchedules, setTemplateSchedules] = useState<{[templateId: string]: {date: Date, time: string, condition?: 'no-response' | 'all'}>}>({});
 
   // Get available contact fields for template variables
   const getAvailableContactFields = () => {
@@ -235,6 +235,8 @@ const Templates = () => {
     setShowScheduling(true);
   };
 
+  const [selectedCondition, setSelectedCondition] = useState<'no-response' | 'all'>('all');
+
   const saveSchedule = () => {
     if (!selectedTemplate || !selectedDate) {
       toast({
@@ -249,7 +251,8 @@ const Templates = () => {
       ...prev,
       [selectedTemplate.id]: {
         date: selectedDate,
-        time: selectedTime
+        time: selectedTime,
+        condition: selectedCondition
       }
     }));
 
@@ -312,6 +315,27 @@ const Templates = () => {
     }
   };
 
+  // Helper function to get border color based on condition
+  const getScheduleBorderClass = (templateId: string) => {
+    const schedule = templateSchedules[templateId];
+    if (!schedule) return "";
+    
+    if (schedule.condition === 'no-response') {
+      return "border-red-500 border-2"; // Red for no-response
+    } else {
+      return "border-blue-500 border-2"; // Blue for all/regular follow-up
+    }
+  };
+
+  // Helper function to get badge color based on condition
+  const getConditionBadgeClass = (condition?: 'no-response' | 'all') => {
+    if (condition === 'no-response') {
+      return "bg-red-100 text-red-800 border-red-300"; // Red for no-response
+    } else {
+      return "bg-blue-100 text-blue-800 border-blue-300"; // Blue for all/regular follow-up
+    }
+  };
+
   return (
     <div className="container mx-auto py-6 max-w-6xl">
       <div className="mb-8 flex justify-between items-center">
@@ -347,7 +371,7 @@ const Templates = () => {
         <div className="grid gap-6">
           {templates.map(template => (
             <React.Fragment key={template.id}>
-              <Card className="overflow-hidden">
+              <Card className={cn("overflow-hidden", getScheduleBorderClass(template.id))}>
                 <div className="p-6 pb-4">
                   <div className="flex justify-between items-start mb-4">
                     <div>
@@ -422,6 +446,14 @@ const Templates = () => {
                       <span>
                         Scheduled: {format(templateSchedules[template.id].date, "MMM d, yyyy")} at {templateSchedules[template.id].time}
                       </span>
+                      {templateSchedules[template.id].condition && (
+                        <Badge 
+                          variant="outline" 
+                          className={cn("ml-2", getConditionBadgeClass(templateSchedules[template.id].condition))}
+                        >
+                          {templateSchedules[template.id].condition === 'no-response' ? 'No Response' : 'Follow-up'}
+                        </Badge>
+                      )}
                       <Button 
                         variant="ghost" 
                         size="sm" 
@@ -693,6 +725,36 @@ const Templates = () => {
               />
             </div>
             
+            <div className="space-y-2">
+              <Label htmlFor="sendCondition">Send Condition</Label>
+              <div className="grid grid-cols-2 gap-4">
+                <div 
+                  className={cn(
+                    "border rounded-md p-3 cursor-pointer transition-all",
+                    selectedCondition === 'all' 
+                      ? "border-blue-500 bg-blue-50 text-blue-800" 
+                      : "border-gray-200 hover:border-blue-200"
+                  )}
+                  onClick={() => setSelectedCondition('all')}
+                >
+                  <p className="font-medium text-sm">Follow-up</p>
+                  <p className="text-xs mt-1 text-muted-foreground">Send to all contacts</p>
+                </div>
+                <div 
+                  className={cn(
+                    "border rounded-md p-3 cursor-pointer transition-all",
+                    selectedCondition === 'no-response' 
+                      ? "border-red-500 bg-red-50 text-red-800" 
+                      : "border-gray-200 hover:border-red-200"
+                  )}
+                  onClick={() => setSelectedCondition('no-response')}
+                >
+                  <p className="font-medium text-sm">No Response</p>
+                  <p className="text-xs mt-1 text-muted-foreground">Only if no reply received</p>
+                </div>
+              </div>
+            </div>
+            
             {selectedTemplate && (
               <div className="space-y-2 border-t pt-4 mt-4">
                 <Label>Template Preview</Label>
@@ -704,9 +766,17 @@ const Templates = () => {
                     Preview shows data from {contacts[0].name}
                   </p>
                 )}
-                <p className="text-xs text-muted-foreground mt-2">
-                  This template will be sent to all relevant contacts at the scheduled time.
-                </p>
+                <div className="flex mt-3 gap-1 items-center">
+                  <div className={cn(
+                    "w-3 h-3 rounded-full",
+                    selectedCondition === 'no-response' ? "bg-red-500" : "bg-blue-500"
+                  )}></div>
+                  <p className="text-xs text-muted-foreground">
+                    {selectedCondition === 'no-response' 
+                      ? "This template will only be sent if no response is received" 
+                      : "This template will be sent to all relevant contacts"}
+                  </p>
+                </div>
               </div>
             )}
           </div>
@@ -721,6 +791,21 @@ const Templates = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Color legend */}
+      <div className="mt-8 p-4 bg-muted/20 rounded-lg">
+        <h3 className="text-sm font-medium mb-2">Template Color Guide</h3>
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <div className="w-5 h-5 rounded border-2 border-blue-500"></div>
+            <p className="text-sm">Blue outline: Regular follow-up (sent to all contacts)</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-5 h-5 rounded border-2 border-red-500"></div>
+            <p className="text-sm">Red outline: No-response follow-up (only sent if no reply received)</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
