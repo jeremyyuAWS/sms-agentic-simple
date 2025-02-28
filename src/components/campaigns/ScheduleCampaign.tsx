@@ -6,7 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TimeWindow } from '@/lib/types';
-import { format } from 'date-fns';
+import { format, isBefore, startOfToday } from 'date-fns';
 import TimeWindowSelector from './TimeWindowSelector';
 import TimeZoneSelector from './TimeZoneSelector';
 
@@ -30,6 +30,11 @@ const ScheduleCampaign: React.FC<ScheduleCampaignProps> = ({
   const [date, setDate] = useState<Date | undefined>(startDate);
   const [timeWindow, setTimeWindow] = useState<TimeWindow | undefined>(window);
   const [timeZone, setTimeZone] = useState<string>(timezone);
+
+  // Function to disable past dates
+  const isPastDate = (day: Date) => {
+    return isBefore(day, startOfToday());
+  };
 
   // Handle date selection
   const handleDateSelect = (selectedDate: Date | undefined) => {
@@ -85,6 +90,8 @@ const ScheduleCampaign: React.FC<ScheduleCampaignProps> = ({
                     selected={date}
                     onSelect={handleDateSelect}
                     initialFocus
+                    disabled={isPastDate}
+                    fromDate={new Date()} // Also ensures the calendar doesn't allow navigating too far back
                   />
                 </PopoverContent>
               </Popover>
