@@ -129,6 +129,30 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
     }
   ];
 
+  // Function to format description text with bullet points
+  const formatDescriptionWithBullets = (description: string) => {
+    // Check if the description has bullet points indicated by \n• 
+    if (description.includes('\n•')) {
+      // Split by newline and map to JSX with proper formatting
+      return (
+        <div className="text-left">
+          {description.split('\n').map((line, index) => 
+            line.startsWith('•') ? (
+              <div key={index} className="flex items-start">
+                <span className="mr-1">•</span>
+                <span>{line.substring(1).trim()}</span>
+              </div>
+            ) : (
+              <div key={index}>{line}</div>
+            )
+          )}
+        </div>
+      );
+    }
+    // Return as is if no bullet points
+    return description;
+  };
+
   // Function to detect data type based on content
   const detectDataType = (values: string[]): string => {
     // Take a sample of non-empty values
@@ -615,7 +639,7 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
               <TableRow key={field.name}>
                 <TableCell className="font-medium">{field.name}</TableCell>
                 <TableCell>{field.required ? 'Yes' : 'No'}</TableCell>
-                <TableCell>{field.description}</TableCell>
+                <TableCell className="whitespace-pre-line">{formatDescriptionWithBullets(field.description)}</TableCell>
                 <TableCell className="text-muted-foreground">{field.example}</TableCell>
               </TableRow>
             ))}
@@ -934,7 +958,7 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
                               <Info className="h-3 w-3 text-muted-foreground cursor-help" />
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p>
+                              <p className="whitespace-pre-line">
                                 {mapping.description || getFieldDescription(mapping.mappedTo)}
                               </p>
                             </TooltipContent>
