@@ -5,11 +5,13 @@ import { Campaign, Message } from '@/lib/types';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell } from 'recharts';
 import { format, subDays, differenceInDays } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
-import { Clock, MessageSquare, ThumbsUp, ThumbsDown, BarChart3, PieChart as PieChartIcon } from 'lucide-react';
+import { Clock, MessageSquare, ThumbsUp, ThumbsDown, BarChart3, PieChart as PieChartIcon, ArrowLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface CampaignAnalyticsProps {
   campaign: Campaign;
   messages?: Message[];
+  onBack?: () => void; // Add the onBack prop to fix the error
 }
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
@@ -19,7 +21,7 @@ const RESPONSE_COLORS = {
   neutral: '#6b7280',
 };
 
-const CampaignAnalytics: React.FC<CampaignAnalyticsProps> = ({ campaign, messages = [] }) => {
+const CampaignAnalytics: React.FC<CampaignAnalyticsProps> = ({ campaign, messages = [], onBack }) => {
   const startDate = campaign.startedAt ? new Date(campaign.startedAt) : new Date();
 
   // Calculate days since campaign started
@@ -97,6 +99,16 @@ const CampaignAnalytics: React.FC<CampaignAnalyticsProps> = ({ campaign, message
 
   return (
     <div className="space-y-6">
+      {/* Add a back button if onBack is provided */}
+      {onBack && (
+        <div className="flex items-center mb-4">
+          <Button variant="ghost" onClick={onBack} className="gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Back to Campaign
+          </Button>
+        </div>
+      )}
+      
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardContent className="pt-6">
