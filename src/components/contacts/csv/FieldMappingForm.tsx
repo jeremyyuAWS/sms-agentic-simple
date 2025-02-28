@@ -45,7 +45,7 @@ const FieldMappingForm: React.FC<FieldMappingFormProps> = ({ mappings, onMapping
     { label: "Country", value: "country" },
     { label: "State/Province", value: "state" },
     { label: "City", value: "city" },
-    { label: "Skip Column", value: "" },
+    { label: "Skip Column", value: "skip" }, // Changed from empty string to "skip"
   ];
 
   return (
@@ -69,7 +69,7 @@ const FieldMappingForm: React.FC<FieldMappingFormProps> = ({ mappings, onMapping
                     <TableCell className="font-medium">{mapping.header}</TableCell>
                     <TableCell>
                       <Select
-                        value={mapping.field}
+                        value={mapping.field || "skip"} // Default to "skip" if field is empty
                         onValueChange={(value) => handleMappingChange(index, value)}
                       >
                         <SelectTrigger className="w-full">

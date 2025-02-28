@@ -77,6 +77,7 @@ const CSVUploader: React.FC = () => {
     setValidContacts([]);
     setInvalidRows([]);
     setIsImported(false);
+    setValidContactIds([]);
     
     // Check if the file is a CSV
     if (!selectedFile.name.toLowerCase().endsWith('.csv')) {
@@ -95,6 +96,12 @@ const CSVUploader: React.FC = () => {
         try {
           const result = parseCSV(csvText);
           
+          if (!result || !result.headers || !result.contacts) {
+            setError('Invalid CSV format or empty file');
+            setIsProcessing(false);
+            return;
+          }
+          
           // For simplicity, we'll consider all rows as valid for now
           // In a real implementation, you'd validate each row
           const parsedContacts = result.contacts || [];
@@ -104,8 +111,19 @@ const CSVUploader: React.FC = () => {
           const suggestedMappings = (result.headers || []).map(header => ({
             header,
             field: header.toLowerCase().includes('email') ? 'email' :
+                   header.toLowerCase().includes('name') && header.toLowerCase().includes('first') ? 'firstName' :
+                   header.toLowerCase().includes('name') && header.toLowerCase().includes('last') ? 'lastName' :
                    header.toLowerCase().includes('name') ? 'name' :
-                   header.toLowerCase().includes('company') ? 'company' : ''
+                   header.toLowerCase().includes('phone') ? 'phone' :
+                   header.toLowerCase().includes('company') ? 'company' :
+                   header.toLowerCase().includes('title') || header.toLowerCase().includes('position') ? 'jobTitle' :
+                   header.toLowerCase().includes('linked') ? 'linkedIn' :
+                   header.toLowerCase().includes('twitter') ? 'twitter' :
+                   header.toLowerCase().includes('note') ? 'notes' :
+                   header.toLowerCase().includes('country') ? 'country' :
+                   header.toLowerCase().includes('state') || header.toLowerCase().includes('province') ? 'state' :
+                   header.toLowerCase().includes('city') ? 'city' :
+                   "skip" // Default to skip instead of empty string
           }));
           
           setMappings(suggestedMappings);
@@ -184,18 +202,29 @@ const CSVUploader: React.FC = () => {
     setIsUploading(true);
     
     try {
-      // Map the validated data into Contact objects
+      // Apply field mappings to create proper contacts
       const contactsToUpload: Contact[] = validContacts.map((csvRow, index) => {
         const id = validContactIds[index] || `contact-${Date.now()}-${index}`;
         
+        // Create a mapped contact using the field mappings
+        const mappedData: Record<string, any> = {};
+        
+        // First, apply the mappings
+        mappings.forEach(mapping => {
+          if (mapping.field && mapping.field !== 'skip') {
+            mappedData[mapping.field] = csvRow[mapping.header] || '';
+          }
+        });
+        
+        // Create the contact with the mapped data
         const contact: Contact = {
           id,
-          name: `${csvRow.firstName || ''} ${csvRow.lastName || ''}`.trim(),
-          phoneNumber: csvRow.phone || '',
-          email: csvRow.email || '',
-          linkedinUrl: csvRow.linkedIn || csvRow.linkedin || '',
-          company: csvRow.company || '',
-          position: csvRow.jobTitle || csvRow.job_title || '',
+          name: mappedData.name || `${mappedData.firstName || ''} ${mappedData.lastName || ''}`.trim(),
+          phoneNumber: mappedData.phone || '',
+          email: mappedData.email || '',
+          linkedinUrl: mappedData.linkedIn || '',
+          company: mappedData.company || '',
+          position: mappedData.jobTitle || '',
           tags: [],
           source: {
             type: 'csv',
