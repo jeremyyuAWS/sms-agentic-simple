@@ -1,9 +1,9 @@
 
 import React, { useState } from 'react';
 import { useApp } from '@/contexts';
-import { Template } from '@/lib/types';
+import { Template, Contact } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Edit, Trash2, Tag, Copy } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Tag, Copy, HelpCircle, Info } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -29,7 +29,7 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const Templates = () => {
-  const { templates, createTemplate } = useApp();
+  const { templates, contacts, createTemplate } = useApp();
   const { toast } = useToast();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newTemplate, setNewTemplate] = useState({
@@ -40,6 +40,34 @@ const Templates = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [previewData, setPreviewData] = useState<{[key: string]: string}>({});
+
+  // Get available contact fields for template variables
+  const getAvailableContactFields = () => {
+    // Start with standard contact fields
+    const standardFields = [
+      { name: 'name', description: 'Contact\'s full name' },
+      { name: 'phoneNumber', description: 'Contact\'s phone number' },
+      { name: 'email', description: 'Contact\'s email address' },
+      { name: 'company', description: 'Company or organization name' },
+      { name: 'position', description: 'Job title or position' }
+    ];
+    
+    // Get custom fields from contacts if available
+    const customFields = new Set<string>();
+    contacts.forEach(contact => {
+      Object.keys(contact).forEach(key => {
+        // Skip standard fields and id
+        if (!['id', 'name', 'phoneNumber', 'email', 'company', 'position'].includes(key)) {
+          customFields.add(key);
+        }
+      });
+    });
+    
+    return {
+      standard: standardFields,
+      custom: Array.from(customFields).map(field => ({ name: field, description: `Custom field: ${field}` }))
+    };
+  };
 
   // Function to extract variables from template body
   const extractVariables = (text: string) => {
@@ -61,6 +89,37 @@ const Templates = () => {
     // Extract variables
     const variables = extractVariables(newBody);
     setExtractedVariables(variables);
+  };
+
+  // Insert variable at cursor position
+  const insertVariable = (variable: string, textareaId: string) => {
+    const textarea = document.getElementById(textareaId) as HTMLTextAreaElement;
+    if (!textarea) return;
+    
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+    const variableText = `{${variable}}`;
+    
+    const newText = text.substring(0, start) + variableText + text.substring(end);
+    
+    if (textareaId === 'body') {
+      setNewTemplate({
+        ...newTemplate,
+        body: newText
+      });
+      
+      // Extract variables including the newly added one
+      const variables = extractVariables(newText);
+      setExtractedVariables(variables);
+    }
+    
+    // Set focus back to textarea for better UX
+    setTimeout(() => {
+      textarea.focus();
+      textarea.selectionStart = start + variableText.length;
+      textarea.selectionEnd = start + variableText.length;
+    }, 0);
   };
 
   // Handle template creation
@@ -145,6 +204,9 @@ const Templates = () => {
       });
     });
   };
+
+  // Get available fields for display
+  const availableFields = getAvailableContactFields();
 
   return (
     <div className="container mx-auto py-6 max-w-6xl">
@@ -263,6 +325,74 @@ const Templates = () => {
                 placeholder="e.g., Initial Outreach"
                 required
               />
+            </div>
+            
+            {/* Available Contact Fields */}
+            <div className="space-y-2 bg-muted/30 p-3 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <Info className="h-4 w-4 text-blue-500" />
+                <Label className="text-sm font-medium">Available Contact Fields</Label>
+              </div>
+              
+              <div className="text-sm text-muted-foreground mb-2">
+                Click a field to insert it into your template. Use format {"{field_name}"}
+              </div>
+              
+              <div className="space-y-3">
+                <div>
+                  <p className="text-xs font-semibold mb-1 text-muted-foreground">Standard Fields:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {availableFields.standard.map((field) => (
+                      <TooltipProvider key={field.name}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              size="sm" 
+                              className="h-7 text-xs bg-background"
+                              onClick={() => insertVariable(field.name, "body")}
+                            >
+                              <span className="truncate">{field.name}</span>
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{field.description}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    ))}
+                  </div>
+                </div>
+                
+                {availableFields.custom.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold mb-1 text-muted-foreground">Custom Fields:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {availableFields.custom.map((field) => (
+                        <TooltipProvider key={field.name}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button 
+                                type="button" 
+                                variant="outline" 
+                                size="sm" 
+                                className="h-7 text-xs bg-background"
+                                onClick={() => insertVariable(field.name, "body")}
+                              >
+                                <span className="truncate">{field.name}</span>
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{field.description}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
             
             <div className="space-y-2">
