@@ -7,8 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Sparkles, AlertCircle, MessageSquare, Clock, Calendar, ArrowRight, CheckCircle, ArrowUp, ArrowDown, ListOrdered } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
-import RecommendedTemplatesList from '../RecommendedTemplatesList';
-import { CampaignType } from '../CampaignTypeSelector';
 import { 
   Tooltip,
   TooltipContent,
@@ -42,7 +40,6 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
   const { toast } = useToast();
   const [selectedView, setSelectedView] = useState<string>("visual");
   const [approved, setApproved] = useState(false);
-  const [campaignType, setCampaignType] = useState<CampaignType>("event-invitation");
 
   // Generate follow-ups if none exist
   useEffect(() => {
@@ -123,34 +120,11 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
     });
   };
 
-  // Function to handle template selection from the RecommendedTemplatesList
-  const handleTemplateSelect = (templateId: string) => {
-    // If this is the initial template selection, update the first follow-up
-    if (followUps.length > 0) {
-      const newFollowUps = [...followUps];
-      newFollowUps[0] = {
-        ...newFollowUps[0],
-        templateId
-      };
-      onFollowUpsChange(newFollowUps);
-    }
-  };
-
   return (
     <div className="space-y-4">
       <div className="text-sm space-y-2 mt-2 mb-4">
         <p className="font-medium">Your Message Sequence</p>
         <p>This campaign includes a strategic messaging sequence designed to maximize engagement. You can customize each message or timing while maintaining proven communication patterns.</p>
-      </div>
-
-      {/* Add RecommendedTemplatesList at the top */}
-      <div className="mb-6">
-        <RecommendedTemplatesList
-          campaignType={campaignType}
-          templates={templates}
-          onSelectTemplate={handleTemplateSelect}
-          selectedTemplateId={followUps[0]?.templateId || selectedTemplateId}
-        />
       </div>
 
       <Tabs defaultValue="visual" className="mb-4" onValueChange={setSelectedView}>
