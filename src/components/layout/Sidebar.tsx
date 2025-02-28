@@ -1,100 +1,104 @@
+
 import React from 'react';
+import { NavLink } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  BarChart2, 
-  Users, 
-  MessageSquare, 
-  Settings, 
-  Tag
-} from 'lucide-react';
 import { useApp } from '@/contexts';
+import { Button } from '@/components/ui/button';
+import { ChevronRight, Home, Users, MessageSquare, Settings, Tag, Send, MessageCircle } from 'lucide-react';
 
-interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {}
+interface SidebarNavProps extends React.HTMLAttributes<HTMLElement> {
+  items: {
+    href: string;
+    title: string;
+    icon: React.ComponentType<{ className?: string }>;
+  }[];
+}
 
-export function Sidebar({ className }: SidebarProps) {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { sidebarOpen } = useApp();
-  
-  const routes = [
+export function Sidebar({ className, ...props }: React.ComponentProps<'div'>) {
+  const { sidebarOpen, toggleSidebar } = useApp();
+
+  const items = [
     {
-      label: 'Dashboard',
-      icon: LayoutDashboard,
       href: '/',
-      active: location.pathname === '/',
+      title: 'Dashboard',
+      icon: Home,
     },
     {
-      label: 'Campaigns',
-      icon: BarChart2,
-      href: '/campaigns',
-      active: location.pathname === '/campaigns',
-    },
-    {
-      label: 'Contacts',
-      icon: Users,
       href: '/contacts',
-      active: location.pathname === '/contacts',
+      title: 'Contacts',
+      icon: Users,
     },
     {
-      label: 'Conversations',
-      icon: MessageSquare,
-      href: '/conversations',
-      active: location.pathname === '/conversations',
-    },
-    {
-      label: 'Templates',
-      icon: Tag,
       href: '/templates',
-      active: location.pathname === '/templates',
+      title: 'Templates',
+      icon: MessageSquare,
     },
     {
-      label: 'Settings',
-      icon: Settings,
-      href: '/settings',
-      active: location.pathname === '/settings',
+      href: '/campaigns',
+      title: 'Campaigns',
+      icon: Send,
     },
   ];
 
   return (
-    <div className={cn(
-      "flex flex-col h-full bg-background border-r",
-      sidebarOpen ? "w-64" : "w-[70px]",
-      className
-    )}>
-      <div className="py-4 flex-1">
+    <div
+      className={cn(
+        'flex flex-col border-r bg-background h-screen',
+        sidebarOpen ? 'w-[240px]' : 'w-[70px]',
+        className
+      )}
+      {...props}
+    >
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={toggleSidebar}
+        className="absolute right-2 top-2"
+      >
+        <ChevronRight
+          className={cn(
+            'h-4 w-4 transition-transform',
+            !sidebarOpen && 'rotate-180'
+          )}
+        />
+        <span className="sr-only">Toggle Sidebar</span>
+      </Button>
+      <div
+        className={cn(
+          'flex h-14 items-center border-b px-4',
+          sidebarOpen ? 'justify-start' : 'justify-center'
+        )}
+      >
+        <MessageCircle className="h-6 w-6 text-primary" />
+        {sidebarOpen && (
+          <span className="ml-2 text-lg font-semibold tracking-tight">
+            Taikis
+          </span>
+        )}
+      </div>
+      <div className="space-y-4 py-4 flex flex-col h-full">
         <div className="px-3 py-2">
-          <h2 className={cn(
-            "text-lg font-semibold transition-all overflow-hidden",
-            sidebarOpen ? "opacity-100 mb-6" : "opacity-0 h-0"
-          )}>
-            Text Campaigns
-          </h2>
           <div className="space-y-1">
-            {routes.map((route) => (
-              <Button
-                key={route.href}
-                variant={route.active ? 'secondary' : 'ghost'}
-                className={cn(
-                  'w-full justify-start',
-                  !sidebarOpen && 'justify-center',
-                )}
-                onClick={() => navigate(route.href)}
-              >
-                <route.icon className={cn(
-                  'h-5 w-5',
-                  sidebarOpen ? 'mr-3' : 'mr-0'
-                )} />
-                <span className={cn(
-                  'transition-all overflow-hidden',
-                  sidebarOpen ? 'opacity-100 w-auto' : 'opacity-0 w-0'
-                )}>
-                  {route.label}
-                </span>
-              </Button>
-            ))}
+            <SidebarNav items={items} />
+          </div>
+        </div>
+        <div className="mt-auto px-3 py-2">
+          <div className="space-y-1">
+            <NavLink
+              to="/settings"
+              className={(props) =>
+                cn(
+                  'flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors',
+                  props.isActive
+                    ? 'text-primary-foreground bg-primary'
+                    : 'text-muted-foreground hover:text-primary hover:bg-muted',
+                  !sidebarOpen && 'justify-center'
+                )
+              }
+            >
+              <Settings className="mr-2 h-4 w-4" />
+              {sidebarOpen && <span>Settings</span>}
+            </NavLink>
           </div>
         </div>
       </div>
@@ -102,4 +106,29 @@ export function Sidebar({ className }: SidebarProps) {
   );
 }
 
-export default Sidebar;
+function SidebarNav({ className, items, ...props }: SidebarNavProps) {
+  const { sidebarOpen } = useApp();
+
+  return (
+    <nav className={cn('grid gap-1', className)} {...props}>
+      {items.map((item, index) => (
+        <NavLink
+          key={index}
+          to={item.href}
+          className={(navProps) =>
+            cn(
+              'flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors',
+              navProps.isActive
+                ? 'text-primary-foreground bg-primary'
+                : 'text-muted-foreground hover:text-primary hover:bg-muted',
+              !sidebarOpen && 'justify-center'
+            )
+          }
+        >
+          <item.icon className={cn('h-4 w-4', sidebarOpen && 'mr-2')} />
+          {sidebarOpen && <span>{item.title}</span>}
+        </NavLink>
+      ))}
+    </nav>
+  );
+}

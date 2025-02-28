@@ -6,6 +6,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Contacts from "./pages/Contacts";
 import Templates from "./pages/Templates";
+import Campaigns from "./pages/Campaigns";
 import { AppProvider } from "./contexts";
 
 function App() {
@@ -16,6 +17,7 @@ function App() {
           <Route path="/" element={<Index />} />
           <Route path="/contacts" element={<Contacts />} />
           <Route path="/templates" element={<Templates />} />
+          <Route path="/campaigns" element={<Campaigns />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <Toaster />
