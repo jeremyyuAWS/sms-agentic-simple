@@ -130,6 +130,9 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
     }
   };
 
+  // Check if we're on the last tab
+  const isLastTab = activeTab === 'followups';
+
   return (
     <div className="container mx-auto py-6 max-w-4xl">
       <Card>
@@ -170,13 +173,17 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
             {/* Tab content */}
             {renderTabContent()}
 
-            {/* Footer with action buttons */}
-            <CampaignCreatorFooter
-              isEditing={!!campaign}
-              isSubmitting={isSubmitting}
-              onSubmit={handleSubmit}
-              onCancel={onCancel}
-            />
+            {/* Only show the create/save button on the last tab */}
+            {isLastTab && (
+              <div className="flex justify-end mt-8">
+                <CampaignCreatorFooter
+                  isEditing={!!campaign}
+                  isSubmitting={isSubmitting}
+                  onSubmit={handleSubmit}
+                  onCancel={onCancel}
+                />
+              </div>
+            )}
           </LoadingState>
         </CardContent>
       </Card>
