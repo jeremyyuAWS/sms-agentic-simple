@@ -57,6 +57,12 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
   const [showMappingDialog, setShowMappingDialog] = useState(false);
   const [sampleData, setSampleData] = useState<string[][]>([]);
   const [editingField, setEditingField] = useState<FieldMapping | null>(null);
+  const [validationResults, setValidationResults] = useState<{total: number, valid: number, invalid: number, issues: string[]}>({
+    total: 0,
+    valid: 0,
+    invalid: 0,
+    issues: []
+  });
 
   // Required fields for the CSV with synonyms for smart mapping
   const requiredFields: CSVField[] = [
@@ -262,6 +268,7 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
     setFile(file);
     setError(null);
     setIsProcessing(true);
+    setValidationResults({total: 0, valid: 0, invalid: 0, issues: []});
     
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -284,6 +291,8 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
         const headers = rows[0].split(',').map(header => header.trim());
         setHeaders(headers);
         
+        console.log("CSV Headers:", headers); // Debug log
+        
         // Parse data rows for smart mapping
         const dataRows: string[][] = [];
         for (let i = 1; i < rows.length; i++) {
@@ -294,9 +303,13 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
           }
         }
         
+        console.log("Data rows parsed:", dataRows.length); // Debug log
+        
         // Perform smart field mapping
         const mappings = performSmartMapping(headers, dataRows);
         setFieldMappings(mappings);
+        
+        console.log("Field mappings:", mappings); // Debug log
         
         // Check if any required fields are missing after mapping
         const missingFields = requiredFields
@@ -376,34 +389,47 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
         
         // Parse the contacts using our mapping
         const parsedContacts: Contact[] = [];
+        const issues: string[] = [];
+        let totalRows = 0;
+        let invalidRows = 0;
+        
+        console.log("Processing contacts with mapping, rows:", rows.length - 1); // Debug log
+        
         for (let i = 1; i < rows.length; i++) {
           if (!rows[i].trim()) continue;
           
+          totalRows++;
           const values = parseCSVLine(rows[i]);
           
           if (values.length !== headers.length) {
+            console.log(`Row ${i}: Column count mismatch - expected ${headers.length}, got ${values.length}`); // Debug log
+            issues.push(`Row ${i}: Column count mismatch - expected ${headers.length}, got ${values.length}`);
+            invalidRows++;
             continue; // Skip malformed rows
           }
           
           const contact: any = { id: `temp-${i}` };
           let isValid = true;
+          const rowIssues: string[] = [];
           
           // Apply field mappings
           fieldMappings.forEach((mapping, index) => {
-            const value = values[index].trim();
-            
-            // Skip empty values for required fields
-            if (mapping.mappedTo === 'name' || mapping.mappedTo === 'phoneNumber') {
-              if (!value) {
-                isValid = false;
-              }
-            }
+            const value = values[index]?.trim() || '';
             
             // Find the field definition to apply validation and formatting
             const fieldDef = requiredFields.find(f => f.name === mapping.mappedTo);
             
+            // Skip empty values for required fields
+            if (mapping.mappedTo === 'name' || mapping.mappedTo === 'phoneNumber') {
+              if (!value) {
+                rowIssues.push(`Row ${i}: Missing required value for ${mapping.mappedTo}`);
+                isValid = false;
+              }
+            }
+            
             if (fieldDef && fieldDef.validator && !fieldDef.validator(value)) {
               // Skip invalid values based on validator
+              rowIssues.push(`Row ${i}: Invalid ${mapping.mappedTo} - "${value}"`);
               isValid = false;
             } else if (fieldDef && fieldDef.formatter) {
               // Apply formatter if available
@@ -416,15 +442,36 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
           
           if (isValid) {
             parsedContacts.push(contact as Contact);
+          } else {
+            invalidRows++;
+            issues.push(...rowIssues);
           }
         }
         
-        setContacts(parsedContacts);
+        console.log("Valid contacts:", parsedContacts.length); // Debug log
+        console.log("Invalid contacts:", invalidRows); // Debug log
+        console.log("Issues:", issues); // Debug log
         
-        toast({
-          title: "CSV Processed Successfully",
-          description: `Found ${parsedContacts.length} valid contacts in your CSV file.`,
+        setContacts(parsedContacts);
+        setValidationResults({
+          total: totalRows,
+          valid: parsedContacts.length,
+          invalid: invalidRows,
+          issues: issues
         });
+        
+        if (parsedContacts.length > 0) {
+          toast({
+            title: "CSV Processed Successfully",
+            description: `Found ${parsedContacts.length} valid contacts out of ${totalRows} total rows.`,
+          });
+        } else {
+          toast({
+            title: "No Valid Contacts",
+            description: "None of the contacts in your CSV file are valid. Check the validation issues for details.",
+            variant: "destructive"
+          });
+        }
         
         setShowMappingDialog(false);
       } catch (err) {
@@ -473,6 +520,7 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
       setContacts([]);
       setHeaders([]);
       setFieldMappings([]);
+      setValidationResults({total: 0, valid: 0, invalid: 0, issues: []});
     }, 1000);
   };
 
@@ -486,6 +534,7 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
     setHeaders([]);
     setError(null);
     setFieldMappings([]);
+    setValidationResults({total: 0, valid: 0, invalid: 0, issues: []});
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -632,6 +681,24 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
                   <span>{contacts.length} contacts detected</span>
                 </div>
               ) : null}
+              
+              {validationResults.issues.length > 0 && (
+                <div className="mt-4 text-left w-full max-w-md">
+                  <h4 className="font-medium text-destructive mb-2">Validation Issues:</h4>
+                  <div className="max-h-40 overflow-y-auto bg-destructive/5 p-3 rounded-md text-sm">
+                    <ul className="list-disc pl-5 space-y-1">
+                      {validationResults.issues.slice(0, 10).map((issue, index) => (
+                        <li key={index} className="text-destructive">{issue}</li>
+                      ))}
+                      {validationResults.issues.length > 10 && (
+                        <li className="text-muted-foreground">
+                          {validationResults.issues.length - 10} more issues not shown
+                        </li>
+                      )}
+                    </ul>
+                  </div>
+                </div>
+              )}
               
               {fieldMappings.length > 0 && !isProcessing && (
                 <Button 
@@ -903,6 +970,33 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
               {contacts.length - 5} more contacts not shown
             </div>
           )}
+        </Card>
+      )}
+      
+      {/* Processing Summary Card */}
+      {file && validationResults.total > 0 && (
+        <Card className="p-4 bg-muted/30">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-medium">Processing Summary</h3>
+            <Button variant="ghost" size="sm" onClick={handleClearFile} className="h-8 px-2">
+              <RotateCw className="h-4 w-4 mr-1" />
+              Reset
+            </Button>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="p-3 bg-green-50 rounded-lg border border-green-100">
+              <p className="text-sm text-muted-foreground mb-1">Valid Contacts</p>
+              <p className="text-2xl font-semibold text-green-600">{validationResults.valid}</p>
+            </div>
+            <div className="p-3 bg-red-50 rounded-lg border border-red-100">
+              <p className="text-sm text-muted-foreground mb-1">Invalid Rows</p>
+              <p className="text-2xl font-semibold text-red-600">{validationResults.invalid}</p>
+            </div>
+            <div className="p-3 bg-blue-50 rounded-lg border border-blue-100">
+              <p className="text-sm text-muted-foreground mb-1">Total Rows</p>
+              <p className="text-2xl font-semibold text-blue-600">{validationResults.total}</p>
+            </div>
+          </div>
         </Card>
       )}
       
