@@ -26,6 +26,7 @@ export interface Campaign {
   completedAt?: Date;
   templateId?: string;
   timeZone?: string;
+  knowledgeBaseId?: string; // Reference to knowledge base document
   sendingWindow?: {
     startTime: string;
     endTime: string;
@@ -55,6 +56,19 @@ export interface Conversation {
   status: 'new' | 'active' | 'interested' | 'not-interested' | 'completed' | 'no-response' | 'do-not-disturb';
   unreadCount: number;
   messages?: Message[];
+}
+
+// New Knowledge Base type for PDF uploads
+export interface KnowledgeBase {
+  id: string;
+  title: string;
+  description: string;
+  fileType: 'pdf'; // Could expand to other types in the future
+  fileName: string;
+  fileSize: number;
+  dateUploaded: Date;
+  content: string; // Base64 encoded content of the PDF
+  campaigns: string[]; // Campaign IDs that use this knowledge base
 }
 
 // Additional types used in the application

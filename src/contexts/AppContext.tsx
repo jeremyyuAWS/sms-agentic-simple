@@ -7,7 +7,8 @@ import {
   Conversation, 
   Template, 
   MetricItem,
-  Message
+  Message,
+  KnowledgeBase
 } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
@@ -17,6 +18,7 @@ interface AppContextProps {
   conversations: Conversation[];
   templates: Template[];
   metrics: MetricItem[];
+  knowledgeBases: KnowledgeBase[];
   activeCampaign: Campaign | null;
   activeConversation: Conversation | null;
   activeTemplate: Template | null;
@@ -27,11 +29,14 @@ interface AppContextProps {
   setConversations: React.Dispatch<React.SetStateAction<Conversation[]>>;
   setTemplates: React.Dispatch<React.SetStateAction<Template[]>>;
   setMetrics: React.Dispatch<React.SetStateAction<MetricItem[]>>;
+  setKnowledgeBases: React.Dispatch<React.SetStateAction<KnowledgeBase[]>>;
   setActiveCampaign: (campaign: Campaign | null) => void;
   setActiveConversation: (conversation: Conversation | null) => void;
   setActiveTemplate: (template: Template | null) => void;
   sendMessage: (contactId: string, message: string, campaignId?: string) => void;
   uploadContacts: (contacts: Contact[]) => void;
+  uploadKnowledgeBase: (knowledgeBase: KnowledgeBase) => void;
+  deleteKnowledgeBase: (id: string) => void;
   createCampaign: (campaign: Omit<Campaign, 'id' | 'createdAt'>) => void;
   updateCampaignStatus: (campaignId: string, status: Campaign['status']) => void;
   createTemplate: (template: Omit<Template, 'id' | 'createdAt' | 'updatedAt'>) => void;
@@ -47,6 +52,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   const [conversationsState, setConversations] = useState<Conversation[]>(conversations);
   const [templatesState, setTemplates] = useState<Template[]>(templates);
   const [metricsState, setMetrics] = useState<MetricItem[]>(metrics);
+  const [knowledgeBasesState, setKnowledgeBases] = useState<KnowledgeBase[]>([]);
   
   const [activeCampaign, setActiveCampaign] = useState<Campaign | null>(null);
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
@@ -147,6 +153,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     });
   };
   
+  const uploadKnowledgeBase = (knowledgeBase: KnowledgeBase) => {
+    setKnowledgeBases(prev => [...prev, knowledgeBase]);
+    
+    toast({
+      title: "Knowledge Base Uploaded",
+      description: `"${knowledgeBase.fileName}" has been uploaded successfully.`
+    });
+  };
+  
+  const deleteKnowledgeBase = (id: string) => {
+    setKnowledgeBases(prev => prev.filter(kb => kb.id !== id));
+    
+    // Also remove references from campaigns
+    setCampaigns(prev => prev.map(campaign => {
+      if (campaign.knowledgeBaseId === id) {
+        const { knowledgeBaseId, ...rest } = campaign;
+        return rest;
+      }
+      return campaign;
+    }));
+  };
+  
   const createCampaign = (campaignData: Omit<Campaign, 'id' | 'createdAt'>) => {
     const now = new Date();
     const newCampaign: Campaign = {
@@ -157,6 +185,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     };
     
     setCampaigns(prev => [...prev, newCampaign]);
+    
+    // If the campaign has a knowledge base, update the knowledge base's campaigns array
+    if (newCampaign.knowledgeBaseId) {
+      setKnowledgeBases(prev => prev.map(kb => {
+        if (kb.id === newCampaign.knowledgeBaseId) {
+          return {
+            ...kb,
+            campaigns: [...kb.campaigns, newCampaign.id]
+          };
+        }
+        return kb;
+      }));
+    }
     
     toast({
       title: "Campaign Created",
@@ -219,6 +260,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
         conversations: conversationsState,
         templates: templatesState,
         metrics: metricsState,
+        knowledgeBases: knowledgeBasesState,
         activeCampaign,
         activeConversation,
         activeTemplate,
@@ -229,11 +271,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
         setConversations,
         setTemplates,
         setMetrics,
+        setKnowledgeBases,
         setActiveCampaign,
         setActiveConversation,
         setActiveTemplate,
         sendMessage,
         uploadContacts,
+        uploadKnowledgeBase,
+        deleteKnowledgeBase,
         createCampaign,
         updateCampaignStatus,
         createTemplate
