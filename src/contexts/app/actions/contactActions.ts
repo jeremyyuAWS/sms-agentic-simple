@@ -1,3 +1,4 @@
+
 import { Contact, ContactTag, ContactSegment, ContactFilter, ContactImport } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
@@ -21,10 +22,14 @@ export const createContactActions = (
       type: 'csv' | 'manual' | 'import' | 'api';
       name: string;
       filename?: string;
+      customName?: string; // New parameter for custom import name
     } = { type: 'manual', name: 'Manual Entry' }
   ) => {
     const batchId = `import-${Date.now()}`;
     const importTime = new Date();
+    
+    // Use custom name if provided, otherwise use the default name
+    const importName = source.customName || source.name;
     
     // Add source information and unique IDs if they don't exist
     const processedContacts = newContacts.map(contact => {
@@ -34,7 +39,7 @@ export const createContactActions = (
         id: contactId,
         source: {
           type: source.type,
-          name: source.name,
+          name: importName, // Use the determined name
           importedAt: importTime,
           batchId
         }
@@ -44,7 +49,7 @@ export const createContactActions = (
     // Create import record
     const importRecord: ContactImport = {
       id: batchId,
-      name: source.name,
+      name: importName, // Use the determined name
       filename: source.filename || `Import ${new Date().toLocaleString()}`,
       importedAt: importTime,
       contactCount: processedContacts.length,
