@@ -53,7 +53,8 @@ const Templates = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTime, setSelectedTime] = useState<string>("09:00");
   const [showScheduling, setShowScheduling] = useState(false);
-  const [templateSchedules, setTemplateSchedules] = useState<{[templateId: string]: {date: Date, time: string, condition?: 'no-response' | 'all'}>}>({});
+  const [templateSchedules, setTemplateSchedules] = useState<{[templateId: string]: {date: Date, time: string, condition?: 'no-response' | 'all'}}>({});
+  const [selectedCondition, setSelectedCondition] = useState<'no-response' | 'all'>('all');
 
   // Get available contact fields for template variables
   const getAvailableContactFields = () => {
@@ -227,15 +228,15 @@ const Templates = () => {
     if (templateSchedules[templateId]) {
       setSelectedDate(templateSchedules[templateId].date);
       setSelectedTime(templateSchedules[templateId].time);
+      setSelectedCondition(templateSchedules[templateId].condition || 'all');
     } else {
       setSelectedDate(undefined);
       setSelectedTime("09:00");
+      setSelectedCondition('all');
     }
     
     setShowScheduling(true);
   };
-
-  const [selectedCondition, setSelectedCondition] = useState<'no-response' | 'all'>('all');
 
   const saveSchedule = () => {
     if (!selectedTemplate || !selectedDate) {
