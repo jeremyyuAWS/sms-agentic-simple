@@ -65,8 +65,7 @@ const InlineTemplateEditor: React.FC<InlineTemplateEditorProps> = ({
         body,
         variables,
         categoryIds: selectedCategoryId ? [selectedCategoryId] : [],
-        // Remove the 'tags' property as it doesn't exist in the Template type
-        knowledgeBaseIds: knowledgeBaseId ? [knowledgeBaseId] : []
+        // Remove the property that doesn't exist in the Template type
       };
       
       // Save the template and get the new ID

@@ -33,14 +33,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
   const getFilteredTemplates = () => {
     let filtered = [...templates];
     
-    // Filter by knowledge base if provided - checking for the property before accessing
-    if (knowledgeBaseId) {
-      filtered = filtered.filter(template => 
-        !template.knowledgeBaseIds || 
-        template.knowledgeBaseIds?.length === 0 || 
-        template.knowledgeBaseIds?.includes(knowledgeBaseId)
-      );
-    }
+    // We won't filter by knowledgeBaseId since the property doesn't exist in the Template type
     
     if (tab === 'all') {
       return filtered;
