@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { Contact } from '@/lib/types';
+import React, { useState, Dispatch, SetStateAction } from 'react';
+import { Contact, ContactFilter } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -9,13 +9,23 @@ import { Search } from 'lucide-react';
 interface CampaignContactSelectionProps {
   contacts: Contact[];
   selectedContactIds: string[];
-  onChange: (selectedIds: string[]) => void;
+  onChange?: (selectedIds: string[]) => void;
+  onSelectionChange?: Dispatch<SetStateAction<string[]>>;
+  segmentId?: string;
+  onSegmentChange?: Dispatch<SetStateAction<string>>;
+  customFilter?: ContactFilter;
+  onFilterChange?: Dispatch<SetStateAction<ContactFilter | undefined>>;
 }
 
 const CampaignContactSelection: React.FC<CampaignContactSelectionProps> = ({
   contacts,
   selectedContactIds,
   onChange,
+  onSelectionChange,
+  segmentId,
+  onSegmentChange,
+  customFilter,
+  onFilterChange,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -31,15 +41,32 @@ const CampaignContactSelection: React.FC<CampaignContactSelectionProps> = ({
       ? selectedContactIds.filter(id => id !== contactId)
       : [...selectedContactIds, contactId];
     
-    onChange(updatedSelection);
+    // Support both onChange and onSelectionChange patterns
+    if (onChange) {
+      onChange(updatedSelection);
+    }
+    
+    if (onSelectionChange) {
+      onSelectionChange(updatedSelection);
+    }
   };
 
   // Handle select all
   const handleSelectAll = () => {
+    let updatedSelection;
     if (selectedContactIds.length === filteredContacts.length) {
-      onChange([]);
+      updatedSelection = [];
     } else {
-      onChange(filteredContacts.map(contact => contact.id));
+      updatedSelection = filteredContacts.map(contact => contact.id);
+    }
+    
+    // Support both onChange and onSelectionChange patterns
+    if (onChange) {
+      onChange(updatedSelection);
+    }
+    
+    if (onSelectionChange) {
+      onSelectionChange(updatedSelection);
     }
   };
 
