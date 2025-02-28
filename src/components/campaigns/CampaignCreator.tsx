@@ -1,12 +1,27 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useApp } from '@/contexts';
+import { Campaign, Template, KnowledgeBase, ContactFilter, FollowUp } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import TimeZoneSelector from './TimeZoneSelector';
-import TimeWindowSelector from './TimeWindowSelector';
+import { useToast } from '@/hooks/use-toast';
+import { CalendarIcon, PlusIcon, Trash2, X } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@/components/ui/tabs';
 import {
   Select,
   SelectContent,
@@ -15,352 +30,196 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
-import { Campaign, TimeZoneOption, TimeWindowOption, FollowUp, Template, Contact } from '@/lib/types';
-import { CalendarIcon, PlusCircle, Clock, Trash2, CalendarPlus, CheckCircle2, Tag } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useToast } from '@/hooks/use-toast';
-import { Switch } from "@/components/ui/switch";
+import TimeZoneSelector from './TimeZoneSelector';
+import TimeWindowSelector from './TimeWindowSelector';
+import CampaignContactSelection from './CampaignContactSelection';
 
 interface CampaignCreatorProps {
-  onClose: () => void;
-  isOpen: boolean;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
 const CampaignCreator: React.FC<CampaignCreatorProps> = ({
-  onClose,
-  isOpen
+  open,
+  onOpenChange
 }) => {
-  const { templates, createCampaign, knowledgeBases, contacts } = useApp();
+  const { templates, knowledgeBases, createCampaign } = useApp();
   const { toast } = useToast();
   
-  const [campaignData, setCampaignData] = useState<Partial<Campaign>>({
-    name: '',
-    description: '',
-    status: 'draft',
-    contactCount: 0,
-    templateId: '',
-    timeZone: 'America/New_York',
-    sendingWindow: {
+  // Form state
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [templateId, setTemplateId] = useState('');
+  const [knowledgeBaseId, setKnowledgeBaseId] = useState('');
+  const [selectedContactIds, setSelectedContactIds] = useState<string[]>([]);
+  const [segmentId, setSegmentId] = useState('');
+  const [customFilter, setCustomFilter] = useState<ContactFilter | undefined>();
+  const [timeZone, setTimeZone] = useState('');
+  const [scheduledDate, setScheduledDate] = useState<Date | undefined>(undefined);
+  const [activeTab, setActiveTab] = useState("details");
+  const [followUps, setFollowUps] = useState<Array<Omit<FollowUp, 'id'>>>([]);
+  
+  // Time window for sending
+  const [sendingWindow, setSendingWindow] = useState<Campaign['sendingWindow']>({
+    startTime: '09:00',
+    endTime: '17:00',
+    daysOfWeek: [1, 2, 3, 4, 5] // Monday to Friday
+  });
+  
+  const handleCreateCampaign = () => {
+    if (!name) {
+      toast({
+        title: "Error",
+        description: "Campaign name is required",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!templateId) {
+      toast({
+        title: "Error",
+        description: "Message template is required",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Determine contact selection method
+    let contactCount = 0;
+    
+    // For demo purposes, we'll use a placeholder count
+    // In a real implementation, this would be calculated based on
+    // selectedContactIds, segmentId, or customFilter
+    if (selectedContactIds.length > 0) {
+      contactCount = selectedContactIds.length;
+    } else if (segmentId) {
+      contactCount = 24; // Example segment size
+    } else if (customFilter) {
+      contactCount = 15; // Example filtered count
+    } else {
+      // All contacts
+      contactCount = 100; // Example total count
+    }
+    
+    // Create the campaign
+    createCampaign({
+      name,
+      description,
+      status: 'draft',
+      contactCount,
+      updatedAt: new Date(),
+      templateId,
+      knowledgeBaseId: knowledgeBaseId || undefined,
+      timeZone: timeZone || undefined,
+      scheduledStartDate: scheduledDate,
+      sendingWindow,
+      followUps,
+      contactIds: selectedContactIds.length > 0 ? selectedContactIds : undefined,
+      segmentId: segmentId || undefined,
+      customFilter
+    });
+    
+    // Reset form and close dialog
+    resetForm();
+    onOpenChange(false);
+    
+    toast({
+      title: "Campaign Created",
+      description: `Campaign "${name}" has been created successfully.`
+    });
+  };
+  
+  const resetForm = () => {
+    setName('');
+    setDescription('');
+    setTemplateId('');
+    setKnowledgeBaseId('');
+    setSelectedContactIds([]);
+    setSegmentId('');
+    setCustomFilter(undefined);
+    setTimeZone('');
+    setScheduledDate(undefined);
+    setActiveTab("details");
+    setFollowUps([]);
+    setSendingWindow({
       startTime: '09:00',
       endTime: '17:00',
       daysOfWeek: [1, 2, 3, 4, 5]
-    },
-    followUps: []
-  });
-  
-  const [selectedTimeZone, setSelectedTimeZone] = useState<TimeZoneOption | null>(null);
-  const [selectedTimeWindow, setSelectedTimeWindow] = useState<TimeWindowOption | null>(null);
-  const [scheduleDate, setScheduleDate] = useState<Date | undefined>(undefined);
-  const [scheduleTime, setScheduleTime] = useState<string>("09:00");
-  const [showScheduleSelector, setShowScheduleSelector] = useState<boolean>(false);
-  const [showFollowUpCreator, setShowFollowUpCreator] = useState<boolean>(false);
-  const [currentFollowUp, setCurrentFollowUp] = useState<Partial<FollowUp>>({
-    templateId: '',
-    delayDays: 3,
-    enabled: true,
-    condition: 'no-response'
-  });
-  const [previewTemplate, setPreviewTemplate] = useState<string>("");
-
-  // Reset the form when the dialog is opened
-  useEffect(() => {
-    if (isOpen) {
-      setCampaignData({
-        name: '',
-        description: '',
-        status: 'draft',
-        contactCount: 0,
-        templateId: templates.length > 0 ? templates[0].id : '',
-        timeZone: 'America/New_York',
-        sendingWindow: {
-          startTime: '09:00',
-          endTime: '17:00',
-          daysOfWeek: [1, 2, 3, 4, 5]
-        },
-        followUps: []
-      });
-      setSelectedTimeZone(null);
-      setSelectedTimeWindow(null);
-      setScheduleDate(undefined);
-      setScheduleTime("09:00");
-      setShowScheduleSelector(false);
-      setCurrentFollowUp({
-        templateId: templates.length > 0 ? templates[0].id : '',
-        delayDays: 3,
-        enabled: true,
-        condition: 'no-response'
-      });
-      
-      // Initialize preview template if templates exist
-      if (templates.length > 0) {
-        setPreviewTemplate(templates[0].body);
-      }
-    }
-  }, [isOpen, templates]);
-  
-  // Update preview template when selected template changes
-  useEffect(() => {
-    if (campaignData.templateId) {
-      const selectedTemplate = templates.find(t => t.id === campaignData.templateId);
-      if (selectedTemplate) {
-        setPreviewTemplate(selectedTemplate.body);
-      }
-    }
-  }, [campaignData.templateId, templates]);
-  
-  const handleTimeZoneChange = (value: string) => {
-    // Find the selected time zone from the TimeZoneSelector's internal list
-    // Here we just set the value directly to the campaign data
-    setCampaignData(prev => ({
-      ...prev,
-      timeZone: value
-    }));
-  };
-  
-  const handleTimeWindowChange = (timeWindow: TimeWindowOption) => {
-    setSelectedTimeWindow(timeWindow);
-    setCampaignData(prev => ({
-      ...prev,
-      sendingWindow: {
-        startTime: timeWindow.startTime,
-        endTime: timeWindow.endTime,
-        daysOfWeek: timeWindow.daysOfWeek
-      }
-    }));
+    });
   };
   
   const addFollowUp = () => {
-    if (!currentFollowUp.templateId) {
+    if (!templateId) {
       toast({
-        title: "Error",
-        description: "Please select a template for the follow-up message.",
+        title: "Select Template First",
+        description: "Please select a primary message template before adding follow-ups.",
         variant: "destructive"
       });
       return;
     }
     
-    if (!currentFollowUp.delayDays || currentFollowUp.delayDays < 1) {
-      toast({
-        title: "Error",
-        description: "Please specify a valid delay in days (minimum 1 day).",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    // Add the follow-up to the campaign
-    setCampaignData(prev => {
-      const followUps = prev.followUps || [];
-      return {
-        ...prev,
-        followUps: [
-          ...followUps,
-          {
-            id: `temp-followup-${Date.now()}`,
-            templateId: currentFollowUp.templateId!,
-            delayDays: currentFollowUp.delayDays!,
-            enabled: currentFollowUp.enabled ?? true,
-            condition: currentFollowUp.condition || 'no-response'
-          }
-        ]
-      };
-    });
-    
-    // Reset the follow-up form
-    setCurrentFollowUp({
-      templateId: templates.length > 0 ? templates[0].id : '',
-      delayDays: 3,
-      enabled: true,
-      condition: 'no-response'
-    });
-    
-    setShowFollowUpCreator(false);
-    
-    toast({
-      title: "Follow-up Added",
-      description: "Follow-up message has been added to the campaign."
-    });
+    setFollowUps([
+      ...followUps,
+      {
+        templateId, // Default to same template as main message
+        delayDays: 2,
+        enabled: true,
+        condition: 'no-response'
+      }
+    ]);
   };
   
   const removeFollowUp = (index: number) => {
-    setCampaignData(prev => {
-      const followUps = prev.followUps ? [...prev.followUps] : [];
-      followUps.splice(index, 1);
-      return {
-        ...prev,
-        followUps
-      };
-    });
-    
-    toast({
-      title: "Follow-up Removed",
-      description: "Follow-up message has been removed from the campaign."
-    });
+    setFollowUps(followUps.filter((_, i) => i !== index));
   };
   
-  const setScheduledStartDate = () => {
-    if (!scheduleDate) {
-      toast({
-        title: "Error",
-        description: "Please select a date for the campaign to start.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    // Combine the date and time
-    const [hours, minutes] = scheduleTime.split(':').map(Number);
-    const scheduledDateTime = new Date(scheduleDate);
-    scheduledDateTime.setHours(hours, minutes, 0, 0);
-    
-    // Make sure it's in the future
-    const now = new Date();
-    if (scheduledDateTime <= now) {
-      toast({
-        title: "Error",
-        description: "The scheduled start time must be in the future.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    setCampaignData(prev => ({
-      ...prev,
-      scheduledStartDate: scheduledDateTime
-    }));
-    
-    setShowScheduleSelector(false);
-    
-    toast({
-      title: "Schedule Set",
-      description: `Campaign scheduled to start on ${format(scheduledDateTime, 'PPp')}.`
-    });
-  };
-  
-  const clearSchedule = () => {
-    setCampaignData(prev => {
-      const { scheduledStartDate, ...rest } = prev;
-      return rest;
-    });
-    
-    setScheduleDate(undefined);
-    setScheduleTime("09:00");
-    
-    toast({
-      title: "Schedule Cleared",
-      description: "Campaign will start immediately when activated."
-    });
-  };
-  
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!campaignData.name) {
-      toast({
-        title: "Error",
-        description: "Campaign name is required.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    if (!campaignData.templateId) {
-      toast({
-        title: "Error",
-        description: "Please select a template for the campaign.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    createCampaign(campaignData as Omit<Campaign, 'id' | 'createdAt'>);
-    onClose();
-  };
-  
-  const getTemplateName = (templateId: string) => {
-    const template = templates.find(t => t.id === templateId);
-    return template ? template.name : 'Unknown template';
-  };
-  
-  // Function to generate a preview with real contact data if available
-  const generatePreview = () => {
-    if (!previewTemplate) return "";
-    
-    // Check if we have contacts to use in the preview
-    if (contacts.length > 0) {
-      // Use the first contact for preview
-      const sampleContact = contacts[0];
-      let preview = previewTemplate;
-      
-      // Replace all variables with contact data
-      Object.keys(sampleContact).forEach(key => {
-        const regex = new RegExp(`{${key}}`, 'g');
-        const value = sampleContact[key] || `[${key}]`;
-        preview = preview.replace(regex, String(value));
-      });
-      
-      // Find any remaining variables that weren't replaced
-      const remainingVariables = [...preview.matchAll(/{([^}]+)}/g)];
-      
-      if (remainingVariables.length > 0) {
-        // Replace remaining variables with placeholders
-        remainingVariables.forEach(match => {
-          const variable = match[1];
-          preview = preview.replace(new RegExp(`{${variable}}`, 'g'), `[${variable}]`);
-        });
+  const updateFollowUp = (index: number, updates: Partial<Omit<FollowUp, 'id'>>) => {
+    setFollowUps(followUps.map((followUp, i) => {
+      if (i === index) {
+        return { ...followUp, ...updates };
       }
-      
-      return preview;
-    } else {
-      // No contacts available, just show placeholder variables
-      return previewTemplate.replace(/{([^}]+)}/g, (_, variable) => `[${variable}]`);
-    }
+      return followUp;
+    }));
   };
   
-  // Get all available variables from the selected template
-  const getTemplateVariables = () => {
-    if (!campaignData.templateId) return [];
-    
-    const selectedTemplate = templates.find(t => t.id === campaignData.templateId);
-    if (!selectedTemplate) return [];
-    
-    return selectedTemplate.variables;
+  const getTemplateNameById = (id: string) => {
+    const template = templates.find(t => t.id === id);
+    return template ? template.name : 'Unknown Template';
   };
   
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create New Campaign</DialogTitle>
           <DialogDescription>
-            Create a new messaging campaign with a template, sending schedule, and follow-up messages.
+            Configure your campaign details, message template, and sending schedule.
           </DialogDescription>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-6 py-4">
-          <div className="space-y-4">
+        <Tabs defaultValue="details" value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid grid-cols-3 mb-4">
+            <TabsTrigger value="details">Campaign Details</TabsTrigger>
+            <TabsTrigger value="audience">Target Audience</TabsTrigger>
+            <TabsTrigger value="schedule">Schedule & Follow-ups</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="details" className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Campaign Name</Label>
               <Input 
                 id="name" 
-                value={campaignData.name || ''} 
-                onChange={(e) => setCampaignData({...campaignData, name: e.target.value})} 
-                placeholder="Q3 Sales Outreach"
+                value={name} 
+                onChange={(e) => setName(e.target.value)} 
+                placeholder="Summer Conference Outreach"
               />
             </div>
             
@@ -368,75 +227,38 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
               <Label htmlFor="description">Description (Optional)</Label>
               <Textarea 
                 id="description" 
-                value={campaignData.description || ''} 
-                onChange={(e) => setCampaignData({...campaignData, description: e.target.value})} 
-                placeholder="Campaign targeting Q3 sales prospects"
-                rows={3}
+                value={description} 
+                onChange={(e) => setDescription(e.target.value)} 
+                placeholder="Campaign targeting attendees of the summer tech conference"
+                className="resize-none"
               />
             </div>
             
             <div className="space-y-2">
               <Label htmlFor="template">Message Template</Label>
-              <Select 
-                value={campaignData.templateId} 
-                onValueChange={(value) => setCampaignData({...campaignData, templateId: value})}
-              >
-                <SelectTrigger>
+              <Select value={templateId} onValueChange={setTemplateId}>
+                <SelectTrigger id="template">
                   <SelectValue placeholder="Select a template" />
                 </SelectTrigger>
                 <SelectContent>
-                  {templates.length > 0 ? (
-                    templates.map((template) => (
-                      <SelectItem key={template.id} value={template.id}>
-                        {template.name}
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <SelectItem value="none" disabled>
-                      No templates available
+                  {templates.map((template) => (
+                    <SelectItem key={template.id} value={template.id}>
+                      {template.name}
                     </SelectItem>
-                  )}
+                  ))}
                 </SelectContent>
               </Select>
               {templates.length === 0 && (
-                <p className="text-sm text-destructive mt-1">
-                  Please create a template first.
+                <p className="text-sm text-muted-foreground">
+                  No templates available. Create a template first.
                 </p>
               )}
             </div>
             
-            {/* Template preview with real contact data */}
-            {campaignData.templateId && (
-              <div className="space-y-2 pt-2">
-                <div className="flex justify-between items-center">
-                  <Label className="text-sm">Message Preview</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {getTemplateVariables().map(variable => (
-                      <Badge key={variable} variant="outline" className="bg-primary/5">
-                        <Tag className="h-3 w-3 mr-1" />
-                        {variable}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-                <div className="p-3 border rounded-md bg-muted/30 text-sm">
-                  {generatePreview()}
-                </div>
-                {contacts.length > 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    Preview shows actual data from {contacts[0].name} ({contacts[0].company || "No company"})
-                  </p>
-                )}
-              </div>
-            )}
-            
             <div className="space-y-2">
               <Label htmlFor="knowledgeBase">Knowledge Base (Optional)</Label>
-              <Select 
-                value={campaignData.knowledgeBaseId || ''} 
-                onValueChange={(value) => setCampaignData({...campaignData, knowledgeBaseId: value})}
-              >
-                <SelectTrigger>
+              <Select value={knowledgeBaseId} onValueChange={setKnowledgeBaseId}>
+                <SelectTrigger id="knowledgeBase">
                   <SelectValue placeholder="Select a knowledge base" />
                 </SelectTrigger>
                 <SelectContent>
@@ -450,317 +272,203 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
               </Select>
             </div>
             
-            <div className="space-y-2">
-              <Label>Campaign Schedule</Label>
-              
-              {campaignData.scheduledStartDate ? (
-                <div className="flex items-center justify-between p-3 border rounded-md bg-muted/30">
-                  <div className="flex items-center gap-2">
-                    <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-                    <div>
-                      <p className="text-sm font-medium">
-                        Scheduled to start: {format(campaignData.scheduledStartDate, 'PPp')}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Campaign will activate automatically at this time
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => setShowScheduleSelector(true)}
-                    >
-                      Edit
-                    </Button>
-                    <Button 
-                      type="button" 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={clearSchedule}
-                    >
-                      Clear
-                    </Button>
+            <div className="flex justify-end">
+              <Button onClick={() => setActiveTab("audience")}>
+                Continue to Audience
+              </Button>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="audience" className="space-y-4">
+            <CampaignContactSelection
+              selectedContactIds={selectedContactIds}
+              onSelectionChange={setSelectedContactIds}
+              segmentId={segmentId}
+              onSegmentChange={setSegmentId}
+              customFilter={customFilter}
+              onFilterChange={setCustomFilter}
+            />
+            
+            <div className="flex justify-between">
+              <Button variant="outline" onClick={() => setActiveTab("details")}>
+                Back
+              </Button>
+              <Button onClick={() => setActiveTab("schedule")}>
+                Continue to Schedule
+              </Button>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="schedule" className="space-y-4">
+            <div className="space-y-4">
+              <div>
+                <Label>Sending Schedule</Label>
+                <div className="mt-2 space-y-4">
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">Start Date</p>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !scheduledDate && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {scheduledDate ? format(scheduledDate, "PPP") : "Select a start date"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={scheduledDate}
+                          onSelect={setScheduledDate}
+                          initialFocus
+                          disabled={(date) => date < new Date()}
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
                 </div>
-              ) : (
-                <div className="flex justify-between items-center p-3 border rounded-md bg-muted/30">
-                  <div>
-                    <p className="text-sm font-medium">No scheduled start time</p>
-                    <p className="text-xs text-muted-foreground">
-                      Campaign will start immediately when activated
-                    </p>
-                  </div>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => setShowScheduleSelector(true)}
-                  >
-                    <CalendarPlus className="h-4 w-4 mr-2" />
-                    Schedule
+              </div>
+              
+              <TimeZoneSelector 
+                value={timeZone} 
+                onChange={setTimeZone} 
+              />
+              
+              <TimeWindowSelector
+                value={sendingWindow}
+                onChange={setSendingWindow}
+              />
+              
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <Label>Follow-up Messages</Label>
+                  <Button variant="outline" size="sm" onClick={addFollowUp}>
+                    <PlusIcon className="h-4 w-4 mr-1" />
+                    Add Follow-up
                   </Button>
                 </div>
-              )}
-              
-              {/* Schedule Selector Dialog */}
-              <Dialog open={showScheduleSelector} onOpenChange={setShowScheduleSelector}>
-                <DialogContent className="sm:max-w-[450px]">
-                  <DialogHeader>
-                    <DialogTitle>Schedule Campaign Start</DialogTitle>
-                    <DialogDescription>
-                      Set when you want this campaign to start sending messages.
-                    </DialogDescription>
-                  </DialogHeader>
-                  
-                  <div className="space-y-4 py-4">
-                    <div className="space-y-2">
-                      <Label>Start Date</Label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "w-full justify-start text-left font-normal",
-                              !scheduleDate && "text-muted-foreground"
-                            )}
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {scheduleDate ? format(scheduleDate, "PPP") : "Select a date"}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={scheduleDate}
-                            onSelect={setScheduleDate}
-                            initialFocus
-                            disabled={(date) => date < new Date()}
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="scheduleTime">Start Time</Label>
-                      <Input
-                        id="scheduleTime"
-                        type="time"
-                        value={scheduleTime}
-                        onChange={(e) => setScheduleTime(e.target.value)}
-                      />
-                    </div>
-                  </div>
-                  
-                  <DialogFooter>
-                    <Button variant="outline" onClick={() => setShowScheduleSelector(false)}>
-                      Cancel
-                    </Button>
-                    <Button type="button" onClick={setScheduledStartDate}>
-                      <CheckCircle2 className="h-4 w-4 mr-2" />
-                      Set Schedule
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </div>
-            
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <Label>Time Zone & Sending Window</Label>
-              </div>
-              
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <TimeZoneSelector 
-                    value={campaignData.timeZone || "America/New_York"} 
-                    onChange={handleTimeZoneChange} 
-                    className="w-full"
-                  />
-                </div>
-                <div>
-                  <TimeWindowSelector 
-                    value={campaignData.sendingWindow || {
-                      startTime: '09:00',
-                      endTime: '17:00',
-                      daysOfWeek: [1, 2, 3, 4, 5]
-                    }} 
-                    onChange={handleTimeWindowChange}
-                    className="w-full"
-                  />
-                </div>
-              </div>
-            </div>
-            
-            <div className="space-y-4 pt-4 border-t">
-              <div className="flex justify-between items-center">
-                <Label className="text-base">Follow-up Messages</Label>
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => setShowFollowUpCreator(true)}
-                >
-                  <PlusCircle className="h-4 w-4 mr-2" />
-                  Add Follow-up
-                </Button>
                 
-                {/* Follow-up Creator Dialog */}
-                <Dialog open={showFollowUpCreator} onOpenChange={setShowFollowUpCreator}>
-                  <DialogContent className="sm:max-w-[450px]">
-                    <DialogHeader>
-                      <DialogTitle>Add Follow-up Message</DialogTitle>
-                      <DialogDescription>
-                        Create an automated follow-up message to send after your initial outreach.
-                      </DialogDescription>
-                    </DialogHeader>
-                    
-                    <div className="space-y-4 py-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="followUpTemplate">Message Template</Label>
-                        <Select 
-                          value={currentFollowUp.templateId} 
-                          onValueChange={(value) => setCurrentFollowUp({...currentFollowUp, templateId: value})}
-                        >
-                          <SelectTrigger id="followUpTemplate">
-                            <SelectValue placeholder="Select a template" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {templates.length > 0 ? (
-                              templates.map((template) => (
-                                <SelectItem key={template.id} value={template.id}>
-                                  {template.name}
-                                </SelectItem>
-                              ))
-                            ) : (
-                              <SelectItem value="none" disabled>
-                                No templates available
-                              </SelectItem>
-                            )}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="delayDays">Send After (Days)</Label>
-                        <Input
-                          id="delayDays"
-                          type="number"
-                          min="1"
-                          max="30"
-                          value={currentFollowUp.delayDays}
-                          onChange={(e) => setCurrentFollowUp({
-                            ...currentFollowUp, 
-                            delayDays: parseInt(e.target.value)
-                          })}
-                        />
-                        <p className="text-xs text-muted-foreground">
-                          Number of days to wait after the initial message before sending this follow-up
-                        </p>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="condition">Send Condition</Label>
-                        <Select 
-                          value={currentFollowUp.condition} 
-                          onValueChange={(value: 'no-response' | 'all') => setCurrentFollowUp({
-                            ...currentFollowUp, 
-                            condition: value
-                          })}
-                        >
-                          <SelectTrigger id="condition">
-                            <SelectValue placeholder="Select when to send" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="no-response">Only if no response received</SelectItem>
-                            <SelectItem value="all">Send to all contacts</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      
-                      <div className="flex items-center space-x-2">
-                        <Switch
-                          id="enabled"
-                          checked={currentFollowUp.enabled}
-                          onCheckedChange={(checked) => setCurrentFollowUp({
-                            ...currentFollowUp, 
-                            enabled: checked
-                          })}
-                        />
-                        <Label htmlFor="enabled">Enabled</Label>
-                      </div>
-                    </div>
-                    
-                    <DialogFooter>
-                      <Button variant="outline" onClick={() => setShowFollowUpCreator(false)}>
-                        Cancel
-                      </Button>
-                      <Button type="button" onClick={addFollowUp}>
-                        <CheckCircle2 className="h-4 w-4 mr-2" />
-                        Add Follow-up
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              </div>
-              
-              {campaignData.followUps && campaignData.followUps.length > 0 ? (
-                <div className="space-y-3">
-                  {campaignData.followUps.map((followUp, index) => (
-                    <div 
-                      key={followUp.id} 
-                      className={cn(
-                        "p-3 border rounded-md flex justify-between items-center",
-                        followUp.enabled ? "bg-muted/30" : "bg-muted/10 opacity-70"
-                      )}
-                    >
-                      <div className="space-y-1">
-                        <p className="font-medium text-sm">{getTemplateName(followUp.templateId)}</p>
-                        <div className="flex gap-4">
-                          <p className="text-xs text-muted-foreground flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {followUp.delayDays} days after initial message
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {followUp.condition === 'no-response' ? 'Only if no response' : 'All contacts'}
-                          </p>
-                          {!followUp.enabled && (
-                            <Badge variant="outline" className="text-xs bg-muted">Disabled</Badge>
-                          )}
+                {followUps.length === 0 ? (
+                  <div className="border border-dashed rounded-md p-4 text-center text-muted-foreground">
+                    No follow-ups added. Add a follow-up message to increase response rates.
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {followUps.map((followUp, index) => (
+                      <div key={index} className="border rounded-md p-3 bg-muted/20">
+                        <div className="flex justify-between items-start mb-2">
+                          <h4 className="font-medium">
+                            Follow-up #{index + 1}: {getTemplateNameById(followUp.templateId)}
+                          </h4>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeFollowUp(index)}
+                            className="h-8 w-8"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <Label htmlFor={`followup-delay-${index}`} className="text-xs">
+                              Send after (days)
+                            </Label>
+                            <Input
+                              id={`followup-delay-${index}`}
+                              type="number"
+                              min="1"
+                              value={followUp.delayDays}
+                              onChange={(e) => updateFollowUp(index, { 
+                                delayDays: parseInt(e.target.value) || 1 
+                              })}
+                            />
+                          </div>
+                          
+                          <div className="space-y-1">
+                            <Label htmlFor={`followup-condition-${index}`} className="text-xs">
+                              Condition
+                            </Label>
+                            <Select
+                              value={followUp.condition || 'no-response'}
+                              onValueChange={(value: 'no-response' | 'all') => updateFollowUp(index, { condition: value })}
+                            >
+                              <SelectTrigger id={`followup-condition-${index}`}>
+                                <SelectValue placeholder="When to send" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="no-response">Only if no response</SelectItem>
+                                <SelectItem value="all">Send to all</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          
+                          <div className="space-y-1">
+                            <Label htmlFor={`followup-template-${index}`} className="text-xs">
+                              Template
+                            </Label>
+                            <Select
+                              value={followUp.templateId}
+                              onValueChange={(value) => updateFollowUp(index, { templateId: value })}
+                            >
+                              <SelectTrigger id={`followup-template-${index}`}>
+                                <SelectValue placeholder="Select template" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {templates.map((template) => (
+                                  <SelectItem key={template.id} value={template.id}>
+                                    {template.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          
+                          <div className="flex items-center pt-6">
+                            <Select
+                              value={followUp.enabled ? "enabled" : "disabled"}
+                              onValueChange={(value) => updateFollowUp(index, { 
+                                enabled: value === "enabled" 
+                              })}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Status" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="enabled">Enabled</SelectItem>
+                                <SelectItem value="disabled">Disabled</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
                         </div>
                       </div>
-                      <Button 
-                        type="button" 
-                        variant="ghost" 
-                        size="icon"
-                        onClick={() => removeFollowUp(index)}
-                      >
-                        <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="p-4 text-center border rounded-md bg-muted/20">
-                  <p className="text-sm text-muted-foreground">
-                    No follow-up messages configured. Follow-ups can improve response rates.
-                  </p>
-                </div>
-              )}
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-          
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button type="submit">
-              Create Campaign
-            </Button>
-          </DialogFooter>
-        </form>
+            
+            <div className="flex justify-between">
+              <Button variant="outline" onClick={() => setActiveTab("audience")}>
+                Back
+              </Button>
+              <Button onClick={handleCreateCampaign}>
+                Create Campaign
+              </Button>
+            </div>
+          </TabsContent>
+        </Tabs>
+        
+        <DialogFooter className="pt-4">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
