@@ -12,6 +12,7 @@ import {
   BarChart3,
   Clock,
   Edit,
+  Trash2
 } from 'lucide-react';
 import { formatDistance } from 'date-fns';
 
@@ -19,12 +20,37 @@ interface CampaignListProps {
   campaigns: Campaign[];
   onSelect: (campaignId: string) => void;
   onUpdateStatus: (campaignId: string, status: Campaign['status']) => void;
+  onEdit?: (campaignId: string) => void; // Added as optional
+  onDelete?: (campaignId: string) => void; // Added as optional
 }
 
-const CampaignList: React.FC<CampaignListProps> = ({ campaigns, onSelect, onUpdateStatus }) => {
+const CampaignList: React.FC<CampaignListProps> = ({ 
+  campaigns, 
+  onSelect, 
+  onUpdateStatus,
+  onEdit,
+  onDelete
+}) => {
   const handleStatusChange = (e: React.MouseEvent, campaign: Campaign, status: Campaign['status']) => {
     e.stopPropagation();
     onUpdateStatus(campaign.id, status);
+  };
+
+  const handleEdit = (e: React.MouseEvent, campaignId: string) => {
+    e.stopPropagation();
+    if (onEdit) {
+      onEdit(campaignId);
+    } else {
+      // If no onEdit is provided, fall back to onSelect
+      onSelect(campaignId);
+    }
+  };
+
+  const handleDelete = (e: React.MouseEvent, campaignId: string) => {
+    e.stopPropagation();
+    if (onDelete) {
+      onDelete(campaignId);
+    }
   };
 
   const getStatusBadge = (status: Campaign['status']) => {
@@ -61,6 +87,16 @@ const CampaignList: React.FC<CampaignListProps> = ({ campaigns, onSelect, onUpda
             >
               <StopCircle className="h-3.5 w-3.5 mr-1" /> Stop
             </Button>
+            {onEdit && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8"
+                onClick={(e) => handleEdit(e, campaign.id)}
+              >
+                <Edit className="h-3.5 w-3.5 mr-1" /> Edit
+              </Button>
+            )}
           </>
         );
       case 'paused':
@@ -82,22 +118,43 @@ const CampaignList: React.FC<CampaignListProps> = ({ campaigns, onSelect, onUpda
             >
               <StopCircle className="h-3.5 w-3.5 mr-1" /> Stop
             </Button>
+            {onEdit && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8"
+                onClick={(e) => handleEdit(e, campaign.id)}
+              >
+                <Edit className="h-3.5 w-3.5 mr-1" /> Edit
+              </Button>
+            )}
           </>
         );
       case 'draft':
         return (
           <>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8"
-              onClick={(e) => {
-                e.stopPropagation();
-                onSelect(campaign.id);
-              }}
-            >
-              <Edit className="h-3.5 w-3.5 mr-1" /> Edit
-            </Button>
+            {onEdit ? (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8"
+                onClick={(e) => handleEdit(e, campaign.id)}
+              >
+                <Edit className="h-3.5 w-3.5 mr-1" /> Edit
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSelect(campaign.id);
+                }}
+              >
+                <Edit className="h-3.5 w-3.5 mr-1" /> Edit
+              </Button>
+            )}
             <Button
               variant="outline"
               size="sm"
@@ -109,7 +166,20 @@ const CampaignList: React.FC<CampaignListProps> = ({ campaigns, onSelect, onUpda
           </>
         );
       default:
-        return null;
+        return (
+          <>
+            {onEdit && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8"
+                onClick={(e) => handleEdit(e, campaign.id)}
+              >
+                <Edit className="h-3.5 w-3.5 mr-1" /> View
+              </Button>
+            )}
+          </>
+        );
     }
   };
 
@@ -136,7 +206,19 @@ const CampaignList: React.FC<CampaignListProps> = ({ campaigns, onSelect, onUpda
               <h3 className="font-medium text-lg">{campaign.name}</h3>
               <p className="text-sm text-muted-foreground mt-1">{campaign.description}</p>
             </div>
-            <div>{getStatusBadge(campaign.status)}</div>
+            <div className="flex items-center gap-2">
+              {getStatusBadge(campaign.status)}
+              {onDelete && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                  onClick={(e) => handleDelete(e, campaign.id)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
