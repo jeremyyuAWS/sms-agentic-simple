@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { useApp } from '@/contexts/AppContext';
+import { useApp } from '@/contexts';
 import { Bell, User, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 

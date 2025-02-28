@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useApp } from '@/contexts/AppContext';
+import { useApp } from '@/contexts';
 import { Template } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Edit, Trash2, Tag, Copy } from 'lucide-react';

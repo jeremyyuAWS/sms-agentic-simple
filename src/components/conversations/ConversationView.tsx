@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Send, User, Phone, Calendar, XCircle, CheckCircle2, Copy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
-import { useApp } from '@/contexts/AppContext';
+import { useApp } from '@/contexts';
 import AnimatedCard from '@/components/ui/AnimatedCard';
 
 interface ConversationViewProps {

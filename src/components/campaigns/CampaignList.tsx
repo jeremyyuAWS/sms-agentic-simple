@@ -3,7 +3,7 @@ import React from 'react';
 import { Campaign } from '@/lib/types';
 import AnimatedCard from '@/components/ui/AnimatedCard';
 import { Button } from '@/components/ui/button';
-import { useApp } from '@/contexts/AppContext';
+import { useApp } from '@/contexts';
 import {
   Play,
   Pause,

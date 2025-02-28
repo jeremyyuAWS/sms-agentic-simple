@@ -3,7 +3,7 @@ import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Upload, AlertCircle, CheckCircle2, FileType2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useApp } from '@/contexts/AppContext';
+import { useApp } from '@/contexts';
 import { Contact } from '@/lib/types';
 import AnimatedCard from '@/components/ui/AnimatedCard';
 import { useToast } from '@/hooks/use-toast';

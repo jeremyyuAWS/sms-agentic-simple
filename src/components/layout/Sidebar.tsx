@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -11,7 +10,7 @@ import {
   Settings, 
   Tag
 } from 'lucide-react';
-import { useApp } from '@/contexts/AppContext';
+import { useApp } from '@/contexts';
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {}
 

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { useApp } from '@/contexts/AppContext';
+import { useApp } from '@/contexts';
 import { Badge } from '@/components/ui/badge';
 import { Plus, X, Save, Tag } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
