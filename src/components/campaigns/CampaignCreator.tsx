@@ -53,7 +53,7 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
   open,
   onOpenChange
 }) => {
-  const { templates, knowledgeBases, createCampaign } = useApp();
+  const { templates, knowledgeBases, createCampaign, contacts } = useApp();
   const { toast } = useToast();
   
   // Form state
@@ -293,6 +293,7 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
           
           <TabsContent value="audience" className="space-y-4">
             <CampaignContactSelection
+              contacts={contacts}
               selectedContactIds={selectedContactIds}
               onSelectionChange={setSelectedContactIds}
               segmentId={segmentId}
