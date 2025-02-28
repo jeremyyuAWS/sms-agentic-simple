@@ -65,7 +65,7 @@ const InlineTemplateEditor: React.FC<InlineTemplateEditorProps> = ({
         body,
         variables,
         categoryIds: selectedCategoryId ? [selectedCategoryId] : [],
-        tags: [],
+        // Remove the 'tags' property as it doesn't exist in the Template type
         knowledgeBaseIds: knowledgeBaseId ? [knowledgeBaseId] : []
       };
       
@@ -142,7 +142,7 @@ const InlineTemplateEditor: React.FC<InlineTemplateEditorProps> = ({
             <div className="flex items-center justify-between">
               <Label htmlFor="template-body">Template Content</Label>
               <div className="text-xs text-muted-foreground">
-                Use {{variable_name}} for dynamic content
+                Use {`{{variable_name}}`} for dynamic content
               </div>
             </div>
             <Textarea
