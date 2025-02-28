@@ -11,6 +11,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Separator } from '@/components/ui/separator';
 import CampaignContactSelection from './CampaignContactSelection';
 import TemplateSelector from '@/components/templates/TemplateSelector';
 import ScheduleCampaign from './ScheduleCampaign';
@@ -20,7 +21,6 @@ import { useCampaignForm } from '@/hooks/use-campaign-form';
 // Import subcomponents
 import CampaignDetailsTab from './campaign-creator/CampaignDetailsTab';
 import CampaignFollowupsTab from './campaign-creator/CampaignFollowupsTab';
-import CampaignCreatorTabs, { CampaignCreatorTabType } from './campaign-creator/CampaignCreatorTabs';
 import CampaignCreatorHeader from './campaign-creator/CampaignCreatorHeader';
 import CampaignCreatorFooter from './campaign-creator/CampaignCreatorFooter';
 import RecommendedTemplatesList from './RecommendedTemplatesList';
@@ -53,9 +53,7 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
   // Use our custom form hook
   const { 
     formState,
-    activeTab,
     isSubmitting: internalIsSubmitting,
-    setActiveTab,
     handleInputChange,
     handleTemplateSelect,
     handleContactsSelect,
@@ -74,8 +72,8 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
     }
   });
   
-  // Track completed tabs
-  const [completedTabs, setCompletedTabs] = useState<CampaignCreatorTabType[]>([]);
+  // Track completion status
+  const [completedSections, setCompletedSections] = useState<string[]>([]);
   
   // Determine campaign type from name
   const getCampaignTypeFromName = (): CampaignType => {
@@ -104,171 +102,170 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
     return 'sales-outreach'; // Default
   };
   
-  // Check for completed tabs
+  // Check for completed sections
   useEffect(() => {
-    const completed: CampaignCreatorTabType[] = [];
+    const completed: string[] = [];
     
-    // Details tab
+    // Details section
     if (formState.name && formState.description) {
       completed.push('details');
     }
     
-    // Contacts tab
+    // Contacts section
     if ((formState.contactIds && formState.contactIds.length > 0) || 
         formState.contactListId || 
         formState.segmentId) {
       completed.push('contacts');
     }
     
-    // Template tab
+    // Template section
     if (formState.templateId) {
       completed.push('template');
     }
     
-    // Schedule tab
+    // Schedule section
     if (formState.scheduledStartDate) {
       completed.push('schedule');
     }
     
-    // Followups tab is always considered complete
-    completed.push('followups');
+    // Followups section is always considered "complete" but we track it
+    if (formState.isFollowUpsEnabled && formState.followUps.length > 0) {
+      completed.push('followups');
+    }
     
-    setCompletedTabs(completed);
+    setCompletedSections(completed);
   }, [formState]);
 
   // Use either external or internal submitting state
   const isSubmitting = externalIsSubmitting || internalIsSubmitting;
-
-  // Render the content for the active tab
-  const renderTabContent = () => {
-    const campaignType = getCampaignTypeFromName();
-    
-    switch (activeTab) {
-      case 'details':
-        return (
-          <>
-            <CampaignSetupGuide campaignType={campaignType} currentStep="details" />
-            <CampaignDetailsTab />
-          </>
-        );
-      case 'contacts':
-        return (
-          <>
-            <CampaignSetupGuide campaignType={campaignType} currentStep="contacts" />
-            <CampaignContactSelection
-              selectedContactIds={formState.contactIds}
-              contactListId={formState.contactListId}
-              segmentId={formState.segmentId}
-              onContactsSelect={handleContactsSelect}
-              onListSelect={handleListSelect}
-              onSegmentSelect={handleSegmentSelect}
-            />
-          </>
-        );
-      case 'template':
-        return (
-          <>
-            <CampaignSetupGuide campaignType={campaignType} currentStep="template" />
-            {/* Show recommended templates first */}
-            <div className="mb-6">
-              <RecommendedTemplatesList
-                campaignType={campaignType}
-                templates={templates}
-                onSelectTemplate={(templateId) => handleInputChange('templateId', templateId)}
-                selectedTemplateId={formState.templateId}
-              />
-            </div>
-          </>
-        );
-      case 'schedule':
-        return (
-          <>
-            <CampaignSetupGuide campaignType={campaignType} currentStep="schedule" />
-            <ScheduleCampaign
-              startDate={formState.scheduledStartDate}
-              window={formState.sendingWindow}
-              timezone={formState.timeZone}
-              onScheduleChange={(date) => handleInputChange('scheduledStartDate', date)}
-              onSendingWindowChange={(window) => handleInputChange('sendingWindow', window)}
-              onTimeZoneChange={(timezone) => handleInputChange('timeZone', timezone)}
-            />
-          </>
-        );
-      case 'followups':
-        return (
-          <>
-            <CampaignSetupGuide campaignType={campaignType} currentStep="followups" />
-            <CampaignFollowupsTab
-              isFollowUpsEnabled={formState.isFollowUpsEnabled}
-              setIsFollowUpsEnabled={setIsFollowUpsEnabled}
-              followUps={formState.followUps}
-              selectedTemplateId={formState.templateId}
-              templates={templates}
-              onFollowUpsChange={(followUps) => handleInputChange('followUps', followUps)}
-              onComplete={handleSubmit}
-            />
-          </>
-        );
-      default:
-        return null;
-    }
-  };
-
-  // Check if we're on the last tab
-  const isLastTab = activeTab === 'followups';
+  const campaignType = getCampaignTypeFromName();
 
   return (
     <div className="container mx-auto py-6 max-w-4xl">
       <Card>
         <CampaignCreatorHeader isEditing={!!campaign} />
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-8">
           <LoadingState isLoading={isSubmitting} loadingText="Saving campaign...">
             {/* Campaign name and description (always visible) */}
-            <div className="space-y-2">
-              <Label htmlFor="name">Campaign Name</Label>
-              <Input
-                type="text"
-                id="name"
-                placeholder="Enter campaign name"
-                value={formState.name}
-                onChange={(e) => handleInputChange('name', e.target.value)}
-                required
-                aria-required="true"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                placeholder="Enter campaign description"
-                value={formState.description}
-                onChange={(e) => handleInputChange('description', e.target.value)}
-              />
-            </div>
-
-            {/* Navigation tabs */}
-            <div className="overflow-x-auto">
-              <CampaignCreatorTabs 
-                activeTab={activeTab as CampaignCreatorTabType} 
-                onTabChange={setActiveTab}
-                completedTabs={completedTabs} 
-              />
-            </div>
-
-            {/* Tab content */}
-            {renderTabContent()}
-
-            {/* Only show the create/save button on tabs other than the last tab */}
-            {!isLastTab && (
-              <div className="flex justify-end mt-8">
-                <CampaignCreatorFooter
-                  isEditing={!!campaign}
-                  isSubmitting={isSubmitting}
-                  onSubmit={handleSubmit}
-                  onCancel={onCancel}
+            <div className="space-y-4">
+              <h2 className="text-2xl font-bold">Campaign Details</h2>
+              <div className="space-y-2">
+                <Label htmlFor="name">Campaign Name</Label>
+                <Input
+                  type="text"
+                  id="name"
+                  placeholder="Enter campaign name"
+                  value={formState.name}
+                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  required
+                  aria-required="true"
                 />
               </div>
-            )}
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  placeholder="Enter campaign description"
+                  value={formState.description}
+                  onChange={(e) => handleInputChange('description', e.target.value)}
+                />
+              </div>
+              
+              <div className="p-4 bg-muted/30 rounded-lg">
+                <h3 className="text-lg font-medium mb-2">Campaign Settings</h3>
+                <p className="text-sm text-muted-foreground">
+                  Your campaign is pre-configured with optimal settings for your selected campaign type.
+                  These settings include sending windows, follow-up sequences, and message scheduling.
+                </p>
+              </div>
+              
+              <div className="p-4 bg-blue-50 border border-blue-100 rounded-lg">
+                <h3 className="text-lg font-medium mb-2 text-blue-700">SMS Best Practices</h3>
+                <ul className="list-disc pl-5 space-y-2 text-sm text-blue-700">
+                  <li>Keep messages concise: SMS messages should be brief and to the point</li>
+                  <li>Include a clear call-to-action in each message</li>
+                  <li>Personalize messages with recipient's name when possible</li>
+                  <li>Always identify yourself or your company in the first message</li>
+                  <li>Send during business hours to maximize response rates</li>
+                  <li>Follow up strategically - the sequence is pre-configured for optimal engagement</li>
+                </ul>
+              </div>
+            </div>
+            
+            <Separator />
+            
+            {/* Contacts Section */}
+            <div className="space-y-4">
+              <h2 className="text-2xl font-bold">Select Recipients</h2>
+              <CampaignSetupGuide campaignType={campaignType} currentStep="contacts" />
+              <CampaignContactSelection
+                selectedContactIds={formState.contactIds}
+                contactListId={formState.contactListId}
+                segmentId={formState.segmentId}
+                onContactsSelect={handleContactsSelect}
+                onListSelect={handleListSelect}
+                onSegmentSelect={handleSegmentSelect}
+              />
+            </div>
+            
+            <Separator />
+            
+            {/* Message Template Section */}
+            <div className="space-y-4">
+              <h2 className="text-2xl font-bold">Message Template</h2>
+              <CampaignSetupGuide campaignType={campaignType} currentStep="template" />
+              <div className="mb-6">
+                <RecommendedTemplatesList
+                  campaignType={campaignType}
+                  templates={templates}
+                  onSelectTemplate={(templateId) => handleInputChange('templateId', templateId)}
+                  selectedTemplateId={formState.templateId}
+                />
+              </div>
+            </div>
+            
+            <Separator />
+            
+            {/* Schedule Section */}
+            <div className="space-y-4">
+              <h2 className="text-2xl font-bold">Campaign Schedule</h2>
+              <CampaignSetupGuide campaignType={campaignType} currentStep="schedule" />
+              <ScheduleCampaign
+                startDate={formState.scheduledStartDate}
+                window={formState.sendingWindow}
+                timezone={formState.timeZone}
+                onScheduleChange={(date) => handleInputChange('scheduledStartDate', date)}
+                onSendingWindowChange={(window) => handleInputChange('sendingWindow', window)}
+                onTimeZoneChange={(timezone) => handleInputChange('timeZone', timezone)}
+              />
+            </div>
+            
+            <Separator />
+            
+            {/* Follow-ups Section */}
+            <div className="space-y-4">
+              <h2 className="text-2xl font-bold">Follow-up Messages</h2>
+              <CampaignSetupGuide campaignType={campaignType} currentStep="followups" />
+              <CampaignFollowupsTab
+                isFollowUpsEnabled={formState.isFollowUpsEnabled}
+                setIsFollowUpsEnabled={setIsFollowUpsEnabled}
+                followUps={formState.followUps}
+                selectedTemplateId={formState.templateId}
+                templates={templates}
+                onFollowUpsChange={(followUps) => handleInputChange('followUps', followUps)}
+                onComplete={handleSubmit}
+              />
+            </div>
+            
+            {/* Footer with action buttons */}
+            <div className="flex justify-end mt-8">
+              <CampaignCreatorFooter
+                isEditing={!!campaign}
+                isSubmitting={isSubmitting}
+                onSubmit={handleSubmit}
+                onCancel={onCancel}
+              />
+            </div>
           </LoadingState>
         </CardContent>
       </Card>
