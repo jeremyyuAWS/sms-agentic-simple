@@ -15,7 +15,8 @@ import {
   ContactList,
   TimeWindow,
   TemplateCategory,
-  TemplateVersion
+  TemplateVersion,
+  TemplateVariant
 } from '@/lib/types';
 import React from 'react';
 
@@ -96,10 +97,36 @@ export interface AppContextProps {
   // Usage tracking
   trackTemplateUsage: (templateId: string, campaignId: string) => void;
   updateTemplateStats: (templateId: string, responseRate?: number, positiveRate?: number, negativeRate?: number) => void;
+  // Contact management
   createContactTag: (tag: Omit<ContactTag, 'id' | 'count'>) => void;
   assignTagToContacts: (tagId: string, contactIds: string[]) => void;
   removeTagFromContacts: (tagId: string, contactIds: string[]) => void;
   createContactSegment: (segment: Omit<ContactSegment, 'id' | 'count' | 'createdAt'>) => void;
   updateContactSegment: (id: string, updates: Partial<Omit<ContactSegment, 'id' | 'count' | 'createdAt'>>) => void;
   deleteContactSegment: (id: string) => void;
+  // A/B Testing for Campaigns
+  setupABTest: (
+    campaignId: string, 
+    templateVariants: Omit<TemplateVariant, 'id'>[], 
+    testDuration: number, 
+    winnerSelectionCriteria?: Campaign['winnerSelectionCriteria']
+  ) => void;
+  updateTemplateVariant: (
+    campaignId: string, 
+    variantId: string, 
+    updates: Partial<Omit<TemplateVariant, 'id'>>
+  ) => void;
+  removeTemplateVariant: (campaignId: string, variantId: string) => void;
+  selectWinningVariant: (campaignId: string, variantId: string) => void;
+  updateABTestPerformance: (
+    campaignId: string, 
+    variantId: string, 
+    stats: {
+      messageCount?: number;
+      responseCount?: number;
+      positiveResponseCount?: number;
+      negativeResponseCount?: number;
+    }
+  ) => void;
+  autoSelectWinner: (campaignId: string) => void;
 }

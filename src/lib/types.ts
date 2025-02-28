@@ -80,6 +80,20 @@ export interface FollowUp {
   };
 }
 
+// New interfaces for A/B testing
+export interface TemplateVariant {
+  id: string;
+  templateId: string;
+  name: string;
+  description?: string;
+  contactPercentage: number; // Percentage of contacts to receive this variant (0-100)
+  contactCount?: number; // Number of contacts who received this variant
+  responseRate?: number; // Response rate for this variant
+  positiveResponseRate?: number; // Positive response rate
+  negativeResponseRate?: number; // Negative response rate
+  isWinner?: boolean; // Whether this variant has been selected as the winner
+}
+
 export interface Campaign {
   id: string;
   name: string;
@@ -106,6 +120,14 @@ export interface Campaign {
   contactListId?: string; // Reference to a contact list
   segmentId?: string; // Reference to a saved segment
   customFilter?: ContactFilter; // Custom filter criteria
+  
+  // A/B testing
+  isABTest?: boolean; // Whether this campaign is an A/B test
+  templateVariants?: TemplateVariant[]; // Template variants for A/B testing
+  testDuration?: number; // Duration of the A/B test in hours before selecting a winner
+  winnerSelectionCriteria?: 'response-rate' | 'positive-response-rate' | 'manual'; // How to select the winning template
+  testWinnerTemplateId?: string; // ID of the template that won the test
+  testStatus?: 'in-progress' | 'completed' | 'not-started'; // Status of the A/B test
 }
 
 export interface Message {
@@ -119,6 +141,8 @@ export interface Message {
   type?: 'inbound' | 'outbound';
   responseType?: 'positive' | 'negative' | 'neutral'; // Classification of response sentiment
   keywords?: string[]; // Extracted keywords from message
+  templateId?: string; // ID of the template used for this message (for A/B testing)
+  templateVariantId?: string; // ID of the template variant used (for A/B testing)
 }
 
 export interface Conversation {

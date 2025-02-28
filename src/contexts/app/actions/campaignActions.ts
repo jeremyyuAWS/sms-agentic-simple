@@ -1,5 +1,5 @@
 
-import { Campaign, KnowledgeBase, FollowUp, FollowUpCondition, Message, TimeWindow } from '@/lib/types';
+import { Campaign, KnowledgeBase, FollowUp, FollowUpCondition, Message, TimeWindow, TemplateVariant, Template } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
 export const createCampaignActions = (
@@ -17,6 +17,10 @@ export const createCampaignActions = (
       updatedAt: campaignData.updatedAt || now,
       followUps: campaignData.followUps || []
     };
+    
+    if (newCampaign.isABTest && newCampaign.templateVariants) {
+      newCampaign.testStatus = 'not-started';
+    }
     
     setCampaigns(prev => [...prev, newCampaign]);
     
@@ -49,12 +53,20 @@ export const createCampaignActions = (
       const campaignIndex = updated.findIndex(c => c.id === campaignId);
       
       if (campaignIndex !== -1) {
+        const campaign = updated[campaignIndex];
+        
         updated[campaignIndex] = {
-          ...updated[campaignIndex],
+          ...campaign,
           status,
           updatedAt: now,
-          ...(status === 'active' && { startedAt: now }),
-          ...(status === 'completed' && { completedAt: now })
+          ...(status === 'active' && { 
+            startedAt: now,
+            ...(campaign.isABTest && { testStatus: 'in-progress' })
+          }),
+          ...(status === 'completed' && { 
+            completedAt: now,
+            ...(campaign.isABTest && campaign.testStatus === 'in-progress' && { testStatus: 'completed' })
+          })
         };
       }
       
@@ -201,6 +213,288 @@ export const createCampaignActions = (
     });
   };
 
+  // New A/B testing functions
+
+  const setupABTest = (campaignId: string, templateVariants: Omit<TemplateVariant, 'id'>[], testDuration: number, winnerSelectionCriteria: Campaign['winnerSelectionCriteria'] = 'response-rate') => {
+    const now = new Date();
+    
+    setCampaigns(prev => {
+      const updated = [...prev];
+      const campaignIndex = updated.findIndex(c => c.id === campaignId);
+      
+      if (campaignIndex !== -1) {
+        // Create template variants with IDs
+        const variantsWithIds = templateVariants.map(variant => ({
+          ...variant,
+          id: `variant-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
+        }));
+        
+        // Update campaign with A/B test settings
+        updated[campaignIndex] = {
+          ...updated[campaignIndex],
+          isABTest: true,
+          templateVariants: variantsWithIds,
+          testDuration,
+          winnerSelectionCriteria,
+          testStatus: 'not-started',
+          updatedAt: now
+        };
+      }
+      
+      return updated;
+    });
+    
+    toast({
+      title: "A/B Test Setup",
+      description: `A/B test has been set up with ${templateVariants.length} variants.`
+    });
+  };
+
+  const updateTemplateVariant = (campaignId: string, variantId: string, updates: Partial<Omit<TemplateVariant, 'id'>>) => {
+    const now = new Date();
+    
+    setCampaigns(prev => {
+      const updated = [...prev];
+      const campaignIndex = updated.findIndex(c => c.id === campaignId);
+      
+      if (campaignIndex !== -1) {
+        const campaign = updated[campaignIndex];
+        if (campaign.templateVariants) {
+          const updatedVariants = campaign.templateVariants.map(variant => 
+            variant.id === variantId ? { ...variant, ...updates } : variant
+          );
+          
+          updated[campaignIndex] = {
+            ...campaign,
+            templateVariants: updatedVariants,
+            updatedAt: now
+          };
+        }
+      }
+      
+      return updated;
+    });
+  };
+
+  const removeTemplateVariant = (campaignId: string, variantId: string) => {
+    const now = new Date();
+    
+    setCampaigns(prev => {
+      const updated = [...prev];
+      const campaignIndex = updated.findIndex(c => c.id === campaignId);
+      
+      if (campaignIndex !== -1) {
+        const campaign = updated[campaignIndex];
+        if (campaign.templateVariants) {
+          // Check if we're not trying to remove the last variant
+          if (campaign.templateVariants.length <= 1) {
+            toast({
+              title: "Cannot Remove Variant",
+              description: "A/B test must have at least one template variant.",
+              variant: "destructive"
+            });
+            return prev;
+          }
+          
+          const filteredVariants = campaign.templateVariants.filter(variant => variant.id !== variantId);
+          
+          // Recalculate percentages to ensure they still add up to 100%
+          const totalRemainingPercentage = 100;
+          const variantsCount = filteredVariants.length;
+          const equalPercentage = totalRemainingPercentage / variantsCount;
+          
+          const rebalancedVariants = filteredVariants.map(variant => ({
+            ...variant,
+            contactPercentage: equalPercentage
+          }));
+          
+          updated[campaignIndex] = {
+            ...campaign,
+            templateVariants: rebalancedVariants,
+            updatedAt: now
+          };
+        }
+      }
+      
+      return updated;
+    });
+    
+    toast({
+      title: "Variant Removed",
+      description: "Template variant has been removed from the A/B test."
+    });
+  };
+
+  const selectWinningVariant = (campaignId: string, variantId: string) => {
+    const now = new Date();
+    
+    setCampaigns(prev => {
+      const updated = [...prev];
+      const campaignIndex = updated.findIndex(c => c.id === campaignId);
+      
+      if (campaignIndex !== -1) {
+        const campaign = updated[campaignIndex];
+        if (campaign.templateVariants) {
+          // Find the winning variant
+          const winningVariant = campaign.templateVariants.find(variant => variant.id === variantId);
+          
+          if (!winningVariant) {
+            toast({
+              title: "Error",
+              description: "Selected variant not found.",
+              variant: "destructive"
+            });
+            return prev;
+          }
+          
+          // Mark the winning variant and update campaign
+          const updatedVariants = campaign.templateVariants.map(variant => ({
+            ...variant,
+            isWinner: variant.id === variantId
+          }));
+          
+          updated[campaignIndex] = {
+            ...campaign,
+            templateVariants: updatedVariants,
+            testWinnerTemplateId: winningVariant.templateId,
+            testStatus: 'completed',
+            updatedAt: now
+          };
+        }
+      }
+      
+      return updated;
+    });
+    
+    toast({
+      title: "Winner Selected",
+      description: "A winning template has been selected for this campaign."
+    });
+  };
+
+  // Update template performance data based on message responses
+  const updateABTestPerformance = (campaignId: string, variantId: string, stats: {
+    messageCount?: number;
+    responseCount?: number;
+    positiveResponseCount?: number;
+    negativeResponseCount?: number;
+  }) => {
+    setCampaigns(prev => {
+      const updated = [...prev];
+      const campaignIndex = updated.findIndex(c => c.id === campaignId);
+      
+      if (campaignIndex !== -1) {
+        const campaign = updated[campaignIndex];
+        if (campaign.templateVariants) {
+          const updatedVariants = campaign.templateVariants.map(variant => {
+            if (variant.id === variantId) {
+              const contactCount = stats.messageCount !== undefined 
+                ? (variant.contactCount || 0) + stats.messageCount 
+                : variant.contactCount;
+              
+              // Calculate response rates if we have message counts
+              let responseRate = variant.responseRate;
+              let positiveResponseRate = variant.positiveResponseRate;
+              let negativeResponseRate = variant.negativeResponseRate;
+              
+              if (contactCount && contactCount > 0) {
+                if (stats.responseCount !== undefined) {
+                  responseRate = ((variant.responseRate || 0) * (variant.contactCount || 0) + stats.responseCount) / contactCount;
+                }
+                
+                if (stats.positiveResponseCount !== undefined) {
+                  positiveResponseRate = ((variant.positiveResponseRate || 0) * (variant.contactCount || 0) + stats.positiveResponseCount) / contactCount;
+                }
+                
+                if (stats.negativeResponseCount !== undefined) {
+                  negativeResponseRate = ((variant.negativeResponseRate || 0) * (variant.contactCount || 0) + stats.negativeResponseCount) / contactCount;
+                }
+              }
+              
+              return {
+                ...variant,
+                contactCount,
+                responseRate,
+                positiveResponseRate,
+                negativeResponseRate
+              };
+            }
+            return variant;
+          });
+          
+          updated[campaignIndex] = {
+            ...campaign,
+            templateVariants: updatedVariants
+          };
+        }
+      }
+      
+      return updated;
+    });
+  };
+
+  // Auto-select winner based on criteria after test duration is over
+  const autoSelectWinner = (campaignId: string) => {
+    setCampaigns(prev => {
+      const updated = [...prev];
+      const campaignIndex = updated.findIndex(c => c.id === campaignId);
+      
+      if (campaignIndex !== -1) {
+        const campaign = updated[campaignIndex];
+        
+        // Only proceed if campaign is an A/B test and test is in progress
+        if (campaign.isABTest && 
+            campaign.testStatus === 'in-progress' && 
+            campaign.templateVariants && 
+            campaign.templateVariants.length > 0) {
+          
+          // Check if test duration has elapsed
+          const testEndTime = new Date(campaign.startedAt || new Date());
+          testEndTime.setHours(testEndTime.getHours() + (campaign.testDuration || 24));
+          
+          const now = new Date();
+          if (now >= testEndTime) {
+            // Sort variants based on selection criteria
+            let sortedVariants = [...campaign.templateVariants];
+            
+            if (campaign.winnerSelectionCriteria === 'response-rate') {
+              sortedVariants.sort((a, b) => (b.responseRate || 0) - (a.responseRate || 0));
+            } else if (campaign.winnerSelectionCriteria === 'positive-response-rate') {
+              sortedVariants.sort((a, b) => (b.positiveResponseRate || 0) - (a.positiveResponseRate || 0));
+            } else {
+              // If manual selection, don't auto-select
+              return prev;
+            }
+            
+            // Select the winner (first in sorted array)
+            const winner = sortedVariants[0];
+            
+            // Mark as winner
+            const updatedVariants = campaign.templateVariants.map(variant => ({
+              ...variant,
+              isWinner: variant.id === winner.id
+            }));
+            
+            updated[campaignIndex] = {
+              ...campaign,
+              templateVariants: updatedVariants,
+              testWinnerTemplateId: winner.templateId,
+              testStatus: 'completed'
+            };
+            
+            // Show toast about auto-selected winner
+            toast({
+              title: "A/B Test Completed",
+              description: `Winner has been automatically selected based on ${campaign.winnerSelectionCriteria}.`
+            });
+          }
+        }
+      }
+      
+      return updated;
+    });
+  };
+
   // New function to check if a follow-up should be sent based on enhanced conditions
   const shouldSendFollowUp = (followUp: FollowUp, message: Message | null, lastResponseDate: Date | null): boolean => {
     // Legacy condition check
@@ -286,6 +580,13 @@ export const createCampaignActions = (
     removeFollowUp,
     updateCampaignSchedule,
     shouldSendFollowUp,
-    connectFollowUps
+    connectFollowUps,
+    // A/B testing
+    setupABTest,
+    updateTemplateVariant,
+    removeTemplateVariant,
+    selectWinningVariant,
+    updateABTestPerformance,
+    autoSelectWinner
   };
 };
