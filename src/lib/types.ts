@@ -12,6 +12,14 @@ export interface Contact {
   [key: string]: any; // Allow for flexible fields
 }
 
+export interface FollowUp {
+  id: string;
+  templateId: string;
+  delayDays: number;
+  enabled: boolean;
+  condition?: 'no-response' | 'all'; // When to send: only if no response, or to all contacts
+}
+
 export interface Campaign {
   id: string;
   name: string;
@@ -32,6 +40,8 @@ export interface Campaign {
     endTime: string;
     daysOfWeek: number[];
   };
+  scheduledStartDate?: Date; // When to start sending the initial messages
+  followUps?: FollowUp[]; // List of follow-up messages
 }
 
 export interface Message {
