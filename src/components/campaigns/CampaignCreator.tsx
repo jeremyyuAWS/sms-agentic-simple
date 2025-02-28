@@ -123,15 +123,16 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
     }
   }, [campaignData.templateId, templates]);
   
-  const handleTimeZoneSelect = (timeZone: TimeZoneOption) => {
-    setSelectedTimeZone(timeZone);
+  const handleTimeZoneChange = (value: string) => {
+    // Find the selected time zone from the TimeZoneSelector's internal list
+    // Here we just set the value directly to the campaign data
     setCampaignData(prev => ({
       ...prev,
-      timeZone: timeZone.value
+      timeZone: value
     }));
   };
   
-  const handleTimeWindowSelect = (timeWindow: TimeWindowOption) => {
+  const handleTimeWindowChange = (timeWindow: TimeWindowOption) => {
     setSelectedTimeWindow(timeWindow);
     setCampaignData(prev => ({
       ...prev,
@@ -573,10 +574,22 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
               
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <TimeZoneSelector onSelect={handleTimeZoneSelect} />
+                  <TimeZoneSelector 
+                    value={campaignData.timeZone || "America/New_York"} 
+                    onChange={handleTimeZoneChange} 
+                    className="w-full"
+                  />
                 </div>
                 <div>
-                  <TimeWindowSelector onSelect={handleTimeWindowSelect} />
+                  <TimeWindowSelector 
+                    value={campaignData.sendingWindow || {
+                      startTime: '09:00',
+                      endTime: '17:00',
+                      daysOfWeek: [1, 2, 3, 4, 5]
+                    }} 
+                    onChange={handleTimeWindowChange}
+                    className="w-full"
+                  />
                 </div>
               </div>
             </div>
