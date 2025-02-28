@@ -92,7 +92,13 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
         name: 'Follow-Up Campaign',
         description: 'Follow up with contacts who haven\'t responded',
         goal: { type: 'lead-generation' },
-        isFollowUpsEnabled: true
+        followUps: [{ 
+          id: `followup-${Date.now()}`,
+          templateId: '',
+          delayDays: 3,
+          enabled: true,
+          condition: 'no-response'
+        }]
       },
       'meeting-scheduling': {
         name: 'Meeting Scheduler Campaign',
