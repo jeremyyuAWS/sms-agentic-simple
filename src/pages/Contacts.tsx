@@ -7,8 +7,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { BookUser, FileText, Import, Info, ListFilter, Users, Plus, Edit, Trash2, List, Filter, X, AlertCircle } from 'lucide-react';
 import CSVUploader from '@/components/contacts/CSVUploader';
-import PDFUploader from '@/components/contacts/PDFUploader';
-import KnowledgeBaseList from '@/components/contacts/KnowledgeBaseList';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format } from 'date-fns';
@@ -48,9 +46,6 @@ const Contacts: React.FC = () => {
   const { 
     contacts, 
     uploadContacts, 
-    knowledgeBases,
-    uploadKnowledgeBase,
-    deleteKnowledgeBase,
     contactLists,
     createContactList,
     updateContactList,
@@ -67,7 +62,6 @@ const Contacts: React.FC = () => {
   const [selectedContactIds, setSelectedContactIds] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSourceFilter, setSelectedSourceFilter] = useState<string>('all');
-  const [selectedKnowledgeBaseId, setSelectedKnowledgeBaseId] = useState<string | undefined>(undefined);
   
   // For delete import confirmation dialog
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -84,11 +78,6 @@ const Contacts: React.FC = () => {
     }
   ) => {
     uploadContacts(newContacts, source);
-  };
-
-  // Handle knowledge base selection
-  const handleKnowledgeBaseSelect = (knowledgeBaseId?: string) => {
-    setSelectedKnowledgeBaseId(knowledgeBaseId);
   };
 
   // Group contacts by their source
@@ -303,9 +292,9 @@ const Contacts: React.FC = () => {
   return (
     <div className="container mx-auto py-6 max-w-7xl">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">Contacts & Knowledge Base</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Contacts</h1>
         <p className="text-muted-foreground mt-1">
-          Manage your contacts and campaign knowledge base files
+          Manage your contacts and contact lists
         </p>
       </div>
 
@@ -322,10 +311,6 @@ const Contacts: React.FC = () => {
           <TabsTrigger value="lists" className="flex items-center gap-2">
             <List className="h-4 w-4" />
             <span>Contact Lists</span>
-          </TabsTrigger>
-          <TabsTrigger value="knowledge-base" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            <span>Knowledge Base</span>
           </TabsTrigger>
         </TabsList>
 
@@ -534,16 +519,6 @@ const Contacts: React.FC = () => {
               )}
             </CardContent>
           </Card>
-        </TabsContent>
-
-        <TabsContent value="knowledge-base">
-          <PDFUploader onPDFUploaded={uploadKnowledgeBase} />
-          <KnowledgeBaseList 
-            knowledgeBases={knowledgeBases}
-            selectedId={selectedKnowledgeBaseId}
-            onSelect={handleKnowledgeBaseSelect}
-            onDeleteKnowledgeBase={deleteKnowledgeBase}
-          />
         </TabsContent>
       </Tabs>
 
