@@ -369,7 +369,7 @@ const Templates = () => {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-6">
+        <div className="grid gap-6 mb-6">
           {templates.map(template => (
             <React.Fragment key={template.id}>
               <Card className={cn("overflow-hidden", getScheduleBorderClass(template.id))}>
@@ -482,6 +482,21 @@ const Templates = () => {
           ))}
         </div>
       )}
+
+      {/* Color legend */}
+      <div className="mb-6 p-4 bg-muted/20 rounded-lg">
+        <h3 className="text-sm font-medium mb-2">Template Color Guide</h3>
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <div className="w-5 h-5 rounded border-2 border-blue-500"></div>
+            <p className="text-sm">Blue outline: Regular follow-up (sent to all contacts)</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-5 h-5 rounded border-2 border-red-500"></div>
+            <p className="text-sm">Red outline: No-response follow-up (only sent if no reply received)</p>
+          </div>
+        </div>
+      </div>
 
       {/* Create Template Dialog */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
@@ -792,21 +807,6 @@ const Templates = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* Color legend */}
-      <div className="mt-8 p-4 bg-muted/20 rounded-lg">
-        <h3 className="text-sm font-medium mb-2">Template Color Guide</h3>
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded border-2 border-blue-500"></div>
-            <p className="text-sm">Blue outline: Regular follow-up (sent to all contacts)</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded border-2 border-red-500"></div>
-            <p className="text-sm">Red outline: No-response follow-up (only sent if no reply received)</p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
