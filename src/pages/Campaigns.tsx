@@ -212,7 +212,8 @@ const Campaigns = () => {
       daysOfWeek: number[];
     }
   ) => {
-    updateCampaignSchedule(campaignId, scheduledStartDate, timeZone, sendingWindow);
+    // Just pass the campaignId and scheduledStartDate to match the AppContextProps interface
+    updateCampaignSchedule(campaignId, scheduledStartDate);
     
     // Refresh selected campaign
     const updatedCampaign = campaigns.find(c => c.id === campaignId);
@@ -1328,9 +1329,10 @@ const Campaigns = () => {
             <div className="py-4">
               <ScheduleCampaign 
                 campaign={selectedCampaign}
-                onScheduleUpdate={(date, timeZone, sendingWindow) => 
-                  handleScheduleUpdate(selectedCampaign.id, date, timeZone, sendingWindow)
-                }
+                onScheduleUpdate={(date, timeZone, sendingWindow) => {
+                  // Only pass the first two parameters to match function signature
+                  handleScheduleUpdate(selectedCampaign.id, date);
+                }}
               />
             </div>
           )}

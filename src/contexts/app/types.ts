@@ -12,7 +12,8 @@ import {
   ContactTag,
   ContactSegment,
   ContactImport,
-  ContactList
+  ContactList,
+  TimeWindow
 } from '@/lib/types';
 import React from 'react';
 
@@ -70,7 +71,7 @@ export interface AppContextProps {
   addFollowUpToCampaign: (campaignId: string, followUp: Omit<FollowUp, 'id'>) => void;
   updateFollowUp: (campaignId: string, followUpId: string, updates: Partial<Omit<FollowUp, 'id'>>) => void;
   removeFollowUp: (campaignId: string, followUpId: string) => void;
-  updateCampaignSchedule: (campaignId: string, scheduledStartDate: Date) => void;
+  updateCampaignSchedule: (campaignId: string, scheduledStartDate: Date, timeZone?: string, sendingWindow?: TimeWindow) => void;
   createTemplate: (template: Omit<Template, 'id' | 'createdAt' | 'updatedAt'>) => void;
   updateTemplate?: (id: string, updates: Partial<Omit<Template, 'id' | 'createdAt'>>) => void;
   deleteTemplate?: (id: string) => void;
