@@ -146,36 +146,42 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
             </div>
           )}
 
-          <div className="border rounded-lg p-4 mb-4 bg-blue-50 text-blue-800">
-            <h3 className="font-semibold mb-2">Follow-up Trigger Types</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="border rounded-lg p-4 mb-4">
+            <h3 className="font-semibold mb-3">Pre-configured Follow-up Sequence</h3>
+            <p className="text-sm mb-3">
+              Your campaign includes a strategic follow-up sequence designed to maximize engagement. Each step is fully customizable but optimized based on proven communication patterns:
+            </p>
+            
+            <div className="space-y-3 text-sm">
               <div className="flex items-start gap-2">
-                <div className="bg-white rounded-full p-1 mt-0.5">
-                  <ThumbsDown className="h-4 w-4 text-red-500" />
-                </div>
+                <div className="mt-0.5 text-primary font-medium">Step 1:</div>
                 <div>
-                  <p className="font-medium text-sm">Negative Response</p>
-                  <p className="text-xs text-blue-700">When contacts express objections or decline</p>
+                  <p className="font-medium">Initial Outreach</p>
+                  <p className="text-muted-foreground">Your primary message that introduces your offer or invitation.</p>
                 </div>
               </div>
+              
               <div className="flex items-start gap-2">
-                <div className="bg-white rounded-full p-1 mt-0.5">
-                  <ThumbsUp className="h-4 w-4 text-green-500" />
-                </div>
+                <div className="mt-0.5 text-primary font-medium">Step 2:</div>
                 <div>
-                  <p className="font-medium text-sm">Positive Response</p>
-                  <p className="text-xs text-blue-700">When contacts express interest or agree</p>
+                  <p className="font-medium">First Follow-up (3 days later)</p>
+                  <p className="text-muted-foreground">Sent if no response is received. Gently reminds recipients about your initial message.</p>
                 </div>
               </div>
+              
               <div className="flex items-start gap-2">
-                <div className="bg-white rounded-full p-1 mt-0.5">
-                  <Search className="h-4 w-4 text-purple-500" />
-                </div>
+                <div className="mt-0.5 text-primary font-medium">Step 3:</div>
                 <div>
-                  <p className="font-medium text-sm">Keyword Response</p>
-                  <p className="text-xs text-blue-700">When contacts mention specific keywords</p>
+                  <p className="font-medium">Second Follow-up (7 days after initial)</p>
+                  <p className="text-muted-foreground">Triggered by continued non-response or negative responses. Provides additional value or addresses common objections.</p>
                 </div>
               </div>
+            </div>
+            
+            <div className="mt-4 pt-3 border-t">
+              <p className="text-sm">
+                <span className="font-medium">Why this works:</span> Research shows that 80% of sales require 5+ follow-ups, yet 44% of salespeople give up after just one attempt. This sequence ensures you maintain contact through the critical decision-making window.
+              </p>
             </div>
           </div>
           
