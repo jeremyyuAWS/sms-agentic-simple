@@ -14,7 +14,7 @@ import CampaignContactSelection from './CampaignContactSelection';
 import LoadingState from '@/components/ui/loading-state';
 import { useCampaignForm } from '@/hooks/use-campaign-form';
 import { Badge } from '@/components/ui/badge';
-import { Check } from 'lucide-react';
+import { Check, AlertCircle } from 'lucide-react';
 
 // Import subcomponents
 import CampaignDetailsTab from './campaign-creator/CampaignDetailsTab';
@@ -142,6 +142,19 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
   // Function to render status badge
   const renderStatusBadge = (section: string) => {
     const isComplete = completedSections.includes(section);
+    
+    // Special handling for messaging and schedule tabs
+    if (section === 'template' || section === 'schedule') {
+      return (
+        <Badge variant={isComplete ? "default" : "outline"} 
+               className="bg-yellow-100 text-yellow-800 border-yellow-200">
+          <AlertCircle className="w-3 h-3 mr-1" />
+          Attention
+        </Badge>
+      );
+    }
+    
+    // Default handling for other tabs
     return (
       <Badge variant={isComplete ? "default" : "outline"} className={isComplete ? "bg-green-100 text-green-800 border-green-200" : ""}>
         {isComplete ? <Check className="w-3 h-3 mr-1" /> : null}
@@ -168,16 +181,16 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
                     {renderStatusBadge('details')}
                   </span>
                 </TabsTrigger>
-                <TabsTrigger value="contacts" className="relative py-3">
-                  Audience
-                  <span className="absolute top-0 right-1 -mt-1 -mr-1">
-                    {renderStatusBadge('contacts')}
-                  </span>
-                </TabsTrigger>
                 <TabsTrigger value="messaging" className="relative py-3">
                   Message Sequence
                   <span className="absolute top-0 right-1 -mt-1 -mr-1">
                     {renderStatusBadge('template')}
+                  </span>
+                </TabsTrigger>
+                <TabsTrigger value="contacts" className="relative py-3">
+                  Audience
+                  <span className="absolute top-0 right-1 -mt-1 -mr-1">
+                    {renderStatusBadge('contacts')}
                   </span>
                 </TabsTrigger>
                 <TabsTrigger value="schedule" className="relative py-3">
@@ -199,19 +212,7 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
                   />
                 </TabsContent>
 
-                {/* Contacts Tab */}
-                <TabsContent value="contacts" className="space-y-6 mt-0">
-                  <CampaignContactSelection
-                    selectedContactIds={formState.contactIds}
-                    contactListId={formState.contactListId}
-                    segmentId={formState.segmentId}
-                    onContactsSelect={handleContactsSelect}
-                    onListSelect={handleListSelect}
-                    onSegmentSelect={handleSegmentSelect}
-                  />
-                </TabsContent>
-
-                {/* Message Sequence Tab */}
+                {/* Message Sequence Tab - Moved to second position */}
                 <TabsContent value="messaging" className="space-y-6 mt-0">
                   <div className="space-y-8">
                     <RecommendedTemplatesList
@@ -232,6 +233,18 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
                       />
                     </div>
                   </div>
+                </TabsContent>
+
+                {/* Contacts Tab - Moved to third position */}
+                <TabsContent value="contacts" className="space-y-6 mt-0">
+                  <CampaignContactSelection
+                    selectedContactIds={formState.contactIds}
+                    contactListId={formState.contactListId}
+                    segmentId={formState.segmentId}
+                    onContactsSelect={handleContactsSelect}
+                    onListSelect={handleListSelect}
+                    onSegmentSelect={handleSegmentSelect}
+                  />
                 </TabsContent>
 
                 {/* Schedule Tab */}
