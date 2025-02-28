@@ -1,91 +1,95 @@
 
 import React from 'react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Settings2 } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
-interface Mapping {
+interface FieldMapping {
   field: string;
   header: string;
 }
 
 interface FieldMappingFormProps {
-  mappings: Mapping[];
-  onMappingChange: (mappings: Mapping[]) => void;
+  mappings: FieldMapping[];
+  onMappingChange: (mappings: FieldMapping[]) => void;
 }
 
-const FieldMappingForm: React.FC<FieldMappingFormProps> = ({
-  mappings,
-  onMappingChange
-}) => {
-  const handleMappingChange = (field: string, header: string) => {
-    const newMappings = mappings.map(mapping => {
-      if (mapping.field === field) {
-        return { ...mapping, header };
-      }
-      return mapping;
-    });
-    
-    onMappingChange(newMappings);
+const FieldMappingForm: React.FC<FieldMappingFormProps> = ({ mappings, onMappingChange }) => {
+  const handleMappingChange = (index: number, field: string) => {
+    const updatedMappings = [...mappings];
+    updatedMappings[index] = {
+      ...updatedMappings[index],
+      field,
+    };
+    onMappingChange(updatedMappings);
   };
-  
-  // Common field options for mapping
-  const fieldOptions = [
-    { value: 'email', label: 'Email' },
-    { value: 'firstName', label: 'First Name' },
-    { value: 'lastName', label: 'Last Name' },
-    { value: 'company', label: 'Company' },
-    { value: 'jobTitle', label: 'Job Title' },
-    { value: 'phone', label: 'Phone' },
-    { value: 'country', label: 'Country' },
-    { value: 'state', label: 'State/Province' },
-    { value: 'city', label: 'City' },
-    { value: 'notes', label: 'Notes' },
-    { value: 'linkedIn', label: 'LinkedIn URL' },
-    { value: 'twitter', label: 'Twitter Handle' },
+
+  const options = [
+    { label: "Email Address", value: "email" },
+    { label: "First Name", value: "firstName" },
+    { label: "Last Name", value: "lastName" },
+    { label: "Full Name", value: "name" },
+    { label: "Phone Number", value: "phone" },
+    { label: "Company", value: "company" },
+    { label: "Job Title", value: "jobTitle" },
+    { label: "LinkedIn URL", value: "linkedIn" },
+    { label: "Twitter", value: "twitter" },
+    { label: "Notes", value: "notes" },
+    { label: "Country", value: "country" },
+    { label: "State/Province", value: "state" },
+    { label: "City", value: "city" },
+    { label: "Skip Column", value: "" },
   ];
-  
-  // Get unique headers from mappings
-  const headers = Array.from(new Set(mappings.map(m => m.header)));
-  
+
   return (
     <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg flex items-center">
-          <Settings2 className="h-5 w-5 text-primary mr-2" />
-          Map CSV Fields
-        </CardTitle>
+      <CardHeader>
+        <CardTitle className="text-lg font-medium">Map CSV Columns</CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-sm text-muted-foreground mb-4">
-          We've attempted to automatically map your CSV columns to the appropriate fields.
-          Please review and adjust as needed.
-        </p>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {fieldOptions.map(field => (
-            <div key={field.value} className="space-y-2">
-              <Label htmlFor={`field-${field.value}`}>{field.label}</Label>
-              <Select
-                value={mappings.find(m => m.field === field.value)?.header || ''}
-                onValueChange={(value) => handleMappingChange(field.value, value)}
-              >
-                <SelectTrigger id={`field-${field.value}`}>
-                  <SelectValue placeholder="Not mapped" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Not mapped</SelectItem>
-                  {headers.map(header => (
-                    <SelectItem key={header} value={header}>
-                      {header}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          ))}
-        </div>
+        <ScrollArea className="h-[300px] w-full">
+          <div className="w-full overflow-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>CSV Header</TableHead>
+                  <TableHead>Map To Field</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {mappings.map((mapping, index) => (
+                  <TableRow key={index}>
+                    <TableCell className="font-medium">{mapping.header}</TableCell>
+                    <TableCell>
+                      <Select
+                        value={mapping.field}
+                        onValueChange={(value) => handleMappingChange(index, value)}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select a field" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {options.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </ScrollArea>
       </CardContent>
     </Card>
   );

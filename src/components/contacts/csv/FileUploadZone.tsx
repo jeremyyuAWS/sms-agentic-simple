@@ -79,7 +79,10 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
             <Button
               variant="ghost"
               size="icon"
-              onClick={onClearFile}
+              onClick={(e) => {
+                e.stopPropagation(); // Prevent triggering parent click
+                onClearFile();
+              }}
             >
               <X className="h-5 w-5" />
             </Button>
@@ -99,7 +102,7 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
           )}
         </div>
       ) : (
-        <div className="space-y-4 text-center">
+        <div className="space-y-4 text-center w-full">
           <Upload className="h-10 w-10 text-muted-foreground mx-auto" />
           <div>
             <h3 className="font-medium text-lg">Drag & Drop CSV File</h3>
@@ -110,7 +113,7 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
               Browse Files
             </Button>
           </div>
-          <p className="text-xs text-muted-foreground max-w-md">
+          <p className="text-xs text-muted-foreground max-w-md mx-auto">
             Upload a CSV file containing your contacts. We support common CSV formats exported from Google Contacts, Outlook, LinkedIn, etc.
           </p>
         </div>

@@ -36,7 +36,7 @@ const ValidationSummary: React.FC<ValidationSummaryProps> = ({
   const successRate = Math.round((validCount / totalRows) * 100) || 0;
 
   return (
-    <Card className="p-4">
+    <Card className="p-4 overflow-hidden">
       <div className="flex items-center gap-2 mb-4">
         <Info className="h-5 w-5 text-blue-500" />
         <h3 className="font-medium text-lg">CSV Validation Results</h3>
@@ -50,7 +50,7 @@ const ValidationSummary: React.FC<ValidationSummaryProps> = ({
         <Progress value={successRate} className="h-2" />
       </div>
       
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="bg-green-50 border border-green-200 rounded-md p-3 flex items-center">
           <CheckCircle className="h-5 w-5 text-green-500 mr-3" />
           <div>
@@ -84,33 +84,35 @@ const ValidationSummary: React.FC<ValidationSummaryProps> = ({
           </AccordionTrigger>
           <AccordionContent>
             {invalidCount > 0 ? (
-              <ScrollArea className="h-[300px]">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[80px]">Row #</TableHead>
-                      <TableHead className="w-[40%]">Errors</TableHead>
-                      <TableHead>Raw Data</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {invalidRows.map((row, index) => (
-                      <TableRow key={index} className="bg-red-50/30">
-                        <TableCell>{row.rowIndex || index + 1}</TableCell>
-                        <TableCell>
-                          <ul className="list-disc list-inside text-sm text-red-600">
-                            {row.errors?.map((error: string, i: number) => (
-                              <li key={i}>{error}</li>
-                            )) || <li>Invalid row</li>}
-                          </ul>
-                        </TableCell>
-                        <TableCell className="font-mono text-xs truncate max-w-xs">
-                          {row.rawData?.join(', ') || 'No data'}
-                        </TableCell>
+              <ScrollArea className="h-[300px] w-full">
+                <div className="overflow-auto w-full">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[80px]">Row #</TableHead>
+                        <TableHead className="w-[40%]">Errors</TableHead>
+                        <TableHead>Raw Data</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {invalidRows.map((row, index) => (
+                        <TableRow key={index} className="bg-red-50/30">
+                          <TableCell>{row.rowIndex || index + 1}</TableCell>
+                          <TableCell>
+                            <ul className="list-disc list-inside text-sm text-red-600">
+                              {row.errors?.map((error: string, i: number) => (
+                                <li key={i}>{error}</li>
+                              )) || <li>Invalid row</li>}
+                            </ul>
+                          </TableCell>
+                          <TableCell className="font-mono text-xs truncate max-w-xs">
+                            {row.rawData?.join(', ') || 'No data'}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </ScrollArea>
             ) : (
               <p className="text-center py-4 text-muted-foreground">No invalid rows found</p>
