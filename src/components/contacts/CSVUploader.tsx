@@ -209,7 +209,7 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
           toast({
             title: `${parsedContacts.length} contacts ready to import`,
             description: `${invalidRows.length} rows were skipped due to validation errors. See details below.`,
-            variant: "warning",
+            variant: "warning",  // Now using our new warning variant
           });
         } else {
           toast({
