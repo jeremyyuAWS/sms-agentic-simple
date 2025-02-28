@@ -13,8 +13,10 @@ import { Campaign } from '@/lib/types';
 import LoadingState from '@/components/ui/loading-state';
 import { useCampaignFilters } from '@/hooks/use-campaign-filters';
 import SimplifiedCampaignCreator from '@/components/campaigns/SimplifiedCampaignCreator';
+import SimplifiedCampaignTypeGrid from '@/components/campaigns/SimplifiedCampaignTypeGrid';
+import { CampaignType } from '@/components/campaigns/CampaignTypeSelector';
 
-type CampaignView = 'list' | 'create' | 'detail';
+type CampaignView = 'list' | 'create' | 'detail' | 'type-selection';
 
 const SimplifiedCampaigns: React.FC = () => {
   const { 
@@ -25,9 +27,10 @@ const SimplifiedCampaigns: React.FC = () => {
   } = useApp();
   
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
-  const [selectedView, setSelectedView] = useState<CampaignView>('list');
+  const [selectedView, setSelectedView] = useState<CampaignView>('type-selection');
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [selectedCampaignType, setSelectedCampaignType] = useState<CampaignType | null>(null);
 
   // Use our custom filters hook
   const {
@@ -47,9 +50,15 @@ const SimplifiedCampaigns: React.FC = () => {
     : null;
 
   // Event handlers
+  const handleSelectCampaignType = useCallback((type: CampaignType) => {
+    setSelectedCampaignType(type);
+    setSelectedView('create');
+    setApiError(null);
+  }, []);
+
   const handleNewCampaign = useCallback(() => {
     setSelectedCampaignId(null);
-    setSelectedView('create');
+    setSelectedView('type-selection');
     setApiError(null);
   }, []);
 
@@ -74,7 +83,7 @@ const SimplifiedCampaigns: React.FC = () => {
       
       if (selectedCampaignId === campaignId) {
         setSelectedCampaignId(null);
-        setSelectedView('list');
+        setSelectedView('type-selection');
       }
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : "Failed to delete campaign";
@@ -87,6 +96,12 @@ const SimplifiedCampaigns: React.FC = () => {
   const handleBackToList = useCallback(() => {
     setSelectedCampaignId(null);
     setSelectedView('list');
+    setApiError(null);
+  }, []);
+
+  const handleBackToTypeSelection = useCallback(() => {
+    setSelectedCampaignId(null);
+    setSelectedView('type-selection');
     setApiError(null);
   }, []);
 
@@ -105,10 +120,55 @@ const SimplifiedCampaigns: React.FC = () => {
 
   // Render the appropriate view
   const renderContent = () => {
+    if (selectedView === 'type-selection') {
+      return campaigns.length === 0 ? (
+        <div className="space-y-8">
+          <div className="text-center space-y-4">
+            <h2 className="text-2xl font-bold">Welcome to the SMS Campaign Creator</h2>
+            <p className="text-muted-foreground max-w-xl mx-auto">
+              Create your first campaign by selecting a campaign type below. Each tile represents a different 
+              outreach scenario with pre-configured templates and settings.
+            </p>
+          </div>
+          <SimplifiedCampaignTypeGrid onSelect={handleSelectCampaignType} />
+        </div>
+      ) : (
+        <div className="space-y-8">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">Your Existing Campaigns</h2>
+            <Button 
+              variant="outline" 
+              onClick={() => setSelectedView('list')}
+              className="text-sm"
+            >
+              View All Campaigns
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {filteredCampaigns.slice(0, 3).map((campaign) => (
+              <Card key={campaign.id} className="overflow-hidden hover:shadow-md cursor-pointer transition-all" onClick={() => handleViewCampaign(campaign.id)}>
+                <div className="h-2 bg-purple-100 w-full"></div>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg">{campaign.name}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground line-clamp-2">{campaign.description || 'No description'}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          <SimplifiedCampaignTypeGrid onSelect={handleSelectCampaignType} />
+        </div>
+      );
+    }
+    
     if (selectedView === 'create') {
       return (
         <SimplifiedCampaignCreator
-          onCancel={handleBackToList}
+          initialCampaignType={selectedCampaignType}
+          onCancel={handleBackToTypeSelection}
           onComplete={handleCampaignCreated}
         />
       );
@@ -118,7 +178,7 @@ const SimplifiedCampaigns: React.FC = () => {
       return (
         <CampaignDetailView
           campaign={selectedCampaign}
-          onClose={handleBackToList}
+          onClose={handleBackToTypeSelection}
           onStatusChange={updateCampaignStatus}
           onEdit={handleEditCampaign}
         />
@@ -126,26 +186,6 @@ const SimplifiedCampaigns: React.FC = () => {
     }
     
     // Default to list view
-    if (campaigns.length === 0) {
-      return (
-        <Card className="border-dashed border-2">
-          <CardContent className="py-10">
-            <div className="text-center space-y-4">
-              <Calendar className="h-12 w-12 text-muted-foreground mx-auto" />
-              <CardTitle>No campaigns yet</CardTitle>
-              <CardDescription className="mx-auto max-w-lg">
-                Create your first campaign to start reaching out to your contacts. Campaigns allow you to send personalized messages and follow-ups automatically.
-              </CardDescription>
-              <Button onClick={handleNewCampaign} className="mt-4 bg-[#8B5CF6] hover:bg-[#7E69AB]">
-                <Plus className="mr-2 h-4 w-4" />
-                Create Your First Campaign
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      );
-    }
-    
     return (
       <LoadingState isLoading={isLoading} error={apiError}>
         <div className="space-y-4">
@@ -160,6 +200,13 @@ const SimplifiedCampaigns: React.FC = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
+            <Button 
+              onClick={handleBackToTypeSelection}
+              className="bg-[#9b87f5] hover:bg-[#8B5CF6] text-white"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              New Campaign
+            </Button>
           </div>
         
           <CampaignFilters 
@@ -185,7 +232,7 @@ const SimplifiedCampaigns: React.FC = () => {
     <div className="container mx-auto py-6 max-w-7xl">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Campaigns</h1>
+          <h1 className="text-3xl font-bold tracking-tight">SMS Campaigns</h1>
           <p className="text-muted-foreground mt-1">
             Create and manage automated outreach campaigns
           </p>
@@ -193,18 +240,18 @@ const SimplifiedCampaigns: React.FC = () => {
         
         {selectedView === 'list' && (
           <Button 
-            onClick={handleNewCampaign}
-            className="bg-[#8B5CF6] hover:bg-[#7E69AB] text-white"
+            onClick={handleBackToTypeSelection}
+            className="bg-[#9b87f5] hover:bg-[#8B5CF6] text-white"
           >
             <Plus className="mr-2 h-4 w-4" />
             New Campaign
           </Button>
         )}
         
-        {selectedView !== 'list' && selectedView !== 'create' && (
-          <Button variant="outline" onClick={handleBackToList}>
+        {selectedView !== 'list' && selectedView !== 'type-selection' && (
+          <Button variant="outline" onClick={handleBackToTypeSelection}>
             <Undo2 className="mr-2 h-4 w-4" />
-            Back to Campaigns
+            Back to Campaign Types
           </Button>
         )}
       </div>
@@ -212,7 +259,7 @@ const SimplifiedCampaigns: React.FC = () => {
       {renderContent()}
       
       {/* Navigation Buttons */}
-      <NavigationButtons currentPage="campaigns" />
+      <NavigationButtons currentPage="simplified-campaigns" />
     </div>
   );
 };

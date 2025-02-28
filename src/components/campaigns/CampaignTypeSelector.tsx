@@ -1,10 +1,33 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CalendarClock, Users, Bell, Calendar, Megaphone } from 'lucide-react';
+import { 
+  CalendarClock, 
+  Users, 
+  Bell, 
+  Calendar, 
+  Megaphone, 
+  MessageSquare, 
+  Radio, 
+  Gift, 
+  PartyPopper,
+  Send,
+  Clipboard
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export type CampaignType = 'event-invitation' | 'sales-outreach' | 'follow-up-reminder' | 'meeting-scheduling' | 'announcement';
+export type CampaignType = 
+  | 'event-invitation' 
+  | 'sales-outreach' 
+  | 'follow-up-reminder' 
+  | 'meeting-scheduling' 
+  | 'announcement'
+  | 'customer-feedback'
+  | 'newsletter'
+  | 'promotional'
+  | 'seasonal'
+  | 'survey'
+  | 'webinar-invitation';
 
 interface CampaignTypeInfo {
   id: CampaignType;
@@ -58,6 +81,48 @@ const CampaignTypeSelector: React.FC<CampaignTypeSelectorProps> = ({
       description: 'Share important information or announcements with your contacts',
       icon: <Megaphone className="h-8 w-8" />,
       color: 'text-red-500'
+    },
+    {
+      id: 'customer-feedback',
+      title: 'Customer Feedback',
+      description: 'Collect feedback and insights from your customers',
+      icon: <MessageSquare className="h-8 w-8" />,
+      color: 'text-cyan-500'
+    },
+    {
+      id: 'newsletter',
+      title: 'Newsletter Campaign',
+      description: 'Send regular updates and news to your contact list',
+      icon: <Send className="h-8 w-8" />,
+      color: 'text-indigo-500'
+    },
+    {
+      id: 'promotional',
+      title: 'Promotional Campaign',
+      description: 'Send special offers, discounts, and promotions to drive sales',
+      icon: <Gift className="h-8 w-8" />,
+      color: 'text-pink-500'
+    },
+    {
+      id: 'seasonal',
+      title: 'Seasonal Greeting',
+      description: 'Send holiday or seasonal greetings to maintain customer relationships',
+      icon: <PartyPopper className="h-8 w-8" />,
+      color: 'text-amber-500'
+    },
+    {
+      id: 'survey',
+      title: 'Survey Campaign',
+      description: 'Collect data and insights through structured surveys',
+      icon: <Clipboard className="h-8 w-8" />,
+      color: 'text-emerald-500'
+    },
+    {
+      id: 'webinar-invitation',
+      title: 'Webinar Invitation',
+      description: 'Invite contacts to attend your online webinar or presentation',
+      icon: <Radio className="h-8 w-8" />,
+      color: 'text-violet-500'
     }
   ];
 
