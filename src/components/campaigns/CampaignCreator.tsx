@@ -28,7 +28,7 @@ import RecommendedTemplatesList from './RecommendedTemplatesList';
 import CampaignSetupGuide from './CampaignSetupGuide';
 import { CampaignType } from './CampaignTypeSelector';
 import { Badge } from '@/components/ui/badge';
-import { Check, CheckCircle } from 'lucide-react';
+import { Check, CheckCircle, InfoIcon } from 'lucide-react';
 
 interface CampaignCreatorProps {
   campaign?: Campaign;
@@ -167,7 +167,7 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
               onValueChange={setActiveTab}
               className="w-full space-y-6"
             >
-              <TabsList className="w-full max-w-4xl mx-auto grid grid-cols-3 mb-6">
+              <TabsList className="w-full max-w-4xl mx-auto grid grid-cols-4 mb-6">
                 <TabsTrigger value="details" className="relative py-3">
                   Campaign Details
                   <span className="absolute top-0 right-1 -mt-1 -mr-1">
@@ -180,12 +180,16 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
                     {renderStatusBadge('contacts')}
                   </span>
                 </TabsTrigger>
-                <TabsTrigger value="followups" className="relative py-3">
+                <TabsTrigger value="messaging" className="relative py-3">
                   Message Sequence
                   <span className="absolute top-0 right-1 -mt-1 -mr-1">
-                    <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">
-                      Pre-configured
-                    </Badge>
+                    {renderStatusBadge('template')}
+                  </span>
+                </TabsTrigger>
+                <TabsTrigger value="schedule" className="relative py-3">
+                  Schedule
+                  <span className="absolute top-0 right-1 -mt-1 -mr-1">
+                    {renderStatusBadge('schedule')}
                   </span>
                 </TabsTrigger>
               </TabsList>
@@ -193,71 +197,39 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
               <div className="mt-6 px-2">
                 {/* Details Tab */}
                 <TabsContent value="details" className="space-y-6 mt-0">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Basic Campaign Details */}
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="name" className="text-base font-medium">Campaign Name</Label>
-                        <Input
-                          type="text"
-                          id="name"
-                          placeholder="Enter campaign name"
-                          value={formState.name}
-                          onChange={(e) => handleInputChange('name', e.target.value)}
-                          required
-                          aria-required="true"
-                          className="w-full"
-                        />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="description" className="text-base font-medium">Description</Label>
-                        <Textarea
-                          id="description"
-                          placeholder="Enter campaign description"
-                          value={formState.description}
-                          onChange={(e) => handleInputChange('description', e.target.value)}
-                          className="min-h-[120px] w-full"
-                        />
-                      </div>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="name" className="text-base font-medium">Campaign Name</Label>
+                      <Input
+                        type="text"
+                        id="name"
+                        placeholder="Enter campaign name"
+                        value={formState.name}
+                        onChange={(e) => handleInputChange('name', e.target.value)}
+                        required
+                        aria-required="true"
+                        className="w-full"
+                      />
                     </div>
                     
-                    {/* Message Template */}
-                    <div className="space-y-4">
-                      <h2 className="text-lg font-semibold flex justify-between items-center">
-                        Message Template
-                        {renderStatusBadge('template')}
-                      </h2>
-                      <div className="border rounded-lg p-4">
-                        <RecommendedTemplatesList
-                          campaignType={campaignType}
-                          templates={templates}
-                          onSelectTemplate={(templateId) => handleInputChange('templateId', templateId)}
-                          selectedTemplateId={formState.templateId}
-                        />
-                      </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="description" className="text-base font-medium">Description</Label>
+                      <Textarea
+                        id="description"
+                        placeholder="Enter campaign description"
+                        value={formState.description}
+                        onChange={(e) => handleInputChange('description', e.target.value)}
+                        className="min-h-[120px] w-full"
+                      />
                     </div>
-                  </div>
-                  
-                  {/* Schedule Section */}
-                  <div className="border rounded-lg p-4 mt-6">
-                    <h2 className="text-lg font-semibold mb-4 flex justify-between items-center">
-                      Schedule
-                      {renderStatusBadge('schedule')}
-                    </h2>
-                    <ScheduleCampaign
-                      startDate={formState.scheduledStartDate}
-                      window={formState.sendingWindow}
-                      timezone={formState.timeZone}
-                      onScheduleChange={(date) => handleInputChange('scheduledStartDate', date)}
-                      onSendingWindowChange={(window) => handleInputChange('sendingWindow', window)}
-                      onTimeZoneChange={(timezone) => handleInputChange('timeZone', timezone)}
-                    />
                   </div>
                   
                   {/* Best Practices */}
                   <div className="p-4 bg-blue-50 border border-blue-100 rounded-lg mt-6">
-                    <h3 className="text-lg font-medium mb-2 text-blue-700">SMS Best Practices</h3>
+                    <h3 className="text-lg font-medium mb-2 text-blue-700 flex items-center">
+                      <InfoIcon className="h-5 w-5 mr-2" />
+                      Campaign Best Practices
+                    </h3>
                     <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 pl-5 text-sm text-blue-700 list-disc">
                       <li>Keep messages concise: SMS messages should be brief and to the point</li>
                       <li>Include a clear call-to-action in each message</li>
@@ -281,28 +253,62 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
                   />
                 </TabsContent>
 
-                {/* Followups Tab */}
-                <TabsContent value="followups" className="space-y-6 mt-0">
-                  <CampaignFollowupsTab
-                    isFollowUpsEnabled={formState.isFollowUpsEnabled}
-                    setIsFollowUpsEnabled={setIsFollowUpsEnabled}
-                    followUps={formState.followUps}
-                    selectedTemplateId={formState.templateId}
-                    templates={templates}
-                    onFollowUpsChange={(followUps) => handleInputChange('followUps', followUps)}
-                    onComplete={handleSubmit}
-                  />
+                {/* Message Sequence Tab */}
+                <TabsContent value="messaging" className="space-y-6 mt-0">
+                  <div className="space-y-8">
+                    <RecommendedTemplatesList
+                      campaignType={campaignType}
+                      templates={templates}
+                      onSelectTemplate={(templateId) => handleInputChange('templateId', templateId)}
+                      selectedTemplateId={formState.templateId}
+                    />
+
+                    <div className="border-t pt-6">
+                      <CampaignFollowupsTab
+                        isFollowUpsEnabled={formState.isFollowUpsEnabled}
+                        setIsFollowUpsEnabled={setIsFollowUpsEnabled}
+                        followUps={formState.followUps}
+                        selectedTemplateId={formState.templateId}
+                        templates={templates}
+                        onFollowUpsChange={(followUps) => handleInputChange('followUps', followUps)}
+                      />
+                    </div>
+                  </div>
+                </TabsContent>
+
+                {/* Schedule Tab */}
+                <TabsContent value="schedule" className="space-y-6 mt-0">
+                  <div className="border rounded-lg p-6">
+                    <h2 className="text-lg font-semibold mb-4">Campaign Schedule</h2>
+                    <ScheduleCampaign
+                      startDate={formState.scheduledStartDate}
+                      window={formState.sendingWindow}
+                      timezone={formState.timeZone}
+                      onScheduleChange={(date) => handleInputChange('scheduledStartDate', date)}
+                      onSendingWindowChange={(window) => handleInputChange('sendingWindow', window)}
+                      onTimeZoneChange={(timezone) => handleInputChange('timeZone', timezone)}
+                    />
+                  </div>
                 </TabsContent>
               </div>
             </Tabs>
             
-            <div className="flex justify-end mt-8 pt-4 border-t">
-              <CampaignCreatorFooter
-                isEditing={!!campaign}
-                isSubmitting={isSubmitting}
-                onSubmit={handleSubmit}
-                onCancel={onCancel}
-              />
+            <div className="flex justify-between mt-8 pt-4 border-t">
+              <Button 
+                variant="outline" 
+                onClick={onCancel}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </Button>
+              
+              <Button 
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className="bg-primary"
+              >
+                {isSubmitting ? 'Saving...' : campaign ? 'Update Campaign' : 'Create Campaign'}
+              </Button>
             </div>
           </LoadingState>
         </CardContent>
