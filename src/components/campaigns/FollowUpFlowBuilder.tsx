@@ -507,6 +507,30 @@ const FollowUpFlowBuilder: React.FC<FollowUpFlowBuilderProps> = ({
           Add Follow-up
         </Button>
       </div>
+
+      {/* Instructions moved from bottom to top as requested */}
+      <div className="mb-4 text-sm text-gray-600">
+        <p>Follow-ups are evaluated in numerical order. Connections (arrows) show what happens after a follow-up, based on whether there's a response or not.</p>
+        <ul className="mt-2 space-y-1">
+          <li className="flex items-center gap-1">
+            <div className="h-4 w-4 rounded-full bg-primary/20 text-primary text-xs flex items-center justify-center">1</div>
+            <span>Number badges show the sequence order</span>
+          </li>
+          <li className="flex items-center gap-1">
+            <ArrowUp className="h-4 w-4 text-gray-600" />
+            <ArrowDown className="h-4 w-4 text-gray-600" />
+            <span>Use arrows to change follow-up order</span>
+          </li>
+          <li className="flex items-center gap-1">
+            <div className="h-2 w-2 rounded-full bg-green-500"></div>
+            <span>Green connections trigger if a contact responds</span>
+          </li>
+          <li className="flex items-center gap-1">
+            <div className="h-2 w-2 rounded-full bg-red-500"></div>
+            <span>Red connections trigger if there's no response</span>
+          </li>
+        </ul>
+      </div>
       
       <div className="flex h-full">
         {/* Flow Canvas */}
@@ -822,34 +846,6 @@ const FollowUpFlowBuilder: React.FC<FollowUpFlowBuilderProps> = ({
             </div>
           </div>
         )}
-      </div>
-
-      {/* Sequence Instructions as a footer on the same level as the "Enabled" toggle */}
-      <div className="mt-6 p-3 text-sm text-blue-600 font-medium">
-        <div className="flex items-center justify-between">
-          <div>
-            <p>Follow-ups are evaluated in numerical order. Connections (arrows) show what happens after a follow-up, based on whether there's a response or not.</p>
-            <ul className="mt-2 space-y-1">
-              <li className="flex items-center gap-1">
-                <div className="h-4 w-4 rounded-full bg-primary/20 text-primary text-xs flex items-center justify-center">1</div>
-                <span>Number badges show the sequence order</span>
-              </li>
-              <li className="flex items-center gap-1">
-                <ArrowUp className="h-4 w-4 text-blue-600" />
-                <ArrowDown className="h-4 w-4 text-blue-600" />
-                <span>Use arrows to change follow-up order</span>
-              </li>
-              <li className="flex items-center gap-1">
-                <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                <span>Green connections trigger if a contact responds</span>
-              </li>
-              <li className="flex items-center gap-1">
-                <div className="h-2 w-2 rounded-full bg-red-500"></div>
-                <span>Red connections trigger if there's no response</span>
-              </li>
-            </ul>
-          </div>
-        </div>
       </div>
     </div>
   );
