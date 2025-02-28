@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FollowUp, Template } from '@/lib/types';
+import { FollowUp, Template, KnowledgeBase } from '@/lib/types';
 import { Plus, ArrowDownCircle, MessageSquare, Clock, CheckCircle, ArrowRight, MoreHorizontal, X, GitBranch } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -17,13 +17,17 @@ interface FollowUpFlowBuilderProps {
   followUps: FollowUp[];
   templates: Template[];
   onUpdate: (followUps: any[]) => void; // Changed from onChange to onUpdate
+  knowledgeBaseId?: string;
+  knowledgeBases?: KnowledgeBase[];
 }
 
 const FollowUpFlowBuilder: React.FC<FollowUpFlowBuilderProps> = ({
   initialTemplateId,
   followUps,
   templates,
-  onUpdate
+  onUpdate,
+  knowledgeBaseId,
+  knowledgeBases = []
 }) => {
   const [showFlowBuilder, setShowFlowBuilder] = useState(false);
   const [localFollowUps, setLocalFollowUps] = useState<FollowUp[]>(followUps);
@@ -618,3 +622,4 @@ const FollowUpFlowBuilder: React.FC<FollowUpFlowBuilderProps> = ({
 };
 
 export default FollowUpFlowBuilder;
+

@@ -99,7 +99,7 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
       case 'template':
         return (
           <TemplateSelector 
-            onSelect={handleTemplateSelect} 
+            onSelect={(templateId) => handleInputChange('templateId', templateId)}
             selectedTemplateId={formState.templateId}
             knowledgeBaseId={formState.knowledgeBaseId}
             knowledgeBases={knowledgeBases}
@@ -196,3 +196,4 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
 };
 
 export default CampaignCreator;
+
