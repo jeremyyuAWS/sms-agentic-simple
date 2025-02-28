@@ -40,20 +40,3 @@ export interface FieldMappingItem {
   csvHeader: string;
   mappedTo: string;
 }
-
-// Add specific interface for contact rows from CSV
-export interface ContactCSVRow {
-  [key: string]: string;
-  email?: string;
-  firstName?: string;
-  lastName?: string;
-  company?: string;
-  jobTitle?: string;
-  phone?: string;
-  country?: string;
-  state?: string;
-  city?: string;
-  notes?: string;
-  linkedIn?: string;
-  twitter?: string;
-}

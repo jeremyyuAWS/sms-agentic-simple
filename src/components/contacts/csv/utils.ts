@@ -199,9 +199,14 @@ export const standardizeBoolean = (value: string): boolean => {
 };
 
 // Enhanced CSV parsing with improved pattern recognition and error tolerance
-export const parseCSV = (csvText: string): { 
+export const parseCSV = (
+  csvText: string, 
+  fieldMappings: FieldMappingItem[]
+): { 
   headers: string[]; 
-  contacts: any[];
+  contacts: Contact[];
+  validationResults: ValidationResult[];
+  typeInfo: TypeInfo[];
 } => {
   try {
     // Handle different line endings and potential BOM characters
@@ -215,36 +220,128 @@ export const parseCSV = (csvText: string): {
     // Parse headers, trimming whitespace
     const headers = lines[0].split(',').map(header => header.trim());
     
-    // Parse the data rows
-    const contacts = [];
+    // Get sample data for type detection (up to 5 rows)
+    const sampleRows = lines.slice(1, Math.min(6, lines.length))
+      .map(line => {
+        // Split by comma, respecting quotes (simple implementation)
+        // For a more robust solution, consider a CSV parsing library
+        const values = line.split(',').map(val => val.trim());
+        
+        // Pad the row if it has fewer columns than headers
+        while (values.length < headers.length) {
+          values.push('');
+        }
+        
+        // Truncate if it has more columns than headers
+        return values.slice(0, headers.length);
+      });
     
+    // Detect data types from samples
+    const typeInfo = detectDataTypes(headers, sampleRows);
+    
+    const contacts: Contact[] = [];
+    const validationResults: ValidationResult[] = [];
+    
+    // Process each row (skipping headers)
     for (let i = 1; i < lines.length; i++) {
       const line = lines[i].trim();
       if (!line) continue; // Skip empty lines
       
-      // Split by comma (simple implementation)
+      // Split values, respecting quotes (simple version)
       let values = line.split(',').map(val => val.trim());
       
-      // Ensure the row has the right number of columns
-      while (values.length < headers.length) {
-        values.push('');
+      // Adjust row if column count doesn't match headers
+      if (values.length < headers.length) {
+        // Pad the row if it has fewer columns
+        while (values.length < headers.length) {
+          values.push('');
+        }
+      } else if (values.length > headers.length) {
+        // Truncate if it has more columns
+        values = values.slice(0, headers.length);
       }
       
-      // Truncate if it has more columns than headers
-      values = values.slice(0, headers.length);
+      const rowErrors: string[] = [];
+      const contact: any = { id: `contact-${Date.now()}-${i}` };
+      let hasRequiredFields = true;
       
-      // Create an object with the headers as keys
-      const contact: {[key: string]: string} = {};
-      headers.forEach((header, j) => {
-        contact[header] = values[j];
+      // Apply field mappings
+      fieldMappings.forEach(mapping => {
+        if (!mapping.mappedTo) return; // Skip unmapped fields
+        
+        const headerIndex = headers.findIndex(h => h === mapping.csvHeader);
+        if (headerIndex === -1) return;
+        
+        const value = values[headerIndex]?.trim() || '';
+        const fieldDef = knownFields.find(f => f.key === mapping.mappedTo);
+        
+        // Apply field-specific validation and formatting
+        if (fieldDef) {
+          if (fieldDef.required && !value) {
+            rowErrors.push(`Required field ${fieldDef.displayName} is empty`);
+            hasRequiredFields = false;
+          } else if (value && fieldDef.validator && !fieldDef.validator(value)) {
+            // More tolerant validation - don't fail immediately if possible
+            // For phone numbers, try to clean and validate again
+            if (fieldDef.key === 'phoneNumber') {
+              const cleanedPhone = value.replace(/[^0-9+]/g, '');
+              if (cleanedPhone.length >= 7 && cleanedPhone.length <= 15) {
+                // Accept anyway but format it
+                contact[mapping.mappedTo] = formatPhoneNumber(value);
+              } else {
+                rowErrors.push(`Invalid ${fieldDef.displayName} format: ${value}`);
+              }
+            } else {
+              rowErrors.push(fieldDef.errorMessage || `Invalid ${fieldDef.displayName} format: ${value}`);
+            }
+          } else if (value) {
+            // Apply type-specific formatting
+            if (mapping.mappedTo === 'phoneNumber') {
+              contact[mapping.mappedTo] = formatPhoneNumber(value);
+            } else if (mapping.mappedTo === 'attendingConference' || mapping.mappedTo.includes('is') || mapping.mappedTo.includes('has')) {
+              contact[mapping.mappedTo] = standardizeBoolean(value);
+            } else {
+              contact[mapping.mappedTo] = value;
+            }
+          }
+        } else {
+          // For custom fields, just assign the value
+          contact[mapping.mappedTo] = value;
+        }
       });
       
-      contacts.push(contact);
+      // Check for required fields explicitly
+      const hasName = !!contact.name;
+      const hasPhone = !!contact.phoneNumber;
+      
+      if (!hasName) {
+        rowErrors.push('Missing name field');
+        hasRequiredFields = false;
+      }
+      if (!hasPhone) {
+        rowErrors.push('Missing phone field');
+        hasRequiredFields = false;
+      }
+      
+      // Decide if this row is valid
+      const isValid = rowErrors.length === 0 && hasRequiredFields;
+      
+      if (isValid) {
+        contacts.push(contact as Contact);
+      }
+      
+      // Add validation result for this row
+      validationResults.push({
+        rowIndex: i,
+        valid: isValid,
+        errors: rowErrors,
+        rawData: values
+      });
     }
     
-    return { headers, contacts };
+    return { headers, contacts, validationResults, typeInfo };
   } catch (error) {
-    console.error("Error parsing CSV:", error);
+    console.error("CSV Parsing Error:", error);
     throw new Error(`Failed to parse CSV: ${error instanceof Error ? error.message : String(error)}`);
   }
 };

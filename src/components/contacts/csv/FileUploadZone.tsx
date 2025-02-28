@@ -1,9 +1,8 @@
 
 import React from 'react';
-import { Card } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
+import { AlertCircle, CheckCircle2, FileText, Upload, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Upload, X, AlertCircle, CheckCircle, FileText } from 'lucide-react';
-import { Progress } from '@/components/ui/progress';
 
 interface FileUploadZoneProps {
   file: File | null;
@@ -11,7 +10,6 @@ interface FileUploadZoneProps {
   isDragging: boolean;
   validCount: number;
   invalidCount: number;
-  validContactIds?: string[];
   onDragOver: (e: React.DragEvent<HTMLDivElement>) => void;
   onDragLeave: () => void;
   onDrop: (e: React.DragEvent<HTMLDivElement>) => void;
@@ -25,100 +23,62 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
   isDragging,
   validCount,
   invalidCount,
-  validContactIds,
   onDragOver,
   onDragLeave,
   onDrop,
   onBrowseClick,
   onClearFile
 }) => {
-  const totalRows = validCount + invalidCount;
-  const successRate = totalRows ? Math.round((validCount / totalRows) * 100) : 0;
-  
   return (
-    <Card 
-      className={`
-        p-6 
-        border-2 
-        border-dashed 
-        flex 
-        flex-col 
-        items-center 
-        justify-center 
-        cursor-pointer 
-        transition-colors
-        ${isDragging ? 'border-primary bg-primary/5' : 'border-muted-foreground/25'}
-        ${error ? 'border-red-300 bg-red-50' : ''}
-      `}
+    <div
+      className={cn(
+        'border-2 border-dashed rounded-lg p-6 text-center transition-all',
+        isDragging ? 'border-primary bg-primary/5' : 'border-border',
+        error && 'border-destructive/50 bg-destructive/5'
+      )}
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
       onDrop={onDrop}
-      onClick={file ? undefined : onBrowseClick}
     >
-      {error ? (
-        <div className="text-center space-y-3">
-          <AlertCircle className="h-10 w-10 text-red-500 mx-auto" />
-          <h3 className="font-medium text-lg">Error</h3>
-          <p className="text-sm text-red-600">{error}</p>
-          <Button variant="outline" size="sm" onClick={onClearFile}>
-            Try Again
-          </Button>
-        </div>
-      ) : file ? (
-        <div className="w-full space-y-4">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center space-x-3">
-              <FileText className="h-8 w-8 text-primary" />
-              <div>
-                <h3 className="font-medium">{file.name}</h3>
-                <p className="text-sm text-muted-foreground">
-                  {(file.size / 1024).toFixed(2)} KB • CSV
-                </p>
-              </div>
-            </div>
+      {file ? (
+        <div className="space-y-4">
+          <div className="flex items-center justify-center gap-2">
+            <FileText className="h-6 w-6 text-primary" />
+            <span className="font-medium">{file.name}</span>
             <Button
               variant="ghost"
               size="icon"
-              onClick={(e) => {
-                e.stopPropagation(); // Prevent triggering parent click
-                onClearFile();
-              }}
+              onClick={onClearFile}
+              className="h-8 w-8 rounded-full hover:bg-destructive/10 hover:text-destructive"
             >
-              <X className="h-5 w-5" />
+              <X className="h-4 w-4" />
             </Button>
           </div>
           
-          {totalRows > 0 && (
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>
-                  <CheckCircle className="h-4 w-4 text-green-500 inline mr-1" />
-                  {validCount} valid rows
-                </span>
-                <span className="text-muted-foreground">{successRate}% success</span>
-              </div>
-              <Progress value={successRate} className="h-2" />
+          {validCount > 0 && (
+            <div className="flex items-center justify-center gap-2 text-green-600">
+              <CheckCircle2 className="h-5 w-5" />
+              <span className="font-medium">{validCount} valid contacts detected</span>
+            </div>
+          )}
+          
+          {invalidCount > 0 && (
+            <div className="flex items-center justify-center gap-2 text-amber-600">
+              <AlertCircle className="h-5 w-5" />
+              <span className="font-medium">{invalidCount} invalid rows found</span>
             </div>
           )}
         </div>
       ) : (
-        <div className="space-y-4 text-center w-full">
+        <div className="space-y-3">
           <Upload className="h-10 w-10 text-muted-foreground mx-auto" />
-          <div>
-            <h3 className="font-medium text-lg">Drag & Drop CSV File</h3>
-            <p className="text-sm text-muted-foreground my-2">
-              or
-            </p>
-            <Button variant="secondary" size="sm" onClick={onBrowseClick}>
-              Browse Files
-            </Button>
-          </div>
-          <p className="text-xs text-muted-foreground max-w-md mx-auto">
-            Upload a CSV file containing your contacts. We support common CSV formats exported from Google Contacts, Outlook, LinkedIn, etc.
+          <h3 className="font-medium">Drag and drop your CSV file here</h3>
+          <p className="text-sm text-muted-foreground">
+            or <button type="button" className="text-primary hover:underline" onClick={onBrowseClick}>browse</button> to upload
           </p>
         </div>
       )}
-    </Card>
+    </div>
   );
 };
 
