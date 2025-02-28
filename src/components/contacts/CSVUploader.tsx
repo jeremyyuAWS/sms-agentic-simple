@@ -84,47 +84,66 @@ const CSVUploader: React.FC = () => {
     }
     
     try {
-      // Parse the CSV file - using the existing parseCSV function
-      const result = await parseCSV(selectedFile);
+      // Parse the CSV file with a file reader
+      const fileReader = new FileReader();
+      fileReader.onload = (e) => {
+        const csvText = e.target?.result as string;
+        
+        // Call the parseCSV function with the text content of the file
+        try {
+          const result = parseCSV(csvText);
+          
+          // For simplicity, we'll consider all rows as valid for now
+          // In a real implementation, you'd validate each row
+          const parsedContacts = result.contacts;
+          setHeaders(result.headers);
+          
+          // Generate some basic field mappings from headers
+          const suggestedMappings = result.headers.map(header => ({
+            csvHeader: header,
+            mappedTo: header.toLowerCase().includes('email') ? 'email' :
+                     header.toLowerCase().includes('name') ? 'name' :
+                     header.toLowerCase().includes('company') ? 'company' : ''
+          }));
+          
+          setMappings(suggestedMappings);
+          
+          // Simple validation - just check if email exists
+          const valid = parsedContacts.filter(contact => 
+            contact.email && contact.email.includes('@')
+          );
+          
+          const invalid = parsedContacts.filter(contact => 
+            !contact.email || !contact.email.includes('@')
+          );
+          
+          setValidContacts(valid);
+          setInvalidRows(invalid);
+          
+          // Generate IDs for valid contacts
+          if (valid.length > 0) {
+            const contactIds = valid.map(() => 
+              `contact-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
+            );
+            setValidContactIds(contactIds);
+          }
+          
+        } catch (err) {
+          setError(`Error parsing CSV: ${err instanceof Error ? err.message : String(err)}`);
+        } finally {
+          setIsProcessing(false);
+        }
+      };
       
-      // For simplicity, we'll consider all rows as valid for now
-      // In a real implementation, you'd validate each row
-      const parsedContacts = result.contacts;
-      setHeaders(result.headers);
+      fileReader.onerror = () => {
+        setError('Error reading file');
+        setIsProcessing(false);
+      };
       
-      // Generate some basic field mappings from headers
-      const suggestedMappings = result.headers.map(header => ({
-        csvHeader: header,
-        mappedTo: header.toLowerCase().includes('email') ? 'email' :
-                 header.toLowerCase().includes('name') ? 'name' :
-                 header.toLowerCase().includes('company') ? 'company' : ''
-      }));
-      
-      setMappings(suggestedMappings);
-      
-      // Simple validation - just check if email exists
-      const valid = parsedContacts.filter(contact => 
-        contact.email && contact.email.includes('@')
-      );
-      
-      const invalid = parsedContacts.filter(contact => 
-        !contact.email || !contact.email.includes('@')
-      );
-      
-      setValidContacts(valid);
-      setInvalidRows(invalid);
-      
-      // Generate IDs for valid contacts
-      if (valid.length > 0) {
-        const contactIds = valid.map(() => 
-          `contact-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
-        );
-        setValidContactIds(contactIds);
-      }
+      fileReader.readAsText(selectedFile);
       
     } catch (err) {
       setError(`Error processing file: ${err instanceof Error ? err.message : String(err)}`);
-    } finally {
       setIsProcessing(false);
     }
   };
@@ -159,27 +178,19 @@ const CSVUploader: React.FC = () => {
         
         const contact: Contact = {
           id,
+          name: `${csvRow.firstName || ''} ${csvRow.lastName || ''}`.trim(),
+          phoneNumber: csvRow.phone || '',
           email: csvRow.email || '',
-          firstName: csvRow.firstName || csvRow.first_name || '',
-          lastName: csvRow.lastName || csvRow.last_name || '',
+          linkedinUrl: csvRow.linkedIn || csvRow.linkedin || '',
           company: csvRow.company || '',
-          jobTitle: csvRow.jobTitle || csvRow.job_title || '',
-          phone: csvRow.phone || '',
-          country: csvRow.country || '',
-          state: csvRow.state || '',
-          city: csvRow.city || '',
-          lastContacted: null,
+          position: csvRow.jobTitle || csvRow.job_title || '',
           tags: [],
-          lists: [],
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          importBatchId: `import-${Date.now()}`,
-          source: 'csv',
-          notes: csvRow.notes || '',
-          linkedIn: csvRow.linkedIn || csvRow.linkedin || '',
-          twitter: csvRow.twitter || '',
-          status: 'active',
-          unsubscribed: false
+          source: {
+            type: 'csv',
+            name: customImportName,
+            importedAt: new Date(),
+            batchId: `import-${Date.now()}`
+          }
         };
         
         return contact;
