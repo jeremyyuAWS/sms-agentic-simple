@@ -6,7 +6,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Contacts from "./pages/Contacts";
 import Templates from "./pages/Templates";
-import { AppProvider } from "./contexts/AppContext";
+import { AppProvider } from "./contexts";
 
 function App() {
   return (
