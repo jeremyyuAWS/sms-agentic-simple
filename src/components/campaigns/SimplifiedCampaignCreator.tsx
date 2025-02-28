@@ -161,7 +161,6 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
         scheduledStartDate: defaultStartDate,
         sendingWindow: defaultSendingWindow,
         timeZone: defaultTimeZone,
-        tags: ['event', 'invitation'],
         estimatedReachCount: 0
       },
       'sales-outreach': {
@@ -179,7 +178,6 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           enabled: true,
           condition: 'no-response'
         }],
-        tags: ['sales', 'outreach'],
         estimatedReachCount: 0
       },
       'follow-up-reminder': {
@@ -203,7 +201,6 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           enabled: true,
           condition: 'no-response'
         }],
-        tags: ['follow-up', 'reminder'],
         estimatedReachCount: 0
       },
       'meeting-scheduling': {
@@ -221,7 +218,6 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           enabled: true,
           condition: 'no-response'
         }],
-        tags: ['meeting', 'scheduling'],
         estimatedReachCount: 0
       },
       'announcement': {
@@ -232,7 +228,6 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
         scheduledStartDate: defaultStartDate,
         sendingWindow: defaultSendingWindow,
         timeZone: defaultTimeZone,
-        tags: ['announcement', 'update'],
         estimatedReachCount: 0
       },
       'customer-feedback': {
@@ -250,7 +245,6 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           enabled: true,
           condition: 'no-response'
         }],
-        tags: ['feedback', 'survey'],
         estimatedReachCount: 0
       },
       'newsletter': {
@@ -261,7 +255,6 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
         scheduledStartDate: defaultStartDate,
         sendingWindow: defaultSendingWindow,
         timeZone: defaultTimeZone,
-        tags: ['newsletter', 'monthly'],
         estimatedReachCount: 0
       },
       'promotional': {
@@ -279,7 +272,6 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           enabled: true,
           condition: 'no-response'
         }],
-        tags: ['promotion', 'discount'],
         estimatedReachCount: 0
       },
       'seasonal': {
@@ -290,7 +282,6 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
         scheduledStartDate: defaultStartDate,
         sendingWindow: defaultSendingWindow,
         timeZone: defaultTimeZone,
-        tags: ['seasonal', 'greeting'],
         estimatedReachCount: 0
       },
       'survey': {
@@ -308,7 +299,6 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           enabled: true,
           condition: 'no-response'
         }],
-        tags: ['survey', 'research'],
         estimatedReachCount: 0
       },
       'webinar-invitation': {
@@ -326,7 +316,6 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           enabled: true,
           condition: 'no-response'
         }],
-        tags: ['webinar', 'invitation'],
         estimatedReachCount: 0
       }
     };
