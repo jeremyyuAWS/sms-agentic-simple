@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useApp } from '@/contexts';
 import { Campaign, Template, KnowledgeBase, ContactFilter, FollowUp, ContactList, TimeWindow, CampaignGoal } from '@/lib/types';
@@ -85,7 +84,14 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
     campaign?.scheduledStartDate ? new Date(campaign.scheduledStartDate) : undefined
   );
   const [activeTab, setActiveTab] = useState("details");
-  const [goal, setGoal] = useState<CampaignGoal | undefined>(campaign?.goal);
+  const [goal, setGoal] = useState<CampaignGoal | undefined>(campaign?.goal || {
+    type: 'lead-generation',
+    targetMetrics: {
+      responseRate: 0.2,
+      conversionRate: 0.1,
+      completionDays: 14,
+    }
+  });
   
   // Selected template (for display purposes)
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
@@ -428,7 +434,7 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
                       <SelectValue placeholder="Select a knowledge base" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">None</SelectItem>
+                      <SelectItem value="none">None</SelectItem>
                       {knowledgeBases.map((kb) => (
                         <SelectItem key={kb.id} value={kb.id}>
                           {kb.title}
@@ -492,7 +498,7 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
                       <SelectValue placeholder="Choose a contact list" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">None (Select individual contacts)</SelectItem>
+                      <SelectItem value="individual">None (Select individual contacts)</SelectItem>
                       {contactLists.map((list) => (
                         <SelectItem key={list.id} value={list.id}>
                           {list.name} ({list.contactIds.length} contacts)
