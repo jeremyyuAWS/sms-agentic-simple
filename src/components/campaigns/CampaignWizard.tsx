@@ -11,6 +11,7 @@ import CampaignReview from './CampaignReview';
 import { useToast } from '@/hooks/use-toast';
 import { useApp } from '@/contexts';
 import { Campaign } from '@/lib/types';
+import { cn } from '@/lib/utils'; // Import the cn utility function
 
 type WizardStep = 'type' | 'contacts' | 'message' | 'schedule' | 'review';
 
@@ -120,9 +121,10 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({ onComplete, onCancel })
       followUps: followUpContent ? [
         {
           id: `followup-${Date.now()}`,
-          triggerCondition: 'no-response',
-          delayHours: followUpDelay * 24,
-          message: followUpContent,
+          templateId: '', // Add required field
+          delayDays: followUpDelay, // Changed from delayHours to delayDays to match type
+          enabled: true, // Add required field
+          condition: 'no-response', // Changed from triggerCondition to condition
         }
       ] : [],
     };
