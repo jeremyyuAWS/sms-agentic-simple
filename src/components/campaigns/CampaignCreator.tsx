@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Campaign, 
@@ -46,7 +45,6 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
   onCancel,
   isSubmitting: externalIsSubmitting,
 }) => {
-  // Use our custom form hook
   const { 
     formState,
     activeTab,
@@ -70,36 +68,29 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
     }
   });
   
-  // Track completion status
   const [completedSections, setCompletedSections] = useState<string[]>([]);
   
-  // Check for completed sections
   useEffect(() => {
     const completed: string[] = [];
     
-    // Details section
     if (formState.name && formState.description) {
       completed.push('details');
     }
     
-    // Contacts section
     if ((formState.contactIds && formState.contactIds.length > 0) || 
         formState.contactListId || 
         formState.segmentId) {
       completed.push('contacts');
     }
     
-    // Template section
     if (formState.templateId) {
       completed.push('template');
     }
     
-    // Schedule section
     if (formState.scheduledStartDate) {
       completed.push('schedule');
     }
     
-    // Followups section is always considered "complete" but we track it
     if (formState.isFollowUpsEnabled && formState.followUps.length > 0) {
       completed.push('followups');
     }
@@ -107,14 +98,11 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
     setCompletedSections(completed);
   }, [formState]);
 
-  // Use either external or internal submitting state
   const isSubmitting = externalIsSubmitting || internalIsSubmitting;
 
-  // Function to render status badge
   const renderStatusBadge = (section: string) => {
     const isComplete = completedSections.includes(section);
     
-    // Special handling for messaging and schedule tabs
     if (section === 'template' || section === 'schedule') {
       return (
         <Badge variant={isComplete ? "default" : "outline"} 
@@ -125,7 +113,6 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
       );
     }
     
-    // Default handling for other tabs
     return (
       <Badge variant={isComplete ? "default" : "outline"} className={isComplete ? "bg-green-100 text-green-800 border-green-200" : ""}>
         {isComplete ? <Check className="w-3 h-3 mr-1" /> : null}
@@ -173,7 +160,6 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
               </TabsList>
 
               <div className="mt-6 px-2">
-                {/* Details Tab */}
                 <TabsContent value="details" className="space-y-6 mt-0">
                   <CampaignDetailsTab 
                     name={formState.name}
@@ -183,7 +169,6 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
                   />
                 </TabsContent>
 
-                {/* Message Sequence Tab - Now only shows the follow-ups component */}
                 <TabsContent value="messaging" className="space-y-6 mt-0">
                   <div className="space-y-8">
                     <CampaignFollowupsTab
@@ -197,7 +182,6 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
                   </div>
                 </TabsContent>
 
-                {/* Contacts Tab */}
                 <TabsContent value="contacts" className="space-y-6 mt-0">
                   <CampaignContactSelection
                     selectedContactIds={formState.contactIds}
@@ -209,7 +193,6 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
                   />
                 </TabsContent>
 
-                {/* Schedule Tab */}
                 <TabsContent value="schedule" className="space-y-6 mt-0">
                   <CampaignScheduleTab
                     startDate={formState.scheduledStartDate}

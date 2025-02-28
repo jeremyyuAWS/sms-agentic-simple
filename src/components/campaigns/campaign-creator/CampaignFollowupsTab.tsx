@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Label } from '@/components/ui/label';
-import { FollowUpCondition } from '@/lib/types';
+import { FollowUpCondition, Template } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Sparkles, AlertCircle, MessageSquare, Clock, Calendar, ArrowRight, CheckCircle, ArrowUp, ArrowDown, ListOrdered } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -19,6 +19,7 @@ interface CampaignFollowupsTabProps {
   setIsFollowUpsEnabled: (enabled: boolean) => void;
   followUps: any[];
   selectedTemplateId: string;
+  templates: Template[]; // Added this property to fix the TypeScript error
   onFollowUpsChange: (followUps: any[]) => void;
   knowledgeBaseId?: string;
   knowledgeBases?: any[];
