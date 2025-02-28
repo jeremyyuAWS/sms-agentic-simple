@@ -43,12 +43,31 @@ export interface ContactFilter {
   children?: ContactFilter[];
 }
 
+export interface TimeWindow {
+  startTime: string; // Format: "HH:MM" in 24-hour format
+  endTime: string; // Format: "HH:MM" in 24-hour format
+  daysOfWeek: number[]; // 0 = Sunday, 1 = Monday, etc.
+}
+
+export interface FollowUpCondition {
+  type: 'no-response' | 'positive-response' | 'negative-response' | 'keyword' | 'all';
+  keywords?: string[]; // For keyword-based conditions
+  timeWindow?: TimeWindow; // Time window for sending
+  excludeDays?: string[]; // Days to exclude (e.g., "Saturday", "Sunday")
+}
+
 export interface FollowUp {
   id: string;
   templateId: string;
   delayDays: number;
   enabled: boolean;
-  condition?: 'no-response' | 'all'; // When to send: only if no response, or to all contacts
+  priority?: number; // Higher number = higher priority
+  condition?: 'no-response' | 'all'; // Legacy support
+  conditions?: FollowUpCondition[]; // Enhanced conditions
+  nextSteps?: { // For multi-step follow-up chains
+    onResponse?: string; // ID of next follow-up if response received
+    onNoResponse?: string; // ID of next follow-up if no response
+  };
 }
 
 export interface Campaign {
@@ -87,6 +106,8 @@ export interface Message {
   sentAt: Date;
   status: 'sending' | 'sent' | 'delivered' | 'failed' | 'received';
   type?: 'inbound' | 'outbound';
+  responseType?: 'positive' | 'negative' | 'neutral'; // Classification of response sentiment
+  keywords?: string[]; // Extracted keywords from message
 }
 
 export interface Conversation {

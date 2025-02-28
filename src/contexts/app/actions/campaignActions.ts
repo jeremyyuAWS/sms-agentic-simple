@@ -1,5 +1,5 @@
 
-import { Campaign, KnowledgeBase, FollowUp } from '@/lib/types';
+import { Campaign, KnowledgeBase, FollowUp, FollowUpCondition, Message } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
 export const createCampaignActions = (
@@ -185,12 +185,91 @@ export const createCampaignActions = (
     });
   };
 
+  // New function to check if a follow-up should be sent based on enhanced conditions
+  const shouldSendFollowUp = (followUp: FollowUp, message: Message | null, lastResponseDate: Date | null): boolean => {
+    // Legacy condition check
+    if (followUp.condition) {
+      if (followUp.condition === 'all') return true;
+      if (followUp.condition === 'no-response' && !lastResponseDate) return true;
+      return false;
+    }
+    
+    // Enhanced conditions check
+    if (followUp.conditions && followUp.conditions.length > 0) {
+      return followUp.conditions.some(condition => {
+        switch (condition.type) {
+          case 'all':
+            return true;
+          case 'no-response':
+            return !lastResponseDate;
+          case 'positive-response':
+            return message?.responseType === 'positive';
+          case 'negative-response':
+            return message?.responseType === 'negative';
+          case 'keyword':
+            if (!message || !condition.keywords || condition.keywords.length === 0) return false;
+            return condition.keywords.some(keyword => 
+              message.content.toLowerCase().includes(keyword.toLowerCase())
+            );
+          default:
+            return false;
+        }
+      });
+    }
+    
+    // Default to legacy behavior if no conditions specified
+    return !lastResponseDate;
+  };
+
+  // Add a function to connect follow-ups into a workflow
+  const connectFollowUps = (campaignId: string, sourceId: string, targetId: string, condition: 'onResponse' | 'onNoResponse') => {
+    const now = new Date();
+    
+    setCampaigns(prev => {
+      const updated = [...prev];
+      const campaignIndex = updated.findIndex(c => c.id === campaignId);
+      
+      if (campaignIndex !== -1) {
+        const campaign = updated[campaignIndex];
+        if (campaign.followUps) {
+          const updatedFollowUps = campaign.followUps.map(fu => {
+            if (fu.id === sourceId) {
+              return { 
+                ...fu, 
+                nextSteps: {
+                  ...fu.nextSteps,
+                  [condition]: targetId
+                }
+              };
+            }
+            return fu;
+          });
+          
+          updated[campaignIndex] = {
+            ...campaign,
+            followUps: updatedFollowUps,
+            updatedAt: now
+          };
+        }
+      }
+      
+      return updated;
+    });
+    
+    toast({
+      title: "Follow-up Flow Updated",
+      description: `Follow-up messages have been connected.`
+    });
+  };
+
   return {
     createCampaign,
     updateCampaignStatus,
     addFollowUpToCampaign,
     updateFollowUp,
     removeFollowUp,
-    updateCampaignSchedule
+    updateCampaignSchedule,
+    shouldSendFollowUp,
+    connectFollowUps
   };
 };
