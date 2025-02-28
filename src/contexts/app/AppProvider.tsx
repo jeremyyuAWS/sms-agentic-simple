@@ -20,6 +20,7 @@ import { createContactActions } from './actions/contactActions';
 import { createKnowledgeBaseActions } from './actions/knowledgeBaseActions';
 import { createCampaignActions } from './actions/campaignActions';
 import { createTemplateActions } from './actions/templateActions';
+import { WorkflowState } from './types';
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ 
   children 
@@ -97,6 +98,74 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
   const [activeTemplate, setActiveTemplate] = useState<Template | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  
+  // New workflow state
+  const [workflowState, setWorkflowState] = useState<WorkflowState>({
+    active: false,
+    currentStep: 'contacts',
+  });
+  
+  // Workflow actions
+  const startWorkflow = () => {
+    setWorkflowState({
+      active: true,
+      currentStep: 'contacts',
+    });
+  };
+  
+  const continueWorkflow = (nextStep: WorkflowState['currentStep']) => {
+    setWorkflowState(prev => ({
+      ...prev,
+      currentStep: nextStep,
+    }));
+  };
+  
+  const updateWorkflowData = (data: Partial<WorkflowState>) => {
+    setWorkflowState(prev => ({
+      ...prev,
+      ...data,
+    }));
+  };
+  
+  const completeWorkflow = () => {
+    // Before resetting, we may want to create a campaign with the collected data
+    const { contactsData, templateData, campaignData, scheduleData } = workflowState;
+    
+    if (contactsData && templateData && campaignData) {
+      // Create a new campaign with the collected data
+      const newCampaign: Omit<Campaign, 'id' | 'createdAt'> = {
+        name: campaignData.name || 'New Campaign',
+        description: campaignData.description,
+        status: 'draft',
+        updatedAt: new Date(),
+        contactCount: contactsData.contactIds?.length || 0,
+        templateId: templateData.selectedTemplateId,
+        knowledgeBaseId: campaignData.knowledgeBaseId,
+        scheduledStartDate: scheduleData?.scheduledStartDate,
+        timeZone: scheduleData?.timeZone,
+        sendingWindow: scheduleData?.sendingWindow,
+        contactIds: contactsData.contactIds,
+        contactListId: contactsData.listId,
+        segmentId: contactsData.segmentId,
+      };
+      
+      campaignActions.createCampaign(newCampaign);
+    }
+    
+    // Reset the workflow state
+    setWorkflowState({
+      active: false,
+      currentStep: 'contacts',
+    });
+  };
+  
+  const cancelWorkflow = () => {
+    // Simply reset the workflow state
+    setWorkflowState({
+      active: false,
+      currentStep: 'contacts',
+    });
+  };
   
   // UI Actions
   const toggleSidebar = () => {
@@ -223,6 +292,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
         activeTemplate,
         sidebarOpen,
         
+        // New workflow state
+        workflow: workflowState,
+        
         // State setters
         toggleSidebar,
         setCampaigns,
@@ -238,6 +310,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
         setActiveCampaign,
         setActiveConversation,
         setActiveTemplate,
+        
+        // Workflow actions
+        startWorkflow,
+        continueWorkflow,
+        updateWorkflowData,
+        completeWorkflow,
+        cancelWorkflow,
         
         // Actions
         ...messageActions,
@@ -257,3 +336,4 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     </AppContext.Provider>
   );
 };
+
