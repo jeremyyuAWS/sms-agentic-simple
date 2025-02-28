@@ -110,6 +110,11 @@ const Campaigns: React.FC = () => {
     ? campaigns.find(c => c.id === selectedCampaignId)
     : null;
 
+  // For debugging
+  console.log("Current activeTab:", activeTab);
+  console.log("Campaigns data:", campaigns);
+  console.log("Selected campaign:", selectedCampaign);
+
   return (
     <div className="container mx-auto py-6 max-w-7xl">
       <div className="flex justify-between items-center mb-6">
@@ -127,7 +132,7 @@ const Campaigns: React.FC = () => {
           </Button>
         )}
         
-        {(activeTab === 'view' || activeTab === 'create') && selectedCampaignId && (
+        {(activeTab === 'view' || activeTab === 'create') && (
           <Button variant="outline" onClick={handleBackToList}>
             <Undo2 className="mr-2 h-4 w-4" />
             Back to Campaigns

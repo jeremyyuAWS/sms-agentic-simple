@@ -3,7 +3,6 @@ import React from 'react';
 import { Campaign } from '@/lib/types';
 import AnimatedCard from '@/components/ui/AnimatedCard';
 import { Button } from '@/components/ui/button';
-import { useApp } from '@/contexts';
 import {
   Play,
   Pause,
@@ -100,6 +99,15 @@ const CampaignList: React.FC<CampaignListProps> = ({ campaigns, onSelect, onUpda
     }
   };
 
+  // If no campaigns, show a message
+  if (campaigns.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-muted-foreground">No campaigns yet. Click "New Campaign" to get started.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       {campaigns.map((campaign, index) => (
@@ -121,12 +129,12 @@ const CampaignList: React.FC<CampaignListProps> = ({ campaigns, onSelect, onUpda
             <div className="flex items-center space-x-2 text-sm text-muted-foreground">
               <Calendar className="h-4 w-4" />
               <span>
-                Created {formatDistance(campaign.createdAt, new Date(), { addSuffix: true })}
+                Created {formatDistance(new Date(campaign.createdAt), new Date(), { addSuffix: true })}
               </span>
             </div>
             <div className="flex items-center space-x-2 text-sm text-muted-foreground">
               <Users className="h-4 w-4" />
-              <span>{campaign.contactCount} contacts</span>
+              <span>{campaign.contactCount || 0} contacts</span>
             </div>
             <div className="flex items-center space-x-2 text-sm text-muted-foreground">
               <Clock className="h-4 w-4" />
