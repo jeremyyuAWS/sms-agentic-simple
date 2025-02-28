@@ -1,21 +1,35 @@
 
-import React, { useMemo } from 'react';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue,
-  SelectGroup,
-  SelectLabel
-} from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Search } from 'lucide-react';
+import React, { useState } from 'react';
 import { TimeZoneOption } from '@/lib/types';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
+import { Button } from '@/components/ui/button';
+import { Check, ChevronsUpDown, GlobeIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+// Common time zones
+const TIME_ZONES: TimeZoneOption[] = [
+  { value: 'America/New_York', label: 'Eastern Time', offset: 'UTC-05:00', abbr: 'ET' },
+  { value: 'America/Chicago', label: 'Central Time', offset: 'UTC-06:00', abbr: 'CT' },
+  { value: 'America/Denver', label: 'Mountain Time', offset: 'UTC-07:00', abbr: 'MT' },
+  { value: 'America/Los_Angeles', label: 'Pacific Time', offset: 'UTC-08:00', abbr: 'PT' },
+  { value: 'America/Anchorage', label: 'Alaska Time', offset: 'UTC-09:00', abbr: 'AKT' },
+  { value: 'Pacific/Honolulu', label: 'Hawaii Time', offset: 'UTC-10:00', abbr: 'HST' },
+  { value: 'Europe/London', label: 'Greenwich Mean Time', offset: 'UTC+00:00', abbr: 'GMT' },
+  { value: 'Europe/Paris', label: 'Central European Time', offset: 'UTC+01:00', abbr: 'CET' },
+  { value: 'Europe/Athens', label: 'Eastern European Time', offset: 'UTC+02:00', abbr: 'EET' },
+  { value: 'Asia/Dubai', label: 'Gulf Standard Time', offset: 'UTC+04:00', abbr: 'GST' },
+  { value: 'Asia/Kolkata', label: 'India Standard Time', offset: 'UTC+05:30', abbr: 'IST' },
+  { value: 'Asia/Shanghai', label: 'China Standard Time', offset: 'UTC+08:00', abbr: 'CST' },
+  { value: 'Asia/Tokyo', label: 'Japan Standard Time', offset: 'UTC+09:00', abbr: 'JST' },
+  { value: 'Australia/Sydney', label: 'Australian Eastern Time', offset: 'UTC+10:00', abbr: 'AET' },
+  { value: 'Pacific/Auckland', label: 'New Zealand Standard Time', offset: 'UTC+12:00', abbr: 'NZST' }
+];
 
 interface TimeZoneSelectorProps {
-  value: string;
+  value: string | undefined;
   onChange: (value: string) => void;
   className?: string;
 }
@@ -25,128 +39,104 @@ const TimeZoneSelector: React.FC<TimeZoneSelectorProps> = ({
   onChange,
   className
 }) => {
-  const timeZones: TimeZoneOption[] = [
-    // North America
-    { value: "America/New_York", label: "Eastern Time (ET)", offset: "UTC-5/4", abbr: "ET" },
-    { value: "America/Chicago", label: "Central Time (CT)", offset: "UTC-6/5", abbr: "CT" },
-    { value: "America/Denver", label: "Mountain Time (MT)", offset: "UTC-7/6", abbr: "MT" },
-    { value: "America/Los_Angeles", label: "Pacific Time (PT)", offset: "UTC-8/7", abbr: "PT" },
-    { value: "America/Anchorage", label: "Alaska Time", offset: "UTC-9/8", abbr: "AKT" },
-    { value: "America/Honolulu", label: "Hawaii Time", offset: "UTC-10", abbr: "HST" },
-    { value: "America/Halifax", label: "Atlantic Time", offset: "UTC-4/3", abbr: "AST" },
-    { value: "America/St_Johns", label: "Newfoundland Time", offset: "UTC-3:30/2:30", abbr: "NST" },
-    
-    // Europe & Africa
-    { value: "Europe/London", label: "Greenwich Mean Time", offset: "UTC+0/1", abbr: "GMT" },
-    { value: "Europe/Paris", label: "Central European Time", offset: "UTC+1/2", abbr: "CET" },
-    { value: "Europe/Helsinki", label: "Eastern European Time", offset: "UTC+2/3", abbr: "EET" },
-    { value: "Europe/Moscow", label: "Moscow Time", offset: "UTC+3", abbr: "MSK" },
-    { value: "Africa/Cairo", label: "Eastern Africa Time", offset: "UTC+2", abbr: "EAT" },
-    { value: "Africa/Johannesburg", label: "South Africa Standard Time", offset: "UTC+2", abbr: "SAST" },
-    
-    // Asia & Oceania
-    { value: "Asia/Dubai", label: "Gulf Standard Time", offset: "UTC+4", abbr: "GST" },
-    { value: "Asia/Kolkata", label: "India Standard Time", offset: "UTC+5:30", abbr: "IST" },
-    { value: "Asia/Singapore", label: "Singapore Time", offset: "UTC+8", abbr: "SGT" },
-    { value: "Asia/Tokyo", label: "Japan Standard Time", offset: "UTC+9", abbr: "JST" },
-    { value: "Australia/Sydney", label: "Australian Eastern Time", offset: "UTC+10/11", abbr: "AEST" },
-    { value: "Pacific/Auckland", label: "New Zealand Time", offset: "UTC+12/13", abbr: "NZST" },
-    
-    // South America
-    { value: "America/Sao_Paulo", label: "Brasilia Time", offset: "UTC-3", abbr: "BRT" },
-    { value: "America/Buenos_Aires", label: "Argentina Time", offset: "UTC-3", abbr: "ART" },
-  ];
-
-  // Group time zones by region
-  const groupedTimeZones = useMemo(() => {
-    return {
-      "North America": timeZones.filter(tz => tz.value.startsWith("America")),
-      "Europe & Africa": timeZones.filter(tz => tz.value.startsWith("Europe") || tz.value.startsWith("Africa")),
-      "Asia & Oceania": timeZones.filter(tz => 
-        tz.value.startsWith("Asia") || 
-        tz.value.startsWith("Australia") || 
-        tz.value.startsWith("Pacific")
-      ),
-      "South America": timeZones.filter(tz => tz.value.includes("Sao_Paulo") || tz.value.includes("Buenos_Aires"))
-    };
-  }, []);
-
-  const [searchTerm, setSearchTerm] = React.useState("");
-  const [isSearching, setIsSearching] = React.useState(false);
-
-  const filteredTimeZones = useMemo(() => {
-    if (!searchTerm) return timeZones;
-    
-    const term = searchTerm.toLowerCase();
-    return timeZones.filter(tz => 
-      tz.label.toLowerCase().includes(term) || 
-      tz.value.toLowerCase().includes(term) ||
-      tz.offset.toLowerCase().includes(term) ||
-      (tz.abbr && tz.abbr.toLowerCase().includes(term))
-    );
-  }, [searchTerm]);
+  const [open, setOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState('');
+  
+  // Get the current selection
+  const selectedTimeZone = value
+    ? TIME_ZONES.find(tz => tz.value === value)
+    : undefined;
+  
+  // Get local time zone if possible
+  const getLocalTimeZone = (): string => {
+    try {
+      return Intl.DateTimeFormat().resolvedOptions().timeZone;
+    } catch (e) {
+      return 'America/New_York'; // Default fallback
+    }
+  };
+  
+  // Handle setting timezone to local
+  const handleUseLocalTimeZone = () => {
+    const localTZ = getLocalTimeZone();
+    onChange(localTZ);
+    setOpen(false);
+  };
 
   return (
-    <div className={className}>
-      <Label htmlFor="timezone">Time Zone</Label>
-      <Select value={value} onValueChange={onChange} onOpenChange={() => setIsSearching(false)}>
-        <SelectTrigger className="w-full">
-          <SelectValue placeholder="Select time zone" />
-        </SelectTrigger>
-        <SelectContent>
-          <div className="px-3 py-2">
-            <div className="relative">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search time zones..."
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setIsSearching(true);
-                }}
-                className="pl-8"
-              />
+    <div className={cn("space-y-2", className)}>
+      <div className="flex items-center gap-2">
+        <GlobeIcon className="h-4 w-4 text-muted-foreground" />
+        <Label>Time Zone</Label>
+      </div>
+      
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className="w-full justify-between"
+          >
+            {selectedTimeZone ? (
+              <div className="flex items-center gap-1 justify-start text-left">
+                <span>{selectedTimeZone.label}</span>
+                <span className="text-xs text-muted-foreground">
+                  ({selectedTimeZone.offset})
+                </span>
+              </div>
+            ) : (
+              "Select time zone..."
+            )}
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[300px] p-0">
+          <Command>
+            <CommandInput 
+              placeholder="Search time zones..." 
+              value={searchValue}
+              onValueChange={setSearchValue}
+            />
+            <div className="p-2 border-b">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start text-muted-foreground"
+                onClick={handleUseLocalTimeZone}
+              >
+                Use my local time zone ({getLocalTimeZone().replace('_', ' ')})
+              </Button>
             </div>
-          </div>
-
-          {isSearching ? (
-            <div className="max-h-[300px] overflow-auto">
-              {filteredTimeZones.length > 0 ? 
-                filteredTimeZones.map(tz => (
-                  <SelectItem key={tz.value} value={tz.value}>
-                    <div className="flex justify-between w-full">
-                      <span>{tz.label}</span>
-                      <span className="text-muted-foreground text-xs">{tz.offset}</span>
-                    </div>
-                  </SelectItem>
-                )) : 
-                <div className="p-2 text-center text-sm text-muted-foreground">
-                  No time zones found
-                </div>
-              }
-            </div>
-          ) : (
-            <div className="max-h-[300px] overflow-auto">
-              {Object.entries(groupedTimeZones).map(([region, zones]) => (
-                <SelectGroup key={region}>
-                  <SelectLabel>{region}</SelectLabel>
-                  {zones.map(tz => (
-                    <SelectItem key={tz.value} value={tz.value}>
-                      <div className="flex justify-between w-full">
-                        <span>{tz.label}</span>
-                        <span className="text-muted-foreground text-xs">{tz.offset}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
+            <CommandEmpty>No time zone found.</CommandEmpty>
+            <CommandGroup className="max-h-[300px] overflow-auto">
+              {TIME_ZONES.map((timeZone) => (
+                <CommandItem
+                  key={timeZone.value}
+                  value={timeZone.value}
+                  onSelect={() => {
+                    onChange(timeZone.value);
+                    setOpen(false);
+                  }}
+                >
+                  <Check
+                    className={cn(
+                      "mr-2 h-4 w-4",
+                      value === timeZone.value ? "opacity-100" : "opacity-0"
+                    )}
+                  />
+                  <div className="flex flex-col">
+                    <span>{timeZone.label}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {timeZone.offset} {timeZone.abbr && `(${timeZone.abbr})`}
+                    </span>
+                  </div>
+                </CommandItem>
               ))}
-            </div>
-          )}
-        </SelectContent>
-      </Select>
-      <p className="text-xs text-muted-foreground mt-1">
-        Messages will be sent according to recipient's local time in the selected time zone
-      </p>
+            </CommandGroup>
+          </Command>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 };

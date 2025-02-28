@@ -1,16 +1,29 @@
 
 import React, { useState } from 'react';
 import { useApp } from '@/contexts';
-import { Campaign, Template, FollowUp, Contact, KnowledgeBase } from '@/lib/types';
+import { Campaign, Template, FollowUp, Contact, KnowledgeBase, TimeWindow } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format } from 'date-fns';
-import { Check, Clock, Edit, Trash2, X, RefreshCw, CalendarClock } from 'lucide-react';
+import { 
+  Check, 
+  Clock, 
+  Edit, 
+  Trash2, 
+  RefreshCw, 
+  CalendarClock, 
+  BarChart3, 
+  Calendar, 
+  GlobeIcon 
+} from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import FollowUpFlowBuilder from './FollowUpFlowBuilder';
+import CampaignAnalytics from './CampaignAnalytics';
+import TimeWindowSelector from './TimeWindowSelector';
+import TimeZoneSelector from './TimeZoneSelector';
 
 interface CampaignDetailViewProps {
   campaign: Campaign;
@@ -23,9 +36,22 @@ const CampaignDetailView: React.FC<CampaignDetailViewProps> = ({
   onClose,
   onStatusChange
 }) => {
-  const { templates, contacts, knowledgeBases, updateFollowUp } = useApp();
+  const { 
+    templates, 
+    contacts, 
+    knowledgeBases, 
+    updateFollowUp, 
+    conversations 
+  } = useApp();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<string>('overview');
+  const [timeWindow, setTimeWindow] = useState<TimeWindow | undefined>(campaign.sendingWindow);
+  const [timeZone, setTimeZone] = useState<string | undefined>(campaign.timeZone);
+  
+  // Get all messages related to this campaign
+  const campaignMessages = conversations
+    .flatMap(conv => conv.messages || [])
+    .filter(msg => msg.campaignId === campaign.id);
   
   // Function to get template by ID
   const getTemplateById = (templateId: string): Template | undefined => {
@@ -50,6 +76,30 @@ const CampaignDetailView: React.FC<CampaignDetailViewProps> = ({
     toast({
       title: "Follow-up Flow Updated",
       description: "Your campaign follow-up sequence has been updated."
+    });
+  };
+
+  // Function to handle time window updates
+  const handleTimeWindowUpdate = (newTimeWindow: TimeWindow | undefined) => {
+    setTimeWindow(newTimeWindow);
+    campaign.sendingWindow = newTimeWindow;
+    
+    toast({
+      title: "Sending Window Updated",
+      description: newTimeWindow 
+        ? "Your campaign sending window has been updated." 
+        : "Sending window has been removed. Messages will be sent at any time."
+    });
+  };
+
+  // Function to handle time zone updates
+  const handleTimeZoneUpdate = (newTimeZone: string) => {
+    setTimeZone(newTimeZone);
+    campaign.timeZone = newTimeZone;
+    
+    toast({
+      title: "Time Zone Updated",
+      description: `Your campaign time zone has been set to ${newTimeZone.replace('_', ' ')}.`
     });
   };
 
@@ -105,10 +155,21 @@ const CampaignDetailView: React.FC<CampaignDetailViewProps> = ({
         onValueChange={setActiveTab}
         className="w-full space-y-4"
       >
-        <TabsList className="w-full grid grid-cols-3">
+        <TabsList className="w-full grid grid-cols-4">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="follow-ups">Follow-up Sequence</TabsTrigger>
-          <TabsTrigger value="contacts">Contacts</TabsTrigger>
+          <TabsTrigger value="analytics">
+            <div className="flex items-center gap-1">
+              <BarChart3 className="h-4 w-4" />
+              <span>Analytics</span>
+            </div>
+          </TabsTrigger>
+          <TabsTrigger value="settings">
+            <div className="flex items-center gap-1">
+              <Clock className="h-4 w-4" />
+              <span>Timing</span>
+            </div>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
@@ -190,27 +251,34 @@ const CampaignDetailView: React.FC<CampaignDetailViewProps> = ({
                   </div>
                   <div>
                     <p className="text-sm font-medium mb-1">Time Zone</p>
-                    <p className="text-sm">
-                      {campaign.timeZone || 'Default (Local)'}
-                    </p>
+                    <div className="flex items-center">
+                      <GlobeIcon className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <p className="text-sm">
+                        {campaign.timeZone ? campaign.timeZone.replace('_', ' ') : 'Default (Local)'}
+                      </p>
+                    </div>
                   </div>
                 </div>
+                
                 {campaign.sendingWindow && (
                   <div className="mt-3 border-t pt-3">
                     <p className="text-sm font-medium mb-1">Sending Window</p>
-                    <p className="text-sm">
-                      {campaign.sendingWindow.startTime} - {campaign.sendingWindow.endTime}
-                      {campaign.sendingWindow.daysOfWeek.length > 0 && (
-                        <span className="ml-2">
-                          on{' '}
-                          {campaign.sendingWindow.daysOfWeek
-                            .map(day => 
-                              ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][day]
-                            )
-                            .join(', ')}
-                        </span>
-                      )}
-                    </p>
+                    <div className="flex items-center">
+                      <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <p className="text-sm">
+                        {campaign.sendingWindow.startTime} - {campaign.sendingWindow.endTime}
+                        {campaign.sendingWindow.daysOfWeek.length > 0 && (
+                          <span className="ml-2">
+                            on{' '}
+                            {campaign.sendingWindow.daysOfWeek
+                              .map(day => 
+                                ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][day]
+                              )
+                              .join(', ')}
+                          </span>
+                        )}
+                      </p>
+                    </div>
                   </div>
                 )}
               </CardContent>
@@ -238,6 +306,69 @@ const CampaignDetailView: React.FC<CampaignDetailViewProps> = ({
               </CardContent>
             </Card>
           )}
+        </TabsContent>
+
+        <TabsContent value="analytics" className="space-y-4">
+          <CampaignAnalytics 
+            campaign={campaign}
+            messages={campaignMessages}
+          />
+        </TabsContent>
+
+        <TabsContent value="settings" className="space-y-4">
+          <div className="grid gap-6">
+            {/* Time Zone */}
+            <Card>
+              <CardContent className="p-6">
+                <TimeZoneSelector 
+                  value={timeZone} 
+                  onChange={handleTimeZoneUpdate}
+                />
+              </CardContent>
+            </Card>
+            
+            {/* Sending Window */}
+            <Card>
+              <CardContent className="p-6">
+                <TimeWindowSelector 
+                  value={timeWindow}
+                  onChange={handleTimeWindowUpdate}
+                />
+              </CardContent>
+            </Card>
+            
+            {/* Date Selection (Future Enhancement) */}
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <h3 className="text-sm font-medium">Campaign Schedule</h3>
+                </div>
+                
+                <div className="bg-muted/20 rounded-md p-4 text-center text-muted-foreground">
+                  <p className="mb-2">Date scheduling will be available in a future update.</p>
+                  <p className="text-xs">This feature will allow you to set specific start and end dates for your campaign.</p>
+                </div>
+              </CardContent>
+            </Card>
+            
+            {/* Blackout Dates (Future Enhancement) */}
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Trash2 className="h-4 w-4 text-muted-foreground" />
+                    <h3 className="text-sm font-medium">Blackout Dates</h3>
+                  </div>
+                </div>
+                
+                <div className="bg-muted/20 rounded-md p-4 text-center text-muted-foreground">
+                  <p className="mb-2">Blackout dates will be available in a future update.</p>
+                  <p className="text-xs">This feature will allow you to exclude specific dates from your campaign sending schedule, such as holidays or weekends.</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         <TabsContent value="contacts" className="space-y-4">
@@ -304,22 +435,29 @@ const CampaignDetailView: React.FC<CampaignDetailViewProps> = ({
         </div>
         <div className="flex gap-2">
           {campaign.status === 'draft' && (
-            <Button onClick={() => onStatusChange(campaign.id, 'active')}>
+            <Button
+              onClick={() => onStatusChange(campaign.id, 'active')}
+            >
               Activate Campaign
             </Button>
           )}
           {campaign.status === 'active' && (
-            <Button variant="outline" onClick={() => onStatusChange(campaign.id, 'paused')}>
+            <Button 
+              variant="outline"
+              onClick={() => onStatusChange(campaign.id, 'paused')}
+            >
               Pause Campaign
             </Button>
           )}
           {campaign.status === 'paused' && (
-            <Button onClick={() => onStatusChange(campaign.id, 'active')}>
+            <Button
+              onClick={() => onStatusChange(campaign.id, 'active')}
+            >
               Resume Campaign
             </Button>
           )}
           {(campaign.status === 'active' || campaign.status === 'paused') && (
-            <Button
+            <Button 
               variant="outline"
               onClick={() => onStatusChange(campaign.id, 'completed')}
             >
