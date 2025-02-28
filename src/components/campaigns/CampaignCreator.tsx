@@ -20,7 +20,7 @@ import { useCampaignForm } from '@/hooks/use-campaign-form';
 // Import subcomponents
 import CampaignDetailsTab from './campaign-creator/CampaignDetailsTab';
 import CampaignFollowupsTab from './campaign-creator/CampaignFollowupsTab';
-import CampaignCreatorTabs from './campaign-creator/CampaignCreatorTabs';
+import CampaignCreatorTabs, { CampaignCreatorTabType } from './campaign-creator/CampaignCreatorTabs';
 import CampaignCreatorHeader from './campaign-creator/CampaignCreatorHeader';
 import CampaignCreatorFooter from './campaign-creator/CampaignCreatorFooter';
 import RecommendedTemplatesList from './RecommendedTemplatesList';
@@ -75,7 +75,7 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
   });
   
   // Track completed tabs
-  const [completedTabs, setCompletedTabs] = useState<string[]>([]);
+  const [completedTabs, setCompletedTabs] = useState<CampaignCreatorTabType[]>([]);
   
   // Determine campaign type from name
   const getCampaignTypeFromName = (): CampaignType => {
@@ -106,7 +106,7 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
   
   // Check for completed tabs
   useEffect(() => {
-    const completed = [];
+    const completed: CampaignCreatorTabType[] = [];
     
     // Details tab
     if (formState.name && formState.description) {
@@ -262,9 +262,9 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
             {/* Navigation tabs */}
             <div className="overflow-x-auto">
               <CampaignCreatorTabs 
-                activeTab={activeTab} 
+                activeTab={activeTab as CampaignCreatorTabType} 
                 onTabChange={setActiveTab}
-                completedTabs={completedTabs as any} 
+                completedTabs={completedTabs} 
               />
             </div>
 

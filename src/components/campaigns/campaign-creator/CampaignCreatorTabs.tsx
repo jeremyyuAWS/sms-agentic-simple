@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { 
   FileText, 
   Users, 
-  MailTemplate, 
+  Mail, 
   Calendar, 
   MessageSquareMore, 
   Check, 
@@ -66,7 +66,7 @@ const CampaignCreatorTabs: React.FC<CampaignCreatorTabsProps> = ({
           {renderBadge('contacts')}
         </TabsTrigger>
         <TabsTrigger value="template" className="flex items-center">
-          <MailTemplate className="w-4 h-4 mr-2" />
+          <Mail className="w-4 h-4 mr-2" />
           <span className="hidden md:inline">Template</span>
           <span className="inline md:hidden">Msg</span>
           {renderBadge('template')}

@@ -97,7 +97,8 @@ const RecommendedTemplatesList: React.FC<RecommendedTemplatesListProps> = ({
                 )}
               </div>
               <CardDescription className="line-clamp-2">
-                {template.description || 'No description available'}
+                {/* Use N/A if no description is available in the template object */}
+                No description available
               </CardDescription>
             </CardHeader>
             <CardContent className="pb-2">

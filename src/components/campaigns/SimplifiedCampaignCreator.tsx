@@ -161,7 +161,6 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
         scheduledStartDate: defaultStartDate,
         sendingWindow: defaultSendingWindow,
         timeZone: defaultTimeZone,
-        personalizeFields: ['firstName', 'company'],
         tags: ['event', 'invitation'],
         estimatedReachCount: 0
       },
@@ -180,7 +179,6 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           enabled: true,
           condition: 'no-response'
         }],
-        personalizeFields: ['firstName', 'company', 'role'],
         tags: ['sales', 'outreach'],
         estimatedReachCount: 0
       },
@@ -205,7 +203,6 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           enabled: true,
           condition: 'no-response'
         }],
-        personalizeFields: ['firstName'],
         tags: ['follow-up', 'reminder'],
         estimatedReachCount: 0
       },
@@ -224,7 +221,6 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           enabled: true,
           condition: 'no-response'
         }],
-        personalizeFields: ['firstName', 'company'],
         tags: ['meeting', 'scheduling'],
         estimatedReachCount: 0
       },
@@ -236,7 +232,6 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
         scheduledStartDate: defaultStartDate,
         sendingWindow: defaultSendingWindow,
         timeZone: defaultTimeZone,
-        personalizeFields: ['firstName'],
         tags: ['announcement', 'update'],
         estimatedReachCount: 0
       },
@@ -255,7 +250,6 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           enabled: true,
           condition: 'no-response'
         }],
-        personalizeFields: ['firstName', 'lastPurchaseDate'],
         tags: ['feedback', 'survey'],
         estimatedReachCount: 0
       },
@@ -267,7 +261,6 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
         scheduledStartDate: defaultStartDate,
         sendingWindow: defaultSendingWindow,
         timeZone: defaultTimeZone,
-        personalizeFields: ['firstName'],
         tags: ['newsletter', 'monthly'],
         estimatedReachCount: 0
       },
@@ -286,7 +279,6 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           enabled: true,
           condition: 'no-response'
         }],
-        personalizeFields: ['firstName', 'currentPlan'],
         tags: ['promotion', 'discount'],
         estimatedReachCount: 0
       },
@@ -298,7 +290,6 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
         scheduledStartDate: defaultStartDate,
         sendingWindow: defaultSendingWindow,
         timeZone: defaultTimeZone,
-        personalizeFields: ['firstName', 'company'],
         tags: ['seasonal', 'greeting'],
         estimatedReachCount: 0
       },
@@ -317,7 +308,6 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           enabled: true,
           condition: 'no-response'
         }],
-        personalizeFields: ['firstName'],
         tags: ['survey', 'research'],
         estimatedReachCount: 0
       },
@@ -336,7 +326,6 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           enabled: true,
           condition: 'no-response'
         }],
-        personalizeFields: ['firstName', 'company'],
         tags: ['webinar', 'invitation'],
         estimatedReachCount: 0
       }
