@@ -40,10 +40,18 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 
 interface CSVUploaderProps {
-  onContactsUploaded: (contacts: Contact[]) => void;
+  onContactsUploaded: (contacts: Contact[], source: { 
+    type: 'csv' | 'manual' | 'import' | 'api';
+    name: string;
+    filename?: string;
+  }) => void;
+  importName?: string;
 }
 
-const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
+const CSVUploader: React.FC<CSVUploaderProps> = ({ 
+  onContactsUploaded,
+  importName = ""
+}) => {
   const [isDragging, setIsDragging] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -57,12 +65,29 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
   const [showMappingDialog, setShowMappingDialog] = useState(false);
   const [sampleData, setSampleData] = useState<string[][]>([]);
   const [editingField, setEditingField] = useState<FieldMapping | null>(null);
+  const [customImportName, setCustomImportName] = useState(importName || "");
   const [validationResults, setValidationResults] = useState<{total: number, valid: number, invalid: number, issues: string[]}>({
     total: 0,
     valid: 0,
     invalid: 0,
     issues: []
   });
+
+  // Update custom import name if prop changes
+  useEffect(() => {
+    if (importName && !customImportName) {
+      setCustomImportName(importName);
+    }
+  }, [importName]);
+
+  // If file changes, update the default import name
+  useEffect(() => {
+    if (file && !customImportName) {
+      // Use the file name without extension as the default import name
+      const fileNameWithoutExtension = file.name.replace(/\.[^/.]+$/, "");
+      setCustomImportName(fileNameWithoutExtension);
+    }
+  }, [file]);
 
   // Required fields for the CSV with synonyms for smart mapping
   const requiredFields: CSVField[] = [
@@ -527,16 +552,32 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
       return;
     }
     
+    if (!customImportName.trim()) {
+      toast({
+        title: "Import Name Required",
+        description: "Please provide a name for this import to help identify these contacts later.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setIsUploading(true);
     
-    // Upload contacts
+    // Prepare source metadata for contact tracking
+    const sourceInfo = {
+      type: 'csv' as const,
+      name: customImportName.trim(),
+      filename: file?.name
+    };
+    
+    // Upload contacts with source information
     setTimeout(() => {
-      onContactsUploaded(contacts);
+      onContactsUploaded(contacts, sourceInfo);
       setIsUploading(false);
       
       toast({
         title: "Upload Successful",
-        description: `${contacts.length} contacts have been uploaded.`,
+        description: `${contacts.length} contacts have been uploaded as "${customImportName}".`,
       });
       
       // Reset the form
@@ -544,6 +585,7 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
       setContacts([]);
       setHeaders([]);
       setFieldMappings([]);
+      setCustomImportName("");
       setValidationResults({total: 0, valid: 0, invalid: 0, issues: []});
     }, 1000);
   };
@@ -558,6 +600,7 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
     setHeaders([]);
     setError(null);
     setFieldMappings([]);
+    setCustomImportName("");
     setValidationResults({total: 0, valid: 0, invalid: 0, issues: []});
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -932,69 +975,89 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
         </DialogContent>
       </Dialog>
       
-      {/* Contact Preview */}
+      {/* Import Name and Contact Preview */}
       {file && headers.length > 0 && contacts.length > 0 && !error && (
-        <Card className="overflow-hidden">
-          <div className="p-4 border-b">
-            <h3 className="font-medium">Contact Preview</h3>
+        <>
+          {/* Import Name Input */}
+          <div className="space-y-2">
+            <Label htmlFor="importName">Import Name (required)</Label>
+            <div className="flex gap-2">
+              <Input
+                id="importName"
+                placeholder="Give this import a name (e.g., Conference Attendees 2023)"
+                value={customImportName}
+                onChange={(e) => setCustomImportName(e.target.value)}
+                className="flex-1"
+              />
+            </div>
             <p className="text-sm text-muted-foreground">
-              Showing {Math.min(5, contacts.length)} of {contacts.length} contacts
+              This name helps you identify these contacts later when creating campaigns
             </p>
           </div>
-          
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  {fieldMappings
-                    .filter(m => !m.isCustomField || requiredFields.some(rf => rf.name === m.mappedTo))
-                    .map((mapping, index) => (
-                    <TableHead key={index} className="whitespace-nowrap">
-                      <div className="flex items-center gap-1">
-                        {mapping.mappedTo}
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Info className="h-3 w-3 text-muted-foreground cursor-help" />
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p className="whitespace-pre-line">
-                                {mapping.description || getFieldDescription(mapping.mappedTo)}
-                              </p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      </div>
-                    </TableHead>
-                  ))}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {contacts.slice(0, 5).map((contact, index) => (
-                  <TableRow key={index}>
+
+          {/* Contact Preview */}
+          <Card className="overflow-hidden">
+            <div className="p-4 border-b">
+              <h3 className="font-medium">Contact Preview</h3>
+              <p className="text-sm text-muted-foreground">
+                Showing {Math.min(5, contacts.length)} of {contacts.length} contacts
+              </p>
+            </div>
+            
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
                     {fieldMappings
                       .filter(m => !m.isCustomField || requiredFields.some(rf => rf.name === m.mappedTo))
-                      .map((mapping, headerIndex) => (
-                      <TableCell key={headerIndex} className="whitespace-nowrap">
-                        {contact[mapping.mappedTo] !== undefined ? 
-                          typeof contact[mapping.mappedTo] === 'boolean' 
-                            ? contact[mapping.mappedTo] ? 'Yes' : 'No'
-                            : contact[mapping.mappedTo]
-                          : ''}
-                      </TableCell>
+                      .map((mapping, index) => (
+                      <TableHead key={index} className="whitespace-nowrap">
+                        <div className="flex items-center gap-1">
+                          {mapping.mappedTo}
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p className="whitespace-pre-line">
+                                  {mapping.description || getFieldDescription(mapping.mappedTo)}
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
+                      </TableHead>
                     ))}
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-          
-          {contacts.length > 5 && (
-            <div className="p-3 text-center text-sm text-muted-foreground border-t">
-              {contacts.length - 5} more contacts not shown
+                </TableHeader>
+                <TableBody>
+                  {contacts.slice(0, 5).map((contact, index) => (
+                    <TableRow key={index}>
+                      {fieldMappings
+                        .filter(m => !m.isCustomField || requiredFields.some(rf => rf.name === m.mappedTo))
+                        .map((mapping, headerIndex) => (
+                        <TableCell key={headerIndex} className="whitespace-nowrap">
+                          {contact[mapping.mappedTo] !== undefined ? 
+                            typeof contact[mapping.mappedTo] === 'boolean' 
+                              ? contact[mapping.mappedTo] ? 'Yes' : 'No'
+                              : contact[mapping.mappedTo]
+                            : ''}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
-          )}
-        </Card>
+            
+            {contacts.length > 5 && (
+              <div className="p-3 text-center text-sm text-muted-foreground border-t">
+                {contacts.length - 5} more contacts not shown
+              </div>
+            )}
+          </Card>
+        </>
       )}
       
       {/* Processing Summary Card */}
@@ -1029,7 +1092,7 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
         <div className="flex justify-end">
           <Button 
             onClick={handleUpload} 
-            disabled={isUploading} 
+            disabled={isUploading || !customImportName.trim()} 
             className="gap-2"
           >
             {isUploading ? (
@@ -1040,7 +1103,11 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
             ) : (
               <>
                 <CheckCircle2 className="h-4 w-4" />
-                <span>Upload {contacts.length} Contacts</span>
+                <span>
+                  {customImportName.trim() 
+                    ? `Upload ${contacts.length} Contacts as "${customImportName}"` 
+                    : `Upload ${contacts.length} Contacts`}
+                </span>
               </>
             )}
           </Button>
@@ -1051,3 +1118,4 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({ onContactsUploaded }) => {
 };
 
 export default CSVUploader;
+

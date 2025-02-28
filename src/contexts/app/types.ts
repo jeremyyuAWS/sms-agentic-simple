@@ -10,7 +10,8 @@ import {
   FollowUp,
   ContactFilter,
   ContactTag,
-  ContactSegment
+  ContactSegment,
+  ContactImport
 } from '@/lib/types';
 import React from 'react';
 
@@ -45,7 +46,16 @@ export interface AppContextProps {
   
   // Actions
   sendMessage: (contactId: string, message: string, campaignId?: string) => void;
-  uploadContacts: (contacts: Contact[]) => void;
+  uploadContacts: (
+    contacts: Contact[], 
+    source?: {
+      type: 'csv' | 'manual' | 'import' | 'api';
+      name: string;
+      filename?: string;
+    }
+  ) => void;
+  getContactsByImport?: (batchId: string) => Contact[];
+  getContactImports?: () => ContactImport[];
   uploadKnowledgeBase: (knowledgeBase: KnowledgeBase) => void;
   deleteKnowledgeBase: (id: string) => void;
   createCampaign: (campaign: Omit<Campaign, 'id' | 'createdAt'>) => void;
@@ -55,6 +65,8 @@ export interface AppContextProps {
   removeFollowUp: (campaignId: string, followUpId: string) => void;
   updateCampaignSchedule: (campaignId: string, scheduledStartDate: Date) => void;
   createTemplate: (template: Omit<Template, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  updateTemplate?: (id: string, updates: Partial<Omit<Template, 'id' | 'createdAt'>>) => void;
+  deleteTemplate?: (id: string) => void;
   createContactTag: (tag: Omit<ContactTag, 'id' | 'count'>) => void;
   assignTagToContacts: (tagId: string, contactIds: string[]) => void;
   removeTagFromContacts: (tagId: string, contactIds: string[]) => void;

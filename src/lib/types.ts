@@ -10,6 +10,12 @@ export interface Contact {
   company?: string;
   position?: string;
   tags?: string[]; // Added for contact tagging
+  source?: {
+    type: 'csv' | 'manual' | 'import' | 'api';
+    name: string;
+    importedAt: Date;
+    batchId: string; // To group contacts from the same import
+  };
   [key: string]: any; // Allow for flexible fields
 }
 
@@ -22,8 +28,8 @@ export interface ContactTag {
 
 export interface ContactSegment {
   id: string;
-  name: string;
   description?: string;
+  name: string;
   filter: ContactFilter;
   count: number;
   createdAt: Date;
@@ -126,6 +132,18 @@ export interface MetricItem {
   change: number;
   changeType: 'increase' | 'decrease' | 'no-change';
   icon?: React.ComponentType<any>;
+}
+
+// New interface for contact import history
+export interface ContactImport {
+  id: string;
+  name: string;
+  filename: string;
+  importedAt: Date;
+  contactCount: number;
+  status: 'completed' | 'failed' | 'processing';
+  errorMessage?: string;
+  source: 'csv' | 'api' | 'manual';
 }
 
 // Field mapping interfaces for CSV import
