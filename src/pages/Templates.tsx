@@ -34,9 +34,20 @@ import {
 } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const Templates = () => {
-  const { templates, contacts, createTemplate } = useApp();
+  const { templates, contacts, createTemplate, deleteTemplate } = useApp();
   const { toast } = useToast();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newTemplate, setNewTemplate] = useState({
@@ -47,6 +58,7 @@ const Templates = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [previewData, setPreviewData] = useState<{[key: string]: string}>({});
+  const [templateToDelete, setTemplateToDelete] = useState<Template | null>(null);
 
   // Get available contact fields for template variables
   const getAvailableContactFields = () => {
@@ -246,14 +258,27 @@ const Templates = () => {
       return templateBody.replace(/{([^}]+)}/g, (_, variable) => `[${variable}]`);
     }
   };
+  
+  // Handle template deletion
+  const handleDeleteTemplate = () => {
+    if (templateToDelete) {
+      deleteTemplate(templateToDelete.id);
+      setTemplateToDelete(null);
+      
+      toast({
+        title: "Template Deleted",
+        description: `Template "${templateToDelete.name}" has been deleted.`
+      });
+    }
+  };
 
   // Available fields for display
   const availableFields = getAvailableContactFields();
 
   return (
     <div className="container mx-auto py-6 max-w-6xl">
-      <div className="mb-8 flex justify-between items-center">
-        <div>
+      <div className="mb-8 flex justify-between items-start">
+        <div className="text-left">
           <h1 className="text-3xl font-bold tracking-tight mb-2">Message Templates</h1>
           <p className="text-muted-foreground">
             Create and manage reusable templates for your SMS campaigns with personalization variables.
@@ -324,6 +349,45 @@ const Templates = () => {
                           </TooltipTrigger>
                           <TooltipContent>
                             <p>Edit & preview</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon"
+                                  onClick={() => setTemplateToDelete(template)}
+                                >
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete Template</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to delete "{template.name}"? This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel onClick={() => setTemplateToDelete(null)}>
+                                    Cancel
+                                  </AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={handleDeleteTemplate}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Delete template</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
