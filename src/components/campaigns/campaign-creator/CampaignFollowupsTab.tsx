@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { Label } from '@/components/ui/label';
-import FollowUpFlowBuilder from '../FollowUpFlowBuilder';
 import { Template, FollowUpCondition } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Sparkles, AlertCircle, MessageSquare, Clock, Calendar, ArrowRight, CheckCircle, ArrowUp, ArrowDown, ListOrdered } from 'lucide-react';
@@ -13,7 +12,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface CampaignFollowupsTabProps {
@@ -38,7 +36,6 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
   onComplete,
 }) => {
   const { toast } = useToast();
-  const [selectedView, setSelectedView] = useState<string>("visual");
   const [approved, setApproved] = useState(false);
 
   // Generate follow-ups if none exist
@@ -127,115 +124,100 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
         <p>This campaign includes a strategic messaging sequence designed to maximize engagement. You can customize each message or timing while maintaining proven communication patterns.</p>
       </div>
 
-      <Tabs defaultValue="visual" className="mb-4" onValueChange={setSelectedView}>
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="visual">Visual Sequence</TabsTrigger>
-          <TabsTrigger value="advanced">Advanced Builder</TabsTrigger>
-        </TabsList>
-        <TabsContent value="visual" className="mt-4">
-          <div className="border rounded-lg p-4">
-            <div className="space-y-6">
-              {/* Pre-defined message sequence */}
-              {followUps.map((followUp, index) => (
-                <div key={followUp.id} className="relative bg-slate-50 border rounded-lg p-4 shadow-sm">
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-2">
-                      <div className="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center font-medium">
-                        {index + 1}
-                      </div>
-                      <h4 className="font-medium">
-                        {index === 0 ? 'Initial Message' : `Follow-up #${index}`}
-                      </h4>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => moveFollowUpUp(index)}
-                              disabled={index === 0}
-                            >
-                              <ArrowUp className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Move message up in sequence</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                      
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => moveFollowUpDown(index)}
-                              disabled={index === followUps.length - 1}
-                            >
-                              <ArrowDown className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Move message down in sequence</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </div>
+      {/* Visual Sequence Builder - Now the main and only view */}
+      <div className="border rounded-lg p-4">
+        <div className="space-y-6">
+          {/* Pre-defined message sequence */}
+          {followUps.map((followUp, index) => (
+            <div key={followUp.id} className="relative bg-slate-50 border rounded-lg p-4 shadow-sm">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <div className="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center font-medium">
+                    {index + 1}
                   </div>
-                  
-                  <div className="mt-2">
-                    <div className="flex items-center text-sm text-muted-foreground mb-2">
-                      <Clock className="mr-1 h-4 w-4" />
-                      {index === 0 ? 
-                        'Initial message sent immediately' : 
-                        `Sent ${followUp.delayDays} days after initial message`}
-                    </div>
-                    
-                    <div className="flex items-center text-sm text-muted-foreground">
-                      <MessageSquare className="mr-1 h-4 w-4" />
-                      {`Template: ${templates.find(t => t.id === followUp.templateId)?.name || 'Unknown template'}`}
-                    </div>
-                  </div>
+                  <h4 className="font-medium">
+                    {index === 0 ? 'Initial Message' : `Follow-up #${index}`}
+                  </h4>
                 </div>
-              ))}
+                <div className="flex items-center gap-2">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => moveFollowUpUp(index)}
+                          disabled={index === 0}
+                        >
+                          <ArrowUp className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Move message up in sequence</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => moveFollowUpDown(index)}
+                          disabled={index === followUps.length - 1}
+                        >
+                          <ArrowDown className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Move message down in sequence</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+              </div>
               
-              {/* Add follow-up button */}
-              <Button 
-                variant="outline" 
-                className="w-full mt-4 border-dashed"
-                onClick={() => {
-                  // Find a template not yet used, or reuse the first one
-                  const usedTemplateIds = new Set(followUps.map(f => f.templateId));
-                  let templateId = templates.find(t => !usedTemplateIds.has(t.id))?.id || templates[0]?.id;
-                  
-                  const newFollowUp = {
-                    id: `followup-${Date.now()}-${followUps.length + 1}`,
-                    templateId,
-                    delayDays: followUps.length > 0 ? followUps[followUps.length - 1].delayDays + 4 : 3,
-                    enabled: true,
-                    conditions: [{ type: 'no-response' as FollowUpCondition['type'] }]
-                  };
-                  
-                  onFollowUpsChange([...followUps, newFollowUp]);
-                }}
-              >
-                Add Follow-up Message
-              </Button>
+              <div className="mt-2">
+                <div className="flex items-center text-sm text-muted-foreground mb-2">
+                  <Clock className="mr-1 h-4 w-4" />
+                  {index === 0 ? 
+                    'Initial message sent immediately' : 
+                    `Sent ${followUp.delayDays} days after initial message`}
+                </div>
+                
+                <div className="flex items-center text-sm text-muted-foreground">
+                  <MessageSquare className="mr-1 h-4 w-4" />
+                  {`Template: ${templates.find(t => t.id === followUp.templateId)?.name || 'Unknown template'}`}
+                </div>
+              </div>
             </div>
-          </div>
-        </TabsContent>
-        <TabsContent value="advanced" className="mt-4">
-          <FollowUpFlowBuilder
-            initialTemplateId={selectedTemplateId || templates[0]?.id || ""}
-            followUps={followUps}
-            templates={templates}
-            onUpdate={onFollowUpsChange}
-          />
-        </TabsContent>
-      </Tabs>
+          ))}
+          
+          {/* Add follow-up button */}
+          <Button 
+            variant="outline" 
+            className="w-full mt-4 border-dashed"
+            onClick={() => {
+              // Find a template not yet used, or reuse the first one
+              const usedTemplateIds = new Set(followUps.map(f => f.templateId));
+              let templateId = templates.find(t => !usedTemplateIds.has(t.id))?.id || templates[0]?.id;
+              
+              const newFollowUp = {
+                id: `followup-${Date.now()}-${followUps.length + 1}`,
+                templateId,
+                delayDays: followUps.length > 0 ? followUps[followUps.length - 1].delayDays + 4 : 3,
+                enabled: true,
+                conditions: [{ type: 'no-response' as FollowUpCondition['type'] }]
+              };
+              
+              onFollowUpsChange([...followUps, newFollowUp]);
+            }}
+          >
+            Add Follow-up Message
+          </Button>
+        </div>
+      </div>
 
       {/* Sequence Overview */}
       <div className="mt-6 bg-slate-50 border rounded-lg p-4">
