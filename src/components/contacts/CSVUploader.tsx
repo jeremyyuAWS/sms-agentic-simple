@@ -680,7 +680,7 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({
           <TableBody>
             {requiredFields.map((field) => (
               <TableRow key={field.name}>
-                <TableCell className="font-medium">{field.name}</TableCell>
+                <TableCell className={cn("font-medium", field.required && "font-bold")}>{field.name}</TableCell>
                 <TableCell>{field.required ? 'Yes' : 'No'}</TableCell>
                 <TableCell className="whitespace-pre-line">{formatDescriptionWithBullets(field.description)}</TableCell>
                 <TableCell className="text-muted-foreground">{field.example}</TableCell>
@@ -841,7 +841,7 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({
                         <SelectContent>
                           {requiredFields.map((field) => (
                             <SelectItem key={field.name} value={field.name}>
-                              {field.name} {field.required && <span className="text-red-500">*</span>}
+                              {field.required ? <span className="font-bold">{field.name}</span> : field.name} {field.required && <span className="text-red-500">*</span>}
                             </SelectItem>
                           ))}
                           <SelectItem value={mapping.csvHeader}>
@@ -928,7 +928,7 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({
                   <SelectContent>
                     {requiredFields.map((field) => (
                       <SelectItem key={field.name} value={field.name}>
-                        {field.name} {field.required && <span className="text-red-500">*</span>}
+                        {field.required ? <span className="font-bold">{field.name}</span> : field.name} {field.required && <span className="text-red-500">*</span>}
                       </SelectItem>
                     ))}
                     <SelectItem value={editingField.csvHeader}>
@@ -1013,7 +1013,11 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({
                       .map((mapping, index) => (
                       <TableHead key={index} className="whitespace-nowrap">
                         <div className="flex items-center gap-1">
-                          {mapping.mappedTo}
+                          {requiredFields.find(f => f.name === mapping.mappedTo)?.required ? (
+                            <span className="font-bold">{mapping.mappedTo}</span>
+                          ) : (
+                            mapping.mappedTo
+                          )}
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -1118,4 +1122,3 @@ const CSVUploader: React.FC<CSVUploaderProps> = ({
 };
 
 export default CSVUploader;
-
