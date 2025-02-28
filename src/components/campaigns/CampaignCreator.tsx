@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { TimeZoneSelector } from './TimeZoneSelector';
-import { TimeWindowSelector } from './TimeWindowSelector';
+import TimeZoneSelector from './TimeZoneSelector';
+import TimeWindowSelector from './TimeWindowSelector';
 import {
   Select,
   SelectContent,
@@ -572,8 +572,12 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
               </div>
               
               <div className="grid md:grid-cols-2 gap-4">
-                <TimeZoneSelector />
-                <TimeWindowSelector />
+                <div>
+                  <TimeZoneSelector onSelect={handleTimeZoneSelect} />
+                </div>
+                <div>
+                  <TimeWindowSelector onSelect={handleTimeWindowSelect} />
+                </div>
               </div>
             </div>
             
