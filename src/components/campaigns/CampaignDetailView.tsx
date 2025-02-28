@@ -16,7 +16,9 @@ import {
   CalendarClock, 
   BarChart3, 
   Calendar, 
-  GlobeIcon 
+  GlobeIcon,
+  ChevronUp,
+  ChevronDown
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -24,6 +26,7 @@ import FollowUpFlowBuilder from './FollowUpFlowBuilder';
 import CampaignAnalytics from './CampaignAnalytics';
 import TimeWindowSelector from './TimeWindowSelector';
 import TimeZoneSelector from './TimeZoneSelector';
+import { Switch } from '@/components/ui/switch';
 
 interface CampaignDetailViewProps {
   campaign: Campaign;
@@ -49,6 +52,7 @@ const CampaignDetailView: React.FC<CampaignDetailViewProps> = ({
   const [activeTab, setActiveTab] = useState<string>('overview');
   const [timeWindow, setTimeWindow] = useState<TimeWindow | undefined>(campaign.sendingWindow);
   const [timeZone, setTimeZone] = useState<string | undefined>(campaign.timeZone);
+  const [followUpEnabled, setFollowUpEnabled] = useState<boolean>(true);
   
   // Get all messages related to this campaign
   const campaignMessages = conversations
@@ -303,22 +307,46 @@ const CampaignDetailView: React.FC<CampaignDetailViewProps> = ({
         </TabsContent>
 
         <TabsContent value="follow-ups" className="space-y-4">
-          {campaign.templateId ? (
-            <FollowUpFlowBuilder
-              initialTemplateId={campaign.templateId}
-              followUps={campaign.followUps || []}
-              templates={templates}
-              onUpdate={handleFollowUpsUpdate}
-            />
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-lg font-semibold">Follow-up Sequence</h3>
+            <div className="flex items-center space-x-2">
+              <Switch 
+                id="followup-toggle" 
+                checked={followUpEnabled}
+                onCheckedChange={setFollowUpEnabled}
+              />
+              <label htmlFor="followup-toggle" className="text-sm cursor-pointer">
+                {followUpEnabled ? 'Enabled' : 'Disabled'}
+              </label>
+            </div>
+          </div>
+          
+          {followUpEnabled ? (
+            campaign.templateId ? (
+              <FollowUpFlowBuilder
+                initialTemplateId={campaign.templateId}
+                followUps={campaign.followUps || []}
+                templates={templates}
+                onUpdate={handleFollowUpsUpdate}
+              />
+            ) : (
+              <Card className="bg-muted/30">
+                <CardContent className="p-6 text-center">
+                  <p className="text-muted-foreground mb-3">
+                    Please select an initial message template first.
+                  </p>
+                  <Button variant="outline" size="sm" onClick={() => setActiveTab('overview')}>
+                    Go to Overview
+                  </Button>
+                </CardContent>
+              </Card>
+            )
           ) : (
             <Card className="bg-muted/30">
               <CardContent className="p-6 text-center">
-                <p className="text-muted-foreground mb-3">
-                  Please select an initial message template first.
+                <p className="text-muted-foreground">
+                  Follow-up sequence is currently disabled. Toggle the switch above to enable it.
                 </p>
-                <Button variant="outline" size="sm" onClick={() => setActiveTab('overview')}>
-                  Go to Overview
-                </Button>
               </CardContent>
             </Card>
           )}
@@ -364,6 +392,48 @@ const CampaignDetailView: React.FC<CampaignDetailViewProps> = ({
                 <div className="bg-muted/20 rounded-md p-4 text-center text-muted-foreground">
                   <p className="mb-2">Date scheduling will be available in a future update.</p>
                   <p className="text-xs">This feature will allow you to set specific start and end dates for your campaign.</p>
+                </div>
+              </CardContent>
+            </Card>
+            
+            {/* Follow-ups settings */}
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <RefreshCw className="h-4 w-4 text-muted-foreground" />
+                    <h3 className="text-sm font-medium">Follow-up Sequence Settings</h3>
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <label htmlFor="enable-followups" className="text-sm">
+                      Enable follow-up sequence
+                    </label>
+                    <Switch 
+                      id="enable-followups" 
+                      checked={followUpEnabled}
+                      onCheckedChange={(checked) => {
+                        setFollowUpEnabled(checked);
+                        if (checked) {
+                          toast({
+                            title: "Follow-ups Enabled",
+                            description: "Your campaign will now use the follow-up sequence you've configured."
+                          });
+                        } else {
+                          toast({
+                            title: "Follow-ups Disabled",
+                            description: "Your campaign will only send the initial message without follow-ups."
+                          });
+                        }
+                      }}
+                    />
+                  </div>
+                  
+                  <p className="text-sm text-muted-foreground">
+                    When disabled, only the initial message will be sent without any follow-ups.
+                  </p>
                 </div>
               </CardContent>
             </Card>
