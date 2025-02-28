@@ -1,14 +1,11 @@
 
-import React, { useState } from 'react';
-import { Calendar as CalendarIcon, Clock } from 'lucide-react';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { TimeWindow } from '@/lib/types';
-import { format, isBefore, startOfToday } from 'date-fns';
-import TimeWindowSelector from './TimeWindowSelector';
-import TimeZoneSelector from './TimeZoneSelector';
+import React, { useState } from "react";
+import { Calendar } from "@/components/ui/calendar";
+import { TimeWindow } from "@/lib/types";
+import TimeZoneSelector from "./TimeZoneSelector";
+import TimeWindowSelector from "./TimeWindowSelector";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { format } from "date-fns";
 
 interface ScheduleCampaignProps {
   startDate?: Date;
@@ -16,124 +13,87 @@ interface ScheduleCampaignProps {
   timezone?: string;
   onScheduleChange: (date: Date) => void;
   onSendingWindowChange: (window: TimeWindow | undefined) => void;
-  onTimeZoneChange: (zone: string) => void;
+  onTimeZoneChange: (timezone: string) => void;
 }
 
 const ScheduleCampaign: React.FC<ScheduleCampaignProps> = ({
-  startDate,
+  startDate = new Date(),
   window,
-  timezone = 'America/Los_Angeles',
+  timezone = Intl.DateTimeFormat().resolvedOptions().timeZone,
   onScheduleChange,
   onSendingWindowChange,
-  onTimeZoneChange
+  onTimeZoneChange,
 }) => {
-  const [date, setDate] = useState<Date | undefined>(startDate);
-  const [timeWindow, setTimeWindow] = useState<TimeWindow | undefined>(window);
-  const [timeZone, setTimeZone] = useState<string>(timezone);
+  const today = new Date();
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
 
-  // Function to disable past dates
-  const isPastDate = (day: Date) => {
-    return isBefore(day, startOfToday());
-  };
-
-  // Handle date selection
-  const handleDateSelect = (selectedDate: Date | undefined) => {
-    if (selectedDate) {
-      setDate(selectedDate);
-      onScheduleChange(selectedDate);
+  const handleDateSelect = (date: Date | undefined) => {
+    if (date) {
+      onScheduleChange(date);
     }
-  };
-
-  // Handle time window selection
-  const handleTimeWindowChange = (selectedWindow: TimeWindow | undefined) => {
-    setTimeWindow(selectedWindow);
-    onSendingWindowChange(selectedWindow);
-  };
-
-  // Handle timezone selection
-  const handleTimezoneChange = (selectedTimezone: string) => {
-    setTimeZone(selectedTimezone);
-    onTimeZoneChange(selectedTimezone);
   };
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Schedule Campaign</h2>
-      <p className="text-muted-foreground">
-        Choose when your campaign should start and during which hours messages should be sent.
-      </p>
-      
-      <div className="grid grid-cols-1 gap-6">
-        {/* Start Date */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <CalendarIcon className="h-5 w-5 mr-2" />
-              Start Date
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col sm:flex-row gap-4 items-start">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="w-full sm:w-auto justify-start text-left font-normal"
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {date ? format(date, 'PPP') : <span>Pick a date</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={date}
-                    onSelect={handleDateSelect}
-                    initialFocus
-                    disabled={isPastDate}
-                    fromDate={new Date()} // Also ensures the calendar doesn't allow navigating too far back
-                  />
-                </PopoverContent>
-              </Popover>
+      <Card>
+        <CardHeader>
+          <CardTitle>Campaign Start Date</CardTitle>
+          <CardDescription>
+            Select when your campaign should start sending messages
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col md:flex-row gap-6">
+            <div className="md:w-1/2">
+              <Calendar
+                mode="single"
+                selected={startDate}
+                onSelect={handleDateSelect}
+                disabled={(date) => date < tomorrow}
+                className="rounded-md border"
+              />
+            </div>
+            <div className="md:w-1/2 space-y-6">
+              <div>
+                <h3 className="text-lg font-medium mb-2">Selected Start Date</h3>
+                <p className="text-muted-foreground">
+                  {startDate ? format(startDate, "EEEE, MMMM d, yyyy") : "No date selected"}
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Your campaign will begin sending on this date according to the sending window and time zone settings.
+                </p>
+              </div>
               
-              <div className="text-sm text-muted-foreground">
-                {date 
-                  ? `Your campaign will start on ${format(date, 'PPPP')}` 
-                  : "Select a start date for your campaign"}
+              <div>
+                <h3 className="text-lg font-medium mb-2">Time Zone</h3>
+                <TimeZoneSelector 
+                  value={timezone} 
+                  onChange={onTimeZoneChange} 
+                />
+                <p className="text-sm text-muted-foreground mt-1">
+                  All scheduling will be based on this time zone
+                </p>
               </div>
             </div>
-          </CardContent>
-        </Card>
-        
-        {/* Time Window */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Clock className="h-5 w-5 mr-2" />
-              Sending Window
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <TimeWindowSelector
-              value={timeWindow}
-              onChange={handleTimeWindowChange}
-            />
-          </CardContent>
-        </Card>
-        
-        {/* Time Zone */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Time Zone</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <TimeZoneSelector
-              value={timeZone}
-              onChange={handleTimezoneChange}
-            />
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Sending Window</CardTitle>
+          <CardDescription>
+            Restrict when your messages will be delivered
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <TimeWindowSelector 
+            value={window} 
+            onChange={onSendingWindowChange} 
+          />
+        </CardContent>
+      </Card>
     </div>
   );
 };
