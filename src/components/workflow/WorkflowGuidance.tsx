@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useApp } from '@/contexts/app/AppContext';
 import { useToast } from '@/hooks/use-toast';
+import { WorkflowState } from '@/contexts/app/types';
 
 export const WorkflowGuidance: React.FC = () => {
   const { workflow, continueWorkflow, updateWorkflowData, cancelWorkflow } = useApp();
@@ -12,7 +13,15 @@ export const WorkflowGuidance: React.FC = () => {
   
   if (!workflow.active) return null;
   
-  const getStepContent = () => {
+  type StepContent = {
+    title: string;
+    description: string;
+    nextLabel: string;
+    canContinue: boolean;
+    nextStep: WorkflowState['currentStep'];
+  };
+  
+  const getStepContent = (): StepContent => {
     switch (workflow.currentStep) {
       case 'contacts':
         return {
