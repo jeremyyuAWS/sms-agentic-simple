@@ -7,12 +7,13 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PlusCircle, Trash2, ArrowRight, Save, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { PlusCircle, Trash2, ArrowRight, Save, AlertCircle, CheckCircle2, ListOrdered, ArrowUp, ArrowDown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import AdvancedConditionEditor from './AdvancedConditionEditor';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface FollowUpDraft extends Omit<FollowUp, 'id'> {
   tempId?: string;
@@ -27,6 +28,7 @@ interface FollowUpNode {
     onResponse?: string;
     onNoResponse?: string;
   };
+  sequence?: number; // Added sequence for ordering
 }
 
 interface FollowUpFlowBuilderProps {
@@ -63,10 +65,11 @@ const FollowUpFlowBuilder: React.FC<FollowUpFlowBuilderProps> = ({
       type: 'initial',
       data: { templateId: initialTemplateId },
       position: { x: 100, y: 100 },
-      connections: {}
+      connections: {},
+      sequence: 0
     };
 
-    // Create nodes for each follow-up
+    // Create nodes for each follow-up - make sure they have a sequence number
     const followUpNodes: FollowUpNode[] = followUps.map((followUp, index) => ({
       id: followUp.id,
       type: 'followup',
@@ -75,7 +78,8 @@ const FollowUpFlowBuilder: React.FC<FollowUpFlowBuilderProps> = ({
       connections: {
         onResponse: followUp.nextSteps?.onResponse,
         onNoResponse: followUp.nextSteps?.onNoResponse
-      }
+      },
+      sequence: index + 1 // Assign sequence numbers starting from 1
     }));
 
     // Set all nodes
@@ -91,6 +95,9 @@ const FollowUpFlowBuilder: React.FC<FollowUpFlowBuilderProps> = ({
   // Add a new follow-up node
   const addFollowUpNode = () => {
     const newNodeId = `temp-followup-${Date.now()}`;
+    // Find the next sequence number
+    const maxSequence = Math.max(0, ...nodes.filter(n => n.type === 'followup').map(n => n.sequence || 0));
+    
     const newNode: FollowUpNode = {
       id: newNodeId,
       type: 'followup',
@@ -106,13 +113,80 @@ const FollowUpFlowBuilder: React.FC<FollowUpFlowBuilderProps> = ({
         x: Math.max(...nodes.map(n => n.position.x)) + 250, 
         y: 100 + nodes.length * 50 
       },
-      connections: {}
+      connections: {},
+      sequence: maxSequence + 1
     };
 
     setNodes([...nodes, newNode]);
     setSelectedNode(newNodeId);
     setIsEditingNode(true);
     setEditingNodeData(newNode.data as FollowUpDraft);
+  };
+
+  // Move a node up in sequence
+  const moveNodeUp = (nodeId: string) => {
+    const nodeIndex = nodes.findIndex(n => n.id === nodeId);
+    if (nodeIndex <= 1) return; // Don't move if it's the initial node or first follow-up
+
+    const updatedNodes = [...nodes];
+    const currentNode = updatedNodes[nodeIndex];
+    const prevNode = updatedNodes[nodeIndex - 1];
+
+    // Only swap if previous node is a follow-up (not the initial node)
+    if (prevNode.type === 'followup') {
+      // Swap sequences
+      const tempSequence = currentNode.sequence;
+      currentNode.sequence = prevNode.sequence;
+      prevNode.sequence = tempSequence;
+
+      // Also adjust positions for visual clarity
+      const tempY = currentNode.position.y;
+      currentNode.position.y = prevNode.position.y;
+      prevNode.position.y = tempY;
+
+      // Sort nodes by sequence for consistent rendering
+      updatedNodes.sort((a, b) => {
+        if (a.type === 'initial') return -1;
+        if (b.type === 'initial') return 1;
+        return (a.sequence || 0) - (b.sequence || 0);
+      });
+
+      setNodes(updatedNodes);
+      updateFollowUps(updatedNodes);
+    }
+  };
+
+  // Move a node down in sequence
+  const moveNodeDown = (nodeId: string) => {
+    const nodeIndex = nodes.findIndex(n => n.id === nodeId);
+    if (nodeIndex === -1 || nodeIndex >= nodes.length - 1) return; // Don't move if it's the last node
+
+    const updatedNodes = [...nodes];
+    const currentNode = updatedNodes[nodeIndex];
+    const nextNode = updatedNodes[nodeIndex + 1];
+
+    // Only swap if current node is a follow-up
+    if (currentNode.type === 'followup' && nextNode.type === 'followup') {
+      // Swap sequences
+      const tempSequence = currentNode.sequence;
+      currentNode.sequence = nextNode.sequence;
+      nextNode.sequence = tempSequence;
+
+      // Also adjust positions for visual clarity
+      const tempY = currentNode.position.y;
+      currentNode.position.y = nextNode.position.y;
+      nextNode.position.y = tempY;
+
+      // Sort nodes by sequence for consistent rendering
+      updatedNodes.sort((a, b) => {
+        if (a.type === 'initial') return -1;
+        if (b.type === 'initial') return 1;
+        return (a.sequence || 0) - (b.sequence || 0);
+      });
+
+      setNodes(updatedNodes);
+      updateFollowUps(updatedNodes);
+    }
   };
 
   // Handle node selection
@@ -141,7 +215,18 @@ const FollowUpFlowBuilder: React.FC<FollowUpFlowBuilderProps> = ({
       }
     }));
 
-    setNodes(nodesWithUpdatedConnections);
+    // Update sequences to be consecutive
+    const resequencedNodes = nodesWithUpdatedConnections.map(node => {
+      if (node.type === 'initial') return node;
+      const followupNodes = nodesWithUpdatedConnections.filter(n => n.type === 'followup');
+      const index = followupNodes.indexOf(node);
+      return {
+        ...node,
+        sequence: index + 1
+      };
+    });
+
+    setNodes(resequencedNodes);
     if (selectedNode === nodeId) {
       setSelectedNode(null);
       setIsEditingNode(false);
@@ -149,7 +234,7 @@ const FollowUpFlowBuilder: React.FC<FollowUpFlowBuilderProps> = ({
     }
 
     // Update parent component
-    updateFollowUps(nodesWithUpdatedConnections);
+    updateFollowUps(resequencedNodes);
   };
 
   // Handle node data updates
@@ -189,6 +274,7 @@ const FollowUpFlowBuilder: React.FC<FollowUpFlowBuilderProps> = ({
   const updateFollowUps = (updatedNodes: FollowUpNode[]) => {
     const newFollowUps: FollowUp[] = updatedNodes
       .filter(node => node.type === 'followup')
+      .sort((a, b) => (a.sequence || 0) - (b.sequence || 0)) // Sort by sequence
       .map(node => {
         const data = node.data as FollowUpDraft;
         return {
@@ -287,18 +373,30 @@ const FollowUpFlowBuilder: React.FC<FollowUpFlowBuilderProps> = ({
     setConnectionType(null);
   };
 
+  // Get sorted nodes for display
+  const getSortedNodes = () => {
+    return [...nodes].sort((a, b) => {
+      // Initial node always comes first
+      if (a.type === 'initial') return -1;
+      if (b.type === 'initial') return 1;
+      // Then sort by sequence
+      return (a.sequence || 0) - (b.sequence || 0);
+    });
+  };
+
   // Draw connections between nodes
   const renderConnections = () => {
     if (!containerRef.current) return null;
 
     const connections: React.ReactNode[] = [];
+    const sortedNodes = getSortedNodes();
 
-    nodes.forEach(node => {
+    sortedNodes.forEach(node => {
       ['onResponse', 'onNoResponse'].forEach((connType) => {
         const targetId = node.connections[connType as 'onResponse' | 'onNoResponse'];
         if (targetId) {
           const sourceNode = node;
-          const targetNode = nodes.find(n => n.id === targetId);
+          const targetNode = sortedNodes.find(n => n.id === targetId);
           
           if (targetNode) {
             // Calculate connection points
@@ -382,7 +480,24 @@ const FollowUpFlowBuilder: React.FC<FollowUpFlowBuilderProps> = ({
   return (
     <div className="follow-up-flow-builder border rounded-md p-4 bg-gray-50 relative" style={{ height: '600px' }}>
       <div className="flex justify-between mb-4">
-        <h3 className="text-lg font-medium">Follow-Up Flow Builder</h3>
+        <div className="flex items-center gap-2">
+          <h3 className="text-lg font-medium">Follow-Up Flow Builder</h3>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="cursor-help">
+                  <AlertCircle className="h-4 w-4 text-muted-foreground" />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-sm">
+                <p>
+                  Build your follow-up sequence. Each card represents a follow-up message.
+                  The sequence number shows the order in which follow-ups will be evaluated.
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
         <Button 
           variant="outline" 
           size="sm" 
@@ -406,7 +521,7 @@ const FollowUpFlowBuilder: React.FC<FollowUpFlowBuilderProps> = ({
             {renderConnections()}
           </svg>
           
-          {nodes.map(node => (
+          {getSortedNodes().map(node => (
             <div
               key={node.id}
               className={cn(
@@ -429,27 +544,64 @@ const FollowUpFlowBuilder: React.FC<FollowUpFlowBuilderProps> = ({
               }}
             >
               <div className="flex justify-between items-start mb-2">
-                <div>
-                  <h4 className="font-medium">
-                    {node.type === 'initial' ? 'Initial Message' : `Follow-up #${nodes.indexOf(node)}`}
-                  </h4>
-                  <p className="text-sm text-muted-foreground">
-                    {getTemplateName((node.data as any).templateId)}
-                  </p>
+                <div className="flex items-center gap-2">
+                  {/* Show sequence number for follow-ups */}
+                  {node.type === 'followup' && (
+                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-medium">
+                      {node.sequence}
+                    </div>
+                  )}
+                  <div>
+                    <h4 className="font-medium">
+                      {node.type === 'initial' ? 'Initial Message' : `Follow-up #${node.sequence}`}
+                    </h4>
+                    <p className="text-sm text-muted-foreground">
+                      {getTemplateName((node.data as any).templateId)}
+                    </p>
+                  </div>
                 </div>
-                {node.type !== 'initial' && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 text-muted-foreground"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      deleteNode(node.id);
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
+                <div className="flex items-center gap-1">
+                  {/* Reordering buttons for follow-ups */}
+                  {node.type === 'followup' && (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-muted-foreground"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          moveNodeUp(node.id);
+                        }}
+                        disabled={node.sequence === 1} // Disable if it's the first follow-up
+                      >
+                        <ArrowUp className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-muted-foreground"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          moveNodeDown(node.id);
+                        }}
+                        disabled={node.sequence === Math.max(...nodes.filter(n => n.type === 'followup').map(n => n.sequence || 0))} // Disable if it's the last
+                      >
+                        <ArrowDown className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-muted-foreground"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteNode(node.id);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </>
+                  )}
+                </div>
               </div>
               
               {node.type === 'followup' && (
@@ -557,6 +709,18 @@ const FollowUpFlowBuilder: React.FC<FollowUpFlowBuilderProps> = ({
                       
                       <TabsContent value="basic" className="space-y-4 mt-4">
                         <div className="space-y-2">
+                          <Label htmlFor="sequence">Sequence Order</Label>
+                          <div className="flex items-center gap-2">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white font-semibold">
+                              {nodes.find(n => n.id === selectedNode)?.sequence}
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              Follow-ups are processed in sequence order, with lower numbers first.
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-2">
                           <Label htmlFor="template">Message Template</Label>
                           <Select 
                             value={editingNodeData.templateId} 
@@ -658,6 +822,39 @@ const FollowUpFlowBuilder: React.FC<FollowUpFlowBuilderProps> = ({
             </div>
           </div>
         )}
+      </div>
+
+      {/* Sequence Legend */}
+      <div className="mt-6 p-3 bg-blue-50 border border-blue-200 rounded-md">
+        <div className="flex items-start gap-2">
+          <ListOrdered className="h-5 w-5 text-blue-600 mt-0.5" />
+          <div>
+            <p className="text-sm font-medium text-blue-800">Understanding the Follow-up Sequence</p>
+            <p className="text-sm text-blue-700 mt-1">
+              Follow-ups are evaluated in numerical order. Connections (arrows) show what happens after 
+              a follow-up, based on whether there's a response or not.
+            </p>
+            <ul className="text-sm text-blue-700 mt-2 space-y-1">
+              <li className="flex items-center gap-1">
+                <div className="h-4 w-4 rounded-full bg-primary/20 text-primary text-xs flex items-center justify-center">1</div>
+                <span>Number badges show the sequence order</span>
+              </li>
+              <li className="flex items-center gap-1">
+                <ArrowUp className="h-4 w-4 text-blue-600" />
+                <ArrowDown className="h-4 w-4 text-blue-600" />
+                <span>Use arrows to change follow-up order</span>
+              </li>
+              <li className="flex items-center gap-1">
+                <div className="h-2 w-2 rounded-full bg-green-500"></div>
+                <span>Green connections trigger if a contact responds</span>
+              </li>
+              <li className="flex items-center gap-1">
+                <div className="h-2 w-2 rounded-full bg-red-500"></div>
+                <span>Red connections trigger if there's no response</span>
+              </li>
+            </ul>
+          </div>
+        </div>
       </div>
     </div>
   );
