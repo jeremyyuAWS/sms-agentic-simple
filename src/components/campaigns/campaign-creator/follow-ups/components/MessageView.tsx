@@ -30,13 +30,11 @@ const MessageView: React.FC<MessageViewProps> = ({
           `Sent ${delayDays} days after initial message`}
       </div>
       
-      {message && (
+      {message ? (
         <div className="p-3 bg-white border rounded-md text-sm mt-2">
-          <p className="text-slate-800">{message}</p>
+          <p className="text-slate-800 whitespace-pre-line">{message}</p>
         </div>
-      )}
-      
-      {!message && (
+      ) : (
         <div className="p-3 border border-dashed rounded-md bg-white text-sm text-muted-foreground mt-2">
           <p>No message content set. Click Edit to add a message.</p>
         </div>

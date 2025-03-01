@@ -44,6 +44,14 @@ const FollowUpItem: React.FC<FollowUpItemProps> = ({
 
   const handleSelectExampleMessage = (message: string) => {
     setCustomMessage(message);
+    
+    // If we're not in editing mode and a message is selected, 
+    // update the followUp directly
+    if (!isEditing) {
+      updateFollowUp(index, {
+        message: message
+      });
+    }
   };
 
   return (
