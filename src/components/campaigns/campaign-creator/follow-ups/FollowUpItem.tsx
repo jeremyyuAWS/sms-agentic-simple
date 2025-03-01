@@ -1,8 +1,9 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Clock, Edit2, Check, AlertCircle } from 'lucide-react';
+import { Clock, Edit2, Check, AlertCircle, MessageSquare } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Tooltip,
   TooltipContent,
@@ -16,6 +17,12 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 interface FollowUpItemProps {
   followUp: any;
@@ -63,6 +70,39 @@ const FollowUpItem: React.FC<FollowUpItemProps> = ({
       { value: `Value proposition (#${index})`, tooltip: "Highlights your main value" },
       { value: `Final outreach (#${index})`, tooltip: "Last attempt to connect" },
       { value: `Just wondering (#${index})`, tooltip: "Very casual follow-up" }
+    ];
+  };
+
+  // Example text messages for each position in the sequence
+  const getExampleMessages = () => {
+    if (index === 0) {
+      return [
+        "Hi {{first_name}}, this is {{sender_name}} from {{company}}. I wanted to reach out about how we can help you increase revenue by 20% with our solution. Would you be open to a quick chat?",
+        "{{first_name}}, {{sender_name}} here from {{company}}. Our clients see 30% efficiency gains within 3 months. I'd love to share how we might help your team at {{prospect_company}} too. When's a good time to connect?",
+        "Hi {{first_name}}, {{sender_name}} with {{company}}. Based on your role at {{prospect_company}}, I think our {{product_name}} could help you with {{specific_pain_point}}. Can we schedule a quick 15-minute call?"
+      ];
+    } 
+    
+    if (index === 1) {
+      return [
+        "Hi {{first_name}}, just checking in on my previous message. I'd still love to share how {{company}} has helped similar businesses achieve {{specific_benefit}}. Would you have 15 minutes this week?",
+        "{{first_name}}, just following up on my previous text. I understand you're busy, but I think {{product_name}} could really help with your {{specific_challenge}}. Let me know if you'd like to learn more.",
+        "Quick follow-up, {{first_name}} - I'm still hoping to connect about how {{company}} can help {{prospect_company}} improve {{metric}}. Does Thursday or Friday work better for a brief call?"
+      ];
+    }
+    
+    if (index === 2) {
+      return [
+        "{{first_name}}, I wanted to share that our clients at {{competitor_company}} increased their {{metric}} by {{percentage}}. I'd be happy to explain how we achieved this in a quick call.",
+        "Hi {{first_name}}, I've helped 3 other {{role}} professionals solve {{pain_point}} this month. If that's still a priority for {{prospect_company}}, I'd love to share our approach.",
+        "{{first_name}}, I'm reaching out one more time because I believe our {{product_name}} would be valuable for your team at {{prospect_company}}. Let me know if you'd like to see a quick demo."
+      ];
+    }
+    
+    return [
+      "{{first_name}}, I'll make this my final message. If improving your {{metric}} becomes a priority, feel free to reach out anytime at {{phone_number}}. Wishing you continued success!",
+      "I understand timing might not be right, {{first_name}}. If you'd like to explore how {{company}} can help {{prospect_company}} in the future, my line is always open at {{phone_number}}.",
+      "{{first_name}}, as this will be my last outreach, I wanted to share this resource that addresses {{specific_challenge}}: {{resource_link}}. Feel free to contact me if you find it valuable."
     ];
   };
 
@@ -118,11 +158,41 @@ const FollowUpItem: React.FC<FollowUpItemProps> = ({
       
       <div className="mt-2">
         {!isEditing ? (
-          <div className="flex items-center text-sm text-muted-foreground mb-2">
-            <Clock className="mr-1 h-4 w-4" />
-            {index === 0 ? 
-              'Initial message sent immediately' : 
-              `Sent ${followUp.delayDays} days after initial message`}
+          <div className="space-y-2">
+            <div className="flex items-center text-sm text-muted-foreground mb-2">
+              <Clock className="mr-1 h-4 w-4" />
+              {index === 0 ? 
+                'Initial message sent immediately' : 
+                `Sent ${followUp.delayDays} days after initial message`}
+            </div>
+            
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="examples">
+                <AccordionTrigger className="text-sm text-primary py-1">
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  View message examples
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="space-y-3 mt-2">
+                    {getExampleMessages().map((message, idx) => (
+                      <div key={idx} className="p-3 bg-white border rounded-md text-sm">
+                        <p className="text-slate-800">{message}</p>
+                        <Button 
+                          variant="link" 
+                          size="sm" 
+                          className="mt-1 h-auto p-0 text-xs text-primary"
+                          onClick={() => {
+                            navigator.clipboard.writeText(message);
+                          }}
+                        >
+                          Copy to clipboard
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           </div>
         ) : (
           <div className="space-y-3 mt-4">
@@ -173,6 +243,28 @@ const FollowUpItem: React.FC<FollowUpItemProps> = ({
                 </div>
               </div>
             )}
+
+            {/* Example messages */}
+            <div>
+              <label className="text-sm font-medium mb-1 block">Example messages for this step:</label>
+              <div className="space-y-2 mt-1">
+                {getExampleMessages().map((message, idx) => (
+                  <div key={idx} className="p-3 bg-white border rounded-md text-sm">
+                    <p className="text-slate-800">{message}</p>
+                    <Button 
+                      variant="link" 
+                      size="sm" 
+                      className="mt-1 h-auto p-0 text-xs text-primary"
+                      onClick={() => {
+                        navigator.clipboard.writeText(message);
+                      }}
+                    >
+                      Copy to clipboard
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
 
             {/* Tips */}
             <div className="bg-blue-50 p-2 rounded-md text-xs text-blue-700 flex items-start">

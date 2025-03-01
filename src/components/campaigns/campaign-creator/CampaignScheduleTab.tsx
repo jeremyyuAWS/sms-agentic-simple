@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ScheduleCampaignCustom from '../ScheduleCampaignCustom';
 import { TimeWindow } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
@@ -22,12 +22,19 @@ const CampaignScheduleTab: React.FC<CampaignScheduleTabProps> = ({
   onSendingWindowChange,
   onTimeZoneChange
 }) => {
-  const [isScheduleComplete, setIsScheduleComplete] = useState(!!startDate);
+  // Default to incomplete unless we have both a startDate and a window selected
+  const [isScheduleComplete, setIsScheduleComplete] = useState(false);
+  
+  // Effect to check completeness whenever dependencies change
+  useEffect(() => {
+    const hasStartDate = !!startDate;
+    const hasWindow = !!window;
+    setIsScheduleComplete(hasStartDate && hasWindow);
+  }, [startDate, window]);
 
-  // Handle schedule change and mark as complete
+  // Handle schedule change
   const handleScheduleChange = (date: Date) => {
     onScheduleChange(date);
-    setIsScheduleComplete(true);
   };
 
   return (
@@ -41,7 +48,7 @@ const CampaignScheduleTab: React.FC<CampaignScheduleTabProps> = ({
             : "bg-yellow-100 text-yellow-800 border-yellow-200"}
         >
           <AlertCircle className="w-3 h-3 mr-1" />
-          {isScheduleComplete ? "Complete" : "Attention"}
+          {isScheduleComplete ? "Complete" : "Attention Required"}
         </Badge>
       </div>
       <ScheduleCampaignCustom
@@ -53,6 +60,16 @@ const CampaignScheduleTab: React.FC<CampaignScheduleTabProps> = ({
         onTimeZoneChange={onTimeZoneChange}
         defaultMonth={new Date()} // Set default month to current month
       />
+      
+      {!isScheduleComplete && (
+        <div className="mt-4 p-3 bg-blue-50 text-blue-700 rounded-md text-sm">
+          <p className="font-medium">Please complete your schedule setup:</p>
+          <ul className="list-disc pl-5 mt-1">
+            {!startDate && <li>Select a start date for your campaign</li>}
+            {!window && <li>Choose a sending window (days and times)</li>}
+          </ul>
+        </div>
+      )}
     </div>
   );
 };
