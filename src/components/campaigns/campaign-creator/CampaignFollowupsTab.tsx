@@ -59,15 +59,20 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
     }
   }, [followUps.length, selectedTemplateId, onFollowUpsChange]);
 
+  // Call onComplete when approved changes
+  useEffect(() => {
+    if (approved && onComplete) {
+      onComplete();
+    }
+  }, [approved, onComplete]);
+
   const handleApproveSequence = () => {
     setApproved(true);
     toast({
       title: "Follow-up Sequence Approved",
       description: "Your message sequence has been approved. You can now complete the campaign setup.",
     });
-  };
-
-  const handleCompleteSetup = () => {
+    
     if (onComplete) {
       onComplete();
     }
@@ -120,13 +125,16 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
   };
 
   // Handle drag start
-  const handleDragStart = (index: number) => {
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, index: number) => {
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', index.toString());
     setDraggingIndex(index);
   };
 
   // Handle drag over
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>, index: number) => {
     e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
     setDragOverIndex(index);
   };
 
@@ -137,18 +145,22 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
   };
 
   // Handle drop
-  const handleDrop = (index: number) => {
-    if (draggingIndex === null || draggingIndex === index) {
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>, index: number) => {
+    e.preventDefault();
+    
+    const draggedIndex = Number(e.dataTransfer.getData('text/plain'));
+    
+    if (isNaN(draggedIndex) || draggedIndex === index) {
       setDraggingIndex(null);
       setDragOverIndex(null);
       return;
     }
 
     const newFollowUps = [...followUps];
-    const draggedItem = newFollowUps[draggingIndex];
+    const draggedItem = newFollowUps[draggedIndex];
     
     // Remove the item from its original position
-    newFollowUps.splice(draggingIndex, 1);
+    newFollowUps.splice(draggedIndex, 1);
     
     // Insert it at the new position
     newFollowUps.splice(index, 0, draggedItem);
@@ -205,10 +217,10 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
                 draggingIndex === index ? 'border-primary border-2' : ''
               } ${dragOverIndex === index ? 'border-dashed border-primary border-2' : ''}`}
               draggable={true}
-              onDragStart={() => handleDragStart(index)}
+              onDragStart={(e) => handleDragStart(e, index)}
               onDragOver={(e) => handleDragOver(e, index)}
               onDragEnd={handleDragEnd}
-              onDrop={() => handleDrop(index)}
+              onDrop={(e) => handleDrop(e, index)}
             >
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
@@ -217,7 +229,8 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
                   </div>
                   <span 
                     className="cursor-grab px-1 text-gray-400 hover:text-gray-600" 
-                    onMouseDown={() => handleDragStart(index)}
+                    onMouseDown={(e) => e.currentTarget.parentElement?.parentElement?.parentElement?.setAttribute('draggable', 'true')}
+                    onMouseUp={(e) => e.currentTarget.parentElement?.parentElement?.parentElement?.setAttribute('draggable', 'false')}
                   >
                     <GripVertical className="h-4 w-4" />
                   </span>
@@ -339,10 +352,11 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
               </Button>
             ) : (
               <Button 
-                onClick={handleCompleteSetup}
+                onClick={() => {}}
                 className="bg-primary hover:bg-primary/90"
+                disabled
               >
-                Complete Campaign Setup
+                Sequence Approved
               </Button>
             )}
           </div>
