@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import CampaignDetailsTab from './CampaignDetailsTab';
@@ -36,7 +37,22 @@ const CampaignTabs: React.FC<CampaignTabsProps> = ({
   setIsFollowUpsEnabled,
   handleMessageSequenceApproved
 }) => {
+  // Check if campaign name has content to determine details completion
+  const isDetailsComplete = formState.name && formState.name.trim().length > 0;
+  
   const renderStatusBadge = (section: string) => {
+    // For details tab, use our direct check
+    if (section === 'details') {
+      return (
+        <CampaignFormStatus 
+          isComplete={isDetailsComplete} 
+          fieldName={section}
+          variant="tab"
+        />
+      );
+    }
+    
+    // For other tabs, use the completedSections array
     const isComplete = completedSections.includes(section);
     const isSectionApproved = sectionApproved[section];
     
