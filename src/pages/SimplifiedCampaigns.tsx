@@ -242,9 +242,10 @@ const SimplifiedCampaigns: React.FC = () => {
           </p>
         </div>
         
+        {/* Removed duplicate New Campaign button - only show in list view */}
         {selectedView === 'list' && (
           <Button 
-            onClick={handleBackToTypeSelection}
+            onClick={handleBackToTypeSelection} /* Changed to direct to type selection */
             className="bg-[#9b87f5] hover:bg-[#8B5CF6] text-white"
           >
             <Plus className="mr-2 h-4 w-4" />
