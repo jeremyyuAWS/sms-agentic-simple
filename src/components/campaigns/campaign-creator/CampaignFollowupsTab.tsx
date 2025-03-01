@@ -5,11 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-// Import our new components and hooks
+// Import our components and hooks
 import FollowUpItem from './follow-ups/FollowUpItem';
 import SequenceSummary from './follow-ups/SequenceSummary';
 import ApprovalSection from './follow-ups/ApprovalSection';
-import { useFollowUpDragDrop } from './follow-ups/useFollowUpDragDrop';
 import { useFollowUpManagement } from './follow-ups/useFollowUpManagement';
 
 interface CampaignFollowupsTabProps {
@@ -36,15 +35,7 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
   const [approved, setApproved] = useState(false);
 
   // Use our custom hooks
-  const { moveFollowUpUp, moveFollowUpDown, getMessageTitle } = useFollowUpManagement(followUps, onFollowUpsChange);
-  const { 
-    draggingIndex, 
-    dragOverIndex, 
-    handleDragStart, 
-    handleDragOver, 
-    handleDragEnd, 
-    handleDrop 
-  } = useFollowUpDragDrop(followUps, onFollowUpsChange);
+  const { updateFollowUp, getMessageTitle } = useFollowUpManagement(followUps, onFollowUpsChange);
 
   // Generate follow-ups if none exist
   useEffect(() => {
@@ -89,7 +80,7 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
     <div className="space-y-4">
       <div className="text-sm space-y-2 mt-2 mb-4">
         <p className="font-medium">Your Message Sequence</p>
-        <p>This campaign includes a strategic messaging sequence designed to maximize engagement. You can customize each message or timing while maintaining proven communication patterns.</p>
+        <p>Customize your message sequence by editing the content and timing of each message. Follow-up messages help increase engagement and response rates.</p>
       </div>
 
       {/* Visual Sequence Builder - Now the main and only view */}
@@ -102,15 +93,8 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
               followUp={followUp}
               index={index}
               totalCount={followUps.length}
-              draggingIndex={draggingIndex}
-              dragOverIndex={dragOverIndex}
               getMessageTitle={getMessageTitle}
-              moveFollowUpUp={moveFollowUpUp}
-              moveFollowUpDown={moveFollowUpDown}
-              handleDragStart={handleDragStart}
-              handleDragOver={handleDragOver}
-              handleDragEnd={handleDragEnd}
-              handleDrop={handleDrop}
+              updateFollowUp={updateFollowUp}
             />
           ))}
           
