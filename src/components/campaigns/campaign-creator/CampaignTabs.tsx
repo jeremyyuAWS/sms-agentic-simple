@@ -40,12 +40,29 @@ const CampaignTabs: React.FC<CampaignTabsProps> = ({
   // Check if campaign name has content to determine details completion
   const isDetailsComplete = formState.name && formState.name.trim().length > 0;
   
+  // Check if schedule is complete - requires startDate, window, AND timezone
+  const isScheduleComplete = !!formState.scheduledStartDate && 
+                             !!formState.sendingWindow && 
+                             !!formState.timeZone && 
+                             formState.timeZone.trim() !== '';
+  
   const renderStatusBadge = (section: string) => {
     // For details tab, use our direct check
     if (section === 'details') {
       return (
         <CampaignFormStatus 
           isComplete={isDetailsComplete} 
+          fieldName={section}
+          variant="tab"
+        />
+      );
+    }
+    
+    // For schedule tab, use our new direct check
+    if (section === 'schedule') {
+      return (
+        <CampaignFormStatus 
+          isComplete={isScheduleComplete} 
           fieldName={section}
           variant="tab"
         />
