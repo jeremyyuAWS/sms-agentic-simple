@@ -37,6 +37,7 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
   const { toast } = useToast();
   const [approved, setApproved] = useState(false);
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   // Generate follow-ups if none exist
   useEffect(() => {
@@ -124,14 +125,22 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
   };
 
   // Handle drag over
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>, index: number) => {
     e.preventDefault();
+    setDragOverIndex(index);
+  };
+
+  // Handle drag end
+  const handleDragEnd = () => {
+    setDraggingIndex(null);
+    setDragOverIndex(null);
   };
 
   // Handle drop
   const handleDrop = (index: number) => {
     if (draggingIndex === null || draggingIndex === index) {
       setDraggingIndex(null);
+      setDragOverIndex(null);
       return;
     }
 
@@ -151,13 +160,12 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
         return;
       }
       // Adjust delay days based on position
-      if (idx > 0) {
-        followUp.delayDays = idx * 3; // Simple formula: 3 days between messages
-      }
+      followUp.delayDays = idx * 3; // Simple formula: 3 days between messages
     });
     
     onFollowUpsChange(newFollowUps);
     setDraggingIndex(null);
+    setDragOverIndex(null);
     
     toast({
       title: "Message Sequence Updated",
@@ -195,10 +203,11 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
               key={followUp.id} 
               className={`relative bg-slate-50 border rounded-lg p-4 shadow-sm ${
                 draggingIndex === index ? 'border-primary border-2' : ''
-              }`}
+              } ${dragOverIndex === index ? 'border-dashed border-primary border-2' : ''}`}
               draggable={true}
               onDragStart={() => handleDragStart(index)}
-              onDragOver={handleDragOver}
+              onDragOver={(e) => handleDragOver(e, index)}
+              onDragEnd={handleDragEnd}
               onDrop={() => handleDrop(index)}
             >
               <div className="flex justify-between items-center">

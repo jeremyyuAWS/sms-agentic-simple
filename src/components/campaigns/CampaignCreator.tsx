@@ -106,7 +106,7 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
     const isComplete = completedSections.includes(section);
     const isSectionApproved = sectionApproved[section];
     
-    if (!isComplete || (section === 'template' && !isSectionApproved)) {
+    if (!isComplete || (section === 'messaging' && !isSectionApproved)) {
       return (
         <Badge variant="outline" 
                className="bg-yellow-100 text-yellow-800 border-yellow-200">
@@ -127,7 +127,7 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
 
   // Handle approval of message sequence
   const handleMessageSequenceApproved = () => {
-    setSectionApproved(prev => ({...prev, template: true}));
+    setSectionApproved(prev => ({...prev, messaging: true}));
   };
 
   return (
@@ -151,7 +151,7 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
                 <TabsTrigger value="messaging" className="relative py-3">
                   Message Sequence
                   <span className="absolute top-0 right-1 -mt-1 -mr-1">
-                    {renderStatusBadge('template')}
+                    {renderStatusBadge('messaging')}
                   </span>
                 </TabsTrigger>
                 <TabsTrigger value="contacts" className="relative py-3">
