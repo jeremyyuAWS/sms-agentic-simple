@@ -70,10 +70,10 @@ const CampaignContactSelection: React.FC<CampaignContactSelectionProps> = ({
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">Select Contacts</h2>
       <p className="text-muted-foreground">
-        Choose contacts for your campaign by selecting individuals, a contact list, or a segment.
+        Choose contacts for your campaign by selecting individuals or a contact list.
       </p>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Contact Lists Selection */}
         <Card>
           <CardHeader>
@@ -97,35 +97,6 @@ const CampaignContactSelection: React.FC<CampaignContactSelectionProps> = ({
               {contactLists.length === 0 && (
                 <div className="text-center py-4 text-muted-foreground">
                   No contact lists available
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-        
-        {/* Segments Selection */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Segments</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {contactSegments?.map(segment => (
-                <div 
-                  key={segment.id}
-                  className={`p-2 border rounded cursor-pointer ${
-                    segmentId === segment.id ? 'border-primary bg-primary/5' : 'border-border'
-                  }`}
-                  onClick={() => onSegmentSelect(segment.id)}
-                >
-                  <div className="font-medium">{segment.name}</div>
-                  <div className="text-sm text-muted-foreground">{segment.count} contacts</div>
-                </div>
-              ))}
-              
-              {(!contactSegments || contactSegments.length === 0) && (
-                <div className="text-center py-4 text-muted-foreground">
-                  No segments available
                 </div>
               )}
             </div>
