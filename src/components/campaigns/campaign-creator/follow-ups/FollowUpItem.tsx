@@ -228,25 +228,27 @@ const FollowUpItem: React.FC<FollowUpItemProps> = ({
           </div>
         ) : (
           <div className="space-y-3 mt-4">
-            {/* Timing selection */}
-            <div>
-              <label className="text-sm font-medium mb-1 block">When to send this message:</label>
-              <Select
-                value={editedDelay}
-                onValueChange={setEditedDelay}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select timing" />
-                </SelectTrigger>
-                <SelectContent>
-                  {commonDelayOptions.map(option => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Timing selection - only show for follow-up messages (index > 0) */}
+            {index > 0 && (
+              <div>
+                <label className="text-sm font-medium mb-1 block">When to send this message:</label>
+                <Select
+                  value={editedDelay}
+                  onValueChange={setEditedDelay}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select timing" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {commonDelayOptions.map(option => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {/* Suggested message names */}
             {getSuggestedMessageNames().length > 0 && (
@@ -309,7 +311,7 @@ const FollowUpItem: React.FC<FollowUpItemProps> = ({
               <AlertCircle className="h-4 w-4 mr-1 mt-0.5 flex-shrink-0" />
               <span>
                 {index === 0 ? 
-                  "This is your initial message. It will be sent immediately when the campaign starts." : 
+                  "This is your initial message. It will be sent when the campaign starts according to your schedule settings." : 
                   "Follow-up messages work best when they're concise and add new value rather than just asking again."}
               </span>
             </div>

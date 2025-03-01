@@ -45,10 +45,10 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
         {
           id: `followup-${Date.now()}-1`,
           templateId: selectedTemplateId,
-          delayDays: 3,
+          delayDays: 0, // Initial message has no delay
           enabled: true,
           condition: 'no-response',
-          name: 'Follow-up Message',
+          name: 'Initial Message',
           conditions: [{ type: 'no-response' as FollowUpCondition['type'] }]
         }
       ];
@@ -80,7 +80,7 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
     <div className="space-y-4">
       <div className="text-sm space-y-2 mt-2 mb-4">
         <p className="font-medium">Your Message Sequence</p>
-        <p>Customize your message sequence by editing the content and timing of each message. Follow-up messages help increase engagement and response rates.</p>
+        <p>Customize your message sequence by editing the content of each message. The initial message is sent according to your campaign schedule, and follow-up messages are sent after the specified number of days.</p>
       </div>
 
       {/* Visual Sequence Builder - Now the main and only view */}
