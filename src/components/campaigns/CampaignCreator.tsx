@@ -70,6 +70,7 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
   });
   
   const [completedSections, setCompletedSections] = useState<string[]>([]);
+  const [sectionApproved, setSectionApproved] = useState<{[key: string]: boolean}>({});
   
   useEffect(() => {
     const completed: string[] = [];
@@ -103,9 +104,9 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
 
   const renderStatusBadge = (section: string) => {
     const isComplete = completedSections.includes(section);
+    const isSectionApproved = sectionApproved[section];
     
-    // All sections now use the yellow attention badge when not complete
-    if (!isComplete) {
+    if (!isComplete || (section === 'template' && !isSectionApproved)) {
       return (
         <Badge variant="outline" 
                className="bg-yellow-100 text-yellow-800 border-yellow-200">
@@ -122,6 +123,11 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
         Complete
       </Badge>
     );
+  };
+
+  // Handle approval of message sequence
+  const handleMessageSequenceApproved = () => {
+    setSectionApproved(prev => ({...prev, template: true}));
   };
 
   return (
@@ -181,6 +187,7 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
                       selectedTemplateId={formState.templateId}
                       templates={templates}
                       onFollowUpsChange={(followUps) => handleInputChange('followUps', followUps)}
+                      onComplete={handleMessageSequenceApproved}
                     />
                   </div>
                 </TabsContent>

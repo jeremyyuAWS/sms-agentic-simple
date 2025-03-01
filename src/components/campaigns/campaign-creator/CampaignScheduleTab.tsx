@@ -1,7 +1,9 @@
 
-import React from 'react';
-import ScheduleCampaign from '../ScheduleCampaign';
+import React, { useState } from 'react';
+import ScheduleCampaignCustom from '../ScheduleCampaignCustom';
 import { TimeWindow } from '@/lib/types';
+import { Badge } from '@/components/ui/badge';
+import { AlertCircle } from 'lucide-react';
 
 interface CampaignScheduleTabProps {
   startDate?: Date;
@@ -20,16 +22,36 @@ const CampaignScheduleTab: React.FC<CampaignScheduleTabProps> = ({
   onSendingWindowChange,
   onTimeZoneChange
 }) => {
+  const [isScheduleComplete, setIsScheduleComplete] = useState(!!startDate);
+
+  // Handle schedule change and mark as complete
+  const handleScheduleChange = (date: Date) => {
+    onScheduleChange(date);
+    setIsScheduleComplete(true);
+  };
+
   return (
     <div className="border rounded-lg p-6">
-      <h2 className="text-lg font-semibold mb-4">Campaign Schedule</h2>
-      <ScheduleCampaign
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-lg font-semibold">Campaign Schedule</h2>
+        <Badge 
+          variant="outline" 
+          className={isScheduleComplete 
+            ? "bg-green-100 text-green-800 border-green-200"
+            : "bg-yellow-100 text-yellow-800 border-yellow-200"}
+        >
+          <AlertCircle className="w-3 h-3 mr-1" />
+          {isScheduleComplete ? "Complete" : "Attention"}
+        </Badge>
+      </div>
+      <ScheduleCampaignCustom
         startDate={startDate}
         window={window}
         timezone={timezone}
-        onScheduleChange={onScheduleChange}
+        onScheduleChange={handleScheduleChange}
         onSendingWindowChange={onSendingWindowChange}
         onTimeZoneChange={onTimeZoneChange}
+        defaultMonth={new Date()} // Set default month to current month
       />
     </div>
   );

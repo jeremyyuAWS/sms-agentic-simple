@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Label } from '@/components/ui/label';
 import { FollowUpCondition, Template } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { Sparkles, AlertCircle, MessageSquare, Clock, Calendar, ArrowRight, CheckCircle, ArrowUp, ArrowDown, ListOrdered } from 'lucide-react';
+import { Sparkles, AlertCircle, MessageSquare, Clock, Calendar, ArrowRight, CheckCircle, ArrowUp, ArrowDown, ListOrdered, GripVertical } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
 import { 
@@ -36,6 +36,7 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
 }) => {
   const { toast } = useToast();
   const [approved, setApproved] = useState(false);
+  const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
 
   // Generate follow-ups if none exist
   useEffect(() => {
@@ -117,6 +118,53 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
     });
   };
 
+  // Handle drag start
+  const handleDragStart = (index: number) => {
+    setDraggingIndex(index);
+  };
+
+  // Handle drag over
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+  };
+
+  // Handle drop
+  const handleDrop = (index: number) => {
+    if (draggingIndex === null || draggingIndex === index) {
+      setDraggingIndex(null);
+      return;
+    }
+
+    const newFollowUps = [...followUps];
+    const draggedItem = newFollowUps[draggingIndex];
+    
+    // Remove the item from its original position
+    newFollowUps.splice(draggingIndex, 1);
+    
+    // Insert it at the new position
+    newFollowUps.splice(index, 0, draggedItem);
+    
+    // Update delay days based on new positions
+    newFollowUps.forEach((followUp, idx) => {
+      if (idx === 0) {
+        // First message is always sent immediately
+        return;
+      }
+      // Adjust delay days based on position
+      if (idx > 0) {
+        followUp.delayDays = idx * 3; // Simple formula: 3 days between messages
+      }
+    });
+    
+    onFollowUpsChange(newFollowUps);
+    setDraggingIndex(null);
+    
+    toast({
+      title: "Message Sequence Updated",
+      description: "The message sequence has been reordered.",
+    });
+  };
+
   // Get the message title based on index and custom name
   const getMessageTitle = (index: number, followUp: any) => {
     if (index === 0) {
@@ -143,12 +191,27 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
         <div className="space-y-6">
           {/* Pre-defined message sequence */}
           {followUps.map((followUp, index) => (
-            <div key={followUp.id} className="relative bg-slate-50 border rounded-lg p-4 shadow-sm">
+            <div 
+              key={followUp.id} 
+              className={`relative bg-slate-50 border rounded-lg p-4 shadow-sm ${
+                draggingIndex === index ? 'border-primary border-2' : ''
+              }`}
+              draggable={true}
+              onDragStart={() => handleDragStart(index)}
+              onDragOver={handleDragOver}
+              onDrop={() => handleDrop(index)}
+            >
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
                   <div className="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center font-medium">
                     {index + 1}
                   </div>
+                  <span 
+                    className="cursor-grab px-1 text-gray-400 hover:text-gray-600" 
+                    onMouseDown={() => handleDragStart(index)}
+                  >
+                    <GripVertical className="h-4 w-4" />
+                  </span>
                   <h4 className="font-medium">
                     {getMessageTitle(index, followUp)}
                   </h4>
