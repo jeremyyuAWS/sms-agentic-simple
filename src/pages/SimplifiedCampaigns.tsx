@@ -205,7 +205,7 @@ const SimplifiedCampaigns: React.FC = () => {
               />
             </div>
             <Button 
-              onClick={handleBackToTypeSelection}
+              onClick={handleNewCampaign}
               className="bg-[#9b87f5] hover:bg-[#8B5CF6] text-white"
             >
               <Plus className="mr-2 h-4 w-4" />
@@ -242,10 +242,10 @@ const SimplifiedCampaigns: React.FC = () => {
           </p>
         </div>
         
-        {/* Removed duplicate New Campaign button - only show in list view */}
+        {/* Only show New Campaign button in list view */}
         {selectedView === 'list' && (
           <Button 
-            onClick={handleBackToTypeSelection} /* Changed to direct to type selection */
+            onClick={handleNewCampaign}
             className="bg-[#9b87f5] hover:bg-[#8B5CF6] text-white"
           >
             <Plus className="mr-2 h-4 w-4" />
