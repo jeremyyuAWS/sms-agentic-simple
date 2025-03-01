@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Campaign, 
@@ -13,7 +14,7 @@ import CampaignContactSelection from './CampaignContactSelection';
 import LoadingState from '@/components/ui/loading-state';
 import { useCampaignForm } from '@/hooks/use-campaign-form';
 import { Badge } from '@/components/ui/badge';
-import { Check, AlertCircle } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 
 // Import subcomponents
 import CampaignDetailsTab from './campaign-creator/CampaignDetailsTab';
@@ -103,9 +104,10 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
   const renderStatusBadge = (section: string) => {
     const isComplete = completedSections.includes(section);
     
-    if (section === 'template' || section === 'schedule') {
+    // All sections now use the yellow attention badge when not complete
+    if (!isComplete) {
       return (
-        <Badge variant={isComplete ? "default" : "outline"} 
+        <Badge variant="outline" 
                className="bg-yellow-100 text-yellow-800 border-yellow-200">
           <AlertCircle className="w-3 h-3 mr-1" />
           Attention
@@ -113,10 +115,11 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
       );
     }
     
+    // Complete sections still show green badge
     return (
-      <Badge variant={isComplete ? "default" : "outline"} className={isComplete ? "bg-green-100 text-green-800 border-green-200" : ""}>
-        {isComplete ? <Check className="w-3 h-3 mr-1" /> : null}
-        {isComplete ? "Complete" : "Required"}
+      <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">
+        <AlertCircle className="w-3 h-3 mr-1" />
+        Complete
       </Badge>
     );
   };

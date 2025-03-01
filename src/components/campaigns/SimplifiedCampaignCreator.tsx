@@ -388,8 +388,8 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
     // Base templates for different campaign types
     const templates: Record<CampaignType, Partial<Campaign>> = {
       'event-invitation': {
-        name: 'Event Invitation Campaign',
-        description: 'Invite contacts to our upcoming quarterly conference on ' + format(defaultStartDate, 'MMMM d, yyyy'),
+        name: '',
+        description: '',
         goal: { type: 'event-promotion' },
         templateId: defaultTemplateId,
         scheduledStartDate: defaultStartDate,
@@ -399,8 +399,8 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
         followUps: defaultFollowUps
       },
       'sales-outreach': {
-        name: 'Sales Outreach Campaign',
-        description: 'Connect with potential customers to promote our latest product features',
+        name: '',
+        description: '',
         goal: { type: 'sales' },
         templateId: defaultTemplateId,
         scheduledStartDate: defaultStartDate,
@@ -410,8 +410,8 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
         contactCount: 0
       },
       'follow-up-reminder': {
-        name: 'Follow-Up Campaign',
-        description: 'Follow up with contacts who haven\'t responded to our initial outreach',
+        name: '',
+        description: '',
         goal: { type: 'lead-generation' },
         templateId: defaultTemplateId,
         scheduledStartDate: defaultStartDate,
@@ -421,8 +421,8 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
         contactCount: 0
       },
       'meeting-scheduling': {
-        name: 'Meeting Scheduler Campaign',
-        description: 'Coordinate and schedule discovery calls with qualified leads',
+        name: '',
+        description: '',
         goal: { type: 'lead-generation' },
         templateId: defaultTemplateId,
         scheduledStartDate: defaultStartDate,
@@ -432,8 +432,8 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
         contactCount: 0
       },
       'announcement': {
-        name: 'General Announcement',
-        description: 'Share important company updates with our customer base',
+        name: '',
+        description: '',
         goal: { type: 'product-announcement' },
         templateId: defaultTemplateId,
         scheduledStartDate: defaultStartDate,
@@ -443,8 +443,8 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
         contactCount: 0
       },
       'customer-feedback': {
-        name: 'Customer Feedback Campaign',
-        description: 'Request feedback on recent customer experiences with our service',
+        name: '',
+        description: '',
         goal: { type: 'customer-feedback' },
         templateId: defaultTemplateId,
         scheduledStartDate: defaultStartDate,
@@ -454,8 +454,8 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
         contactCount: 0
       },
       'newsletter': {
-        name: 'Newsletter Campaign',
-        description: 'Send monthly industry insights and company updates',
+        name: '',
+        description: '',
         goal: { type: 'newsletter' },
         templateId: defaultTemplateId,
         scheduledStartDate: defaultStartDate,
@@ -465,8 +465,8 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
         contactCount: 0
       },
       'promotional': {
-        name: 'Promotional Campaign',
-        description: 'Special discount offer for our premium tier subscription',
+        name: '',
+        description: '',
         goal: { type: 'sales' },
         templateId: defaultTemplateId,
         scheduledStartDate: defaultStartDate,
@@ -476,8 +476,8 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
         contactCount: 0
       },
       'seasonal': {
-        name: 'Seasonal Greeting Campaign',
-        description: 'Send holiday wishes to our valued customers',
+        name: '',
+        description: '',
         goal: { type: 'other' },
         templateId: defaultTemplateId,
         scheduledStartDate: defaultStartDate,
@@ -487,8 +487,8 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
         contactCount: 0
       },
       'survey': {
-        name: 'Survey Campaign',
-        description: 'Collect insights on customer preferences for our next product update',
+        name: '',
+        description: '',
         goal: { type: 'survey' },
         templateId: defaultTemplateId,
         scheduledStartDate: defaultStartDate,
@@ -498,8 +498,8 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
         contactCount: 0
       },
       'webinar-invitation': {
-        name: 'Webinar Invitation Campaign',
-        description: 'Invite contacts to our upcoming product demo webinar on ' + format(defaultStartDate, 'MMMM d, yyyy'),
+        name: '',
+        description: '',
         goal: { type: 'webinar-invitation' },
         templateId: defaultTemplateId,
         scheduledStartDate: defaultStartDate,

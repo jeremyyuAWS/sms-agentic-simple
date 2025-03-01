@@ -30,8 +30,6 @@ const CampaignDetailsTab: React.FC<CampaignDetailsTabProps> = ({
           placeholder="Enter campaign name"
           value={name}
           onChange={(e) => onNameChange(e.target.value)}
-          required
-          aria-required="true"
           className="w-full"
         />
       </div>
