@@ -3,6 +3,7 @@ import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import CampaignFormStatus from './CampaignFormStatus';
 
 interface CampaignDetailsTabProps {
   name: string;
@@ -20,21 +21,28 @@ const CampaignDetailsTab: React.FC<CampaignDetailsTabProps> = ({
   onNameChange,
   onDescriptionChange
 }) => {
+  // Check if the name has at least one character
+  const isNameComplete = name.trim().length > 0;
+  
   return (
     <div className="space-y-4">
-      <div className="space-y-2">
+      <div className="flex justify-between items-center mb-2">
         <Label htmlFor="name" className="text-base font-medium">Campaign Name</Label>
-        <Input
-          type="text"
-          id="name"
-          placeholder="Enter campaign name"
-          value={name}
-          onChange={(e) => onNameChange(e.target.value)}
-          className="w-full"
+        <CampaignFormStatus 
+          isComplete={isNameComplete} 
+          fieldName="Campaign Name" 
         />
       </div>
+      <Input
+        type="text"
+        id="name"
+        placeholder="Enter campaign name"
+        value={name}
+        onChange={(e) => onNameChange(e.target.value)}
+        className={`w-full ${isNameComplete ? 'border-green-500 focus-visible:ring-green-500' : ''}`}
+      />
       
-      <div className="space-y-2">
+      <div className="space-y-2 mt-6">
         <Label htmlFor="description" className="text-base font-medium">Description</Label>
         <Textarea
           id="description"
