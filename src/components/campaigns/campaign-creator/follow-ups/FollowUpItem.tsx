@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Clock, Edit2, Check, AlertCircle, MessageSquare } from 'lucide-react';
+import { Clock, Edit2, Check, AlertCircle, MessageSquare, Copy, ChevronDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -23,6 +23,12 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface FollowUpItemProps {
   followUp: any;
@@ -42,11 +48,14 @@ const FollowUpItem: React.FC<FollowUpItemProps> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(followUp.name || getMessageTitle(index, followUp));
   const [editedDelay, setEditedDelay] = useState(followUp.delayDays?.toString() || "3");
+  const [selectedMessage, setSelectedMessage] = useState<string>("");
+  const [customMessage, setCustomMessage] = useState<string>(followUp.message || "");
 
   const handleSaveChanges = () => {
     updateFollowUp(index, {
       name: editedName,
-      delayDays: parseInt(editedDelay, 10)
+      delayDays: parseInt(editedDelay, 10),
+      message: customMessage || selectedMessage
     });
     setIsEditing(false);
   };
@@ -104,6 +113,11 @@ const FollowUpItem: React.FC<FollowUpItemProps> = ({
       "I understand timing might not be right, {{first_name}}. If you'd like to explore how {{company}} can help {{prospect_company}} in the future, my line is always open at {{phone_number}}.",
       "{{first_name}}, as this will be my last outreach, I wanted to share this resource that addresses {{specific_challenge}}: {{resource_link}}. Feel free to contact me if you find it valuable."
     ];
+  };
+
+  const handleSelectExampleMessage = (message: string) => {
+    setCustomMessage(message);
+    setSelectedMessage(message);
   };
 
   return (
@@ -166,33 +180,51 @@ const FollowUpItem: React.FC<FollowUpItemProps> = ({
                 `Sent ${followUp.delayDays} days after initial message`}
             </div>
             
-            <Accordion type="single" collapsible className="w-full">
-              <AccordionItem value="examples">
-                <AccordionTrigger className="text-sm text-primary py-1">
+            {followUp.message && (
+              <div className="p-3 bg-white border rounded-md text-sm mt-2">
+                <p className="text-slate-800">{followUp.message}</p>
+              </div>
+            )}
+            
+            {!followUp.message && (
+              <div className="p-3 border border-dashed rounded-md bg-white text-sm text-muted-foreground mt-2">
+                <p>No message content set. Click Edit to add a message.</p>
+              </div>
+            )}
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="mt-2">
                   <MessageSquare className="h-4 w-4 mr-2" />
                   View message examples
-                </AccordionTrigger>
-                <AccordionContent>
-                  <div className="space-y-3 mt-2">
-                    {getExampleMessages().map((message, idx) => (
-                      <div key={idx} className="p-3 bg-white border rounded-md text-sm">
-                        <p className="text-slate-800">{message}</p>
-                        <Button 
-                          variant="link" 
-                          size="sm" 
-                          className="mt-1 h-auto p-0 text-xs text-primary"
-                          onClick={() => {
-                            navigator.clipboard.writeText(message);
-                          }}
-                        >
-                          Copy to clipboard
-                        </Button>
+                  <ChevronDown className="h-4 w-4 ml-2" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-96 p-0" align="start">
+                <div className="p-3 bg-slate-50 border-b">
+                  <p className="text-sm font-medium">Example Messages</p>
+                  <p className="text-xs text-muted-foreground">Select a message to use as a template</p>
+                </div>
+                <div className="max-h-80 overflow-y-auto">
+                  {getExampleMessages().map((message, idx) => (
+                    <DropdownMenuItem 
+                      key={idx} 
+                      className="px-3 py-2 hover:bg-slate-50 cursor-pointer flex flex-col items-start"
+                      onClick={() => {
+                        setIsEditing(true);
+                        handleSelectExampleMessage(message);
+                      }}
+                    >
+                      <p className="text-sm text-slate-800 mb-1 w-full">{message}</p>
+                      <div className="flex items-center text-xs text-primary w-full">
+                        <Copy className="h-3 w-3 mr-1" />
+                        Use this message
                       </div>
-                    ))}
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
+                    </DropdownMenuItem>
+                  ))}
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         ) : (
           <div className="space-y-3 mt-4">
@@ -244,26 +276,32 @@ const FollowUpItem: React.FC<FollowUpItemProps> = ({
               </div>
             )}
 
-            {/* Example messages */}
+            {/* Message content */}
             <div>
-              <label className="text-sm font-medium mb-1 block">Example messages for this step:</label>
-              <div className="space-y-2 mt-1">
-                {getExampleMessages().map((message, idx) => (
-                  <div key={idx} className="p-3 bg-white border rounded-md text-sm">
-                    <p className="text-slate-800">{message}</p>
-                    <Button 
-                      variant="link" 
-                      size="sm" 
-                      className="mt-1 h-auto p-0 text-xs text-primary"
-                      onClick={() => {
-                        navigator.clipboard.writeText(message);
-                      }}
-                    >
-                      Copy to clipboard
-                    </Button>
-                  </div>
-                ))}
-              </div>
+              <label className="text-sm font-medium mb-1 block">Message content:</label>
+              <Textarea 
+                value={customMessage}
+                onChange={(e) => setCustomMessage(e.target.value)}
+                placeholder="Enter your message content here..."
+                className="min-h-[120px]"
+              />
+            </div>
+
+            {/* Example messages dropdown */}
+            <div>
+              <label className="text-sm font-medium mb-1 block">Or select from example messages:</label>
+              <Select onValueChange={handleSelectExampleMessage}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Choose an example message" />
+                </SelectTrigger>
+                <SelectContent>
+                  {getExampleMessages().map((example, idx) => (
+                    <SelectItem key={idx} value={example}>
+                      <div className="truncate max-w-[300px]">{example.substring(0, 60)}...</div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Tips */}
