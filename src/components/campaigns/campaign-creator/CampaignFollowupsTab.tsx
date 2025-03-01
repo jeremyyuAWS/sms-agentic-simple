@@ -1,12 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { FollowUpCondition, Template } from '@/lib/types';
-import { Button } from '@/components/ui/button';
-import { Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 // Import our components and hooks
-import FollowUpItem from './follow-ups/FollowUpItem';
+import FollowUpList from './follow-ups/components/FollowUpList';
+import IntroductionSection from './follow-ups/components/IntroductionSection';
 import SequenceSummary from './follow-ups/SequenceSummary';
 import ApprovalSection from './follow-ups/ApprovalSection';
 import { useFollowUpManagement } from './follow-ups/useFollowUpManagement';
@@ -76,48 +75,32 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
     }
   };
 
+  const handleAddFollowUp = () => {
+    const newFollowUp = {
+      id: `followup-${Date.now()}-${followUps.length + 1}`,
+      templateId: selectedTemplateId,
+      delayDays: followUps.length > 0 ? followUps[followUps.length - 1].delayDays + 4 : 3,
+      enabled: true,
+      name: `Follow-up Message ${followUps.length}`,
+      conditions: [{ type: 'no-response' as FollowUpCondition['type'] }]
+    };
+    
+    onFollowUpsChange([...followUps, newFollowUp]);
+  };
+
   return (
     <div className="space-y-4">
-      <div className="text-sm space-y-2 mt-2 mb-4">
-        <p className="font-medium">Your Message Sequence</p>
-        <p>Customize your message sequence by editing the content of each message. The initial message is sent according to your campaign schedule, and follow-up messages are sent after the specified number of days.</p>
-      </div>
+      <IntroductionSection />
 
       {/* Visual Sequence Builder - Now the main and only view */}
       <div className="border rounded-lg p-4">
-        <div className="space-y-6">
-          {/* Pre-defined message sequence */}
-          {followUps.map((followUp, index) => (
-            <FollowUpItem
-              key={followUp.id}
-              followUp={followUp}
-              index={index}
-              totalCount={followUps.length}
-              getMessageTitle={getMessageTitle}
-              updateFollowUp={updateFollowUp}
-            />
-          ))}
-          
-          {/* Add follow-up button */}
-          <Button 
-            variant="outline" 
-            className="w-full mt-4 border-dashed"
-            onClick={() => {
-              const newFollowUp = {
-                id: `followup-${Date.now()}-${followUps.length + 1}`,
-                templateId: selectedTemplateId,
-                delayDays: followUps.length > 0 ? followUps[followUps.length - 1].delayDays + 4 : 3,
-                enabled: true,
-                name: `Follow-up Message ${followUps.length}`,
-                conditions: [{ type: 'no-response' as FollowUpCondition['type'] }]
-              };
-              
-              onFollowUpsChange([...followUps, newFollowUp]);
-            }}
-          >
-            Add Follow-up Message
-          </Button>
-        </div>
+        <FollowUpList
+          followUps={followUps}
+          selectedTemplateId={selectedTemplateId}
+          getMessageTitle={getMessageTitle}
+          updateFollowUp={updateFollowUp}
+          onAddFollowUp={handleAddFollowUp}
+        />
       </div>
 
       {/* Sequence Overview */}
