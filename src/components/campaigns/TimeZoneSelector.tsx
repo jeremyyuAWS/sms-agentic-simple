@@ -51,10 +51,10 @@ const TimeZoneSelector: React.FC<TimeZoneSelectorProps> = ({ value, onChange }) 
   
   return (
     <div className="space-y-2">
-      <Label htmlFor="timezone-selector">Select Time Zone</Label>
+      <Label htmlFor="timezone-selector">Select Time Zone <span className="text-red-500">*</span></Label>
       <Select value={value} onValueChange={onChange}>
         <SelectTrigger id="timezone-selector">
-          <SelectValue placeholder="Select a timezone" />
+          <SelectValue placeholder="Select a timezone (required)" />
         </SelectTrigger>
         <SelectContent>
           {timeZones.map(tz => (

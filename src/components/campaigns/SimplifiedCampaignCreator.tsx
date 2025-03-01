@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useApp } from '@/contexts';
 import { Button } from '@/components/ui/button';
@@ -31,7 +30,6 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
   const [selectedType, setSelectedType] = useState<CampaignType | null>(initialCampaignType);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // If initialCampaignType is provided, skip type selection
   useEffect(() => {
     if (initialCampaignType) {
       setSelectedType(initialCampaignType);
@@ -76,7 +74,6 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
     }
   };
 
-  // Get a template ID based on campaign type (try to find a matching template by name)
   const getDefaultTemplateId = (type: CampaignType): string => {
     const templateNameMap: Record<CampaignType, string> = {
       'event-invitation': 'Event Invitation',
@@ -99,16 +96,13 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
     return matchingTemplate?.id || templates[0]?.id || '';
   };
 
-  // Get default sending window based on campaign type
   const getDefaultSendingWindow = (type: CampaignType): TimeWindow | undefined => {
-    // Business hours for most campaign types
     const businessHours: TimeWindow = {
       startTime: '09:00',
       endTime: '17:00',
       daysOfWeek: [1, 2, 3, 4, 5] // Monday to Friday
     };
 
-    // Custom windows for specific campaign types
     const customWindows: Record<string, TimeWindow> = {
       'promotional': {
         startTime: '12:00',
@@ -125,13 +119,11 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
     return customWindows[type] || businessHours;
   };
 
-  // Get default start date based on campaign type
   const getDefaultStartDate = (type: CampaignType): Date => {
     const now = new Date();
     const tomorrow = new Date(now);
     tomorrow.setDate(tomorrow.getDate() + 1);
     
-    // For event invitations, set date a week from now
     if (type === 'event-invitation' || type === 'webinar-invitation') {
       const nextWeek = new Date(now);
       nextWeek.setDate(nextWeek.getDate() + 7);
@@ -141,11 +133,9 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
     return tomorrow;
   };
 
-  // Create pre-configured follow-ups for specific campaign types
   const getDefaultFollowUps = (type: CampaignType, templateId: string): FollowUp[] => {
     const now = Date.now();
     
-    // Default follow-up configurations by campaign type
     const followUpConfigs: Record<CampaignType, FollowUp[]> = {
       'sales-outreach': [
         { 
@@ -154,7 +144,7 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           delayDays: 3,
           enabled: true,
           condition: 'no-response',
-          name: 'Value Proposition' // Custom name for this follow-up
+          name: 'Value Proposition'
         },
         { 
           id: `followup-${now}-2`,
@@ -162,7 +152,7 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           delayDays: 7,
           enabled: true,
           condition: 'no-response',
-          name: 'Case Study Share' // Custom name for this follow-up
+          name: 'Case Study Share'
         },
         { 
           id: `followup-${now}-3`,
@@ -170,7 +160,7 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           delayDays: 12,
           enabled: true,
           condition: 'no-response',
-          name: 'Final Opportunity' // Added a third follow-up
+          name: 'Final Opportunity'
         }
       ],
       'follow-up-reminder': [
@@ -180,7 +170,7 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           delayDays: 2,
           enabled: true,
           condition: 'no-response',
-          name: 'Gentle Reminder' // Custom name
+          name: 'Gentle Reminder'
         },
         { 
           id: `followup-${now}-2`,
@@ -188,7 +178,7 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           delayDays: 5,
           enabled: true,
           condition: 'no-response',
-          name: 'Additional Information' // Custom name
+          name: 'Additional Information'
         },
         { 
           id: `followup-${now}-3`,
@@ -196,7 +186,7 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           delayDays: 10,
           enabled: true,
           condition: 'no-response',
-          name: 'Check-In' // Custom name
+          name: 'Check-In'
         }
       ],
       'meeting-scheduling': [
@@ -206,15 +196,15 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           delayDays: 2,
           enabled: true,
           condition: 'no-response',
-          name: 'Availability Options' // Custom name
+          name: 'Availability Options'
         },
         { 
           id: `followup-${now}-2`,
           templateId,
           delayDays: 4,
-          enabled: true, 
+          enabled: true,
           condition: 'no-response',
-          name: 'Final Scheduling Attempt' // Custom name
+          name: 'Final Scheduling Attempt'
         }
       ],
       'customer-feedback': [
@@ -224,7 +214,7 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           delayDays: 3,
           enabled: true,
           condition: 'no-response',
-          name: 'Feedback Importance' // Custom name
+          name: 'Feedback Importance'
         },
         { 
           id: `followup-${now}-2`,
@@ -232,7 +222,7 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           delayDays: 7,
           enabled: true,
           condition: 'no-response',
-          name: 'Last Chance for Input' // Custom name
+          name: 'Last Chance for Input'
         }
       ],
       'promotional': [
@@ -242,7 +232,7 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           delayDays: 1,
           enabled: true,
           condition: 'no-response',
-          name: 'Special Offer Reminder' // Custom name
+          name: 'Special Offer Reminder'
         },
         { 
           id: `followup-${now}-2`,
@@ -250,7 +240,7 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           delayDays: 3,
           enabled: true,
           condition: 'no-response',
-          name: 'Last Day of Promotion' // Custom name
+          name: 'Last Day of Promotion'
         },
         { 
           id: `followup-${now}-3`,
@@ -258,7 +248,7 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           delayDays: 7,
           enabled: true,
           condition: 'no-response',
-          name: 'Extended Offer' // Custom name
+          name: 'Extended Offer'
         }
       ],
       'survey': [
@@ -268,7 +258,7 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           delayDays: 2,
           enabled: true,
           condition: 'no-response',
-          name: 'Survey Reminder' // Custom name
+          name: 'Survey Reminder'
         },
         { 
           id: `followup-${now}-2`,
@@ -276,7 +266,7 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           delayDays: 5,
           enabled: true,
           condition: 'no-response',
-          name: 'Final Day to Participate' // Custom name
+          name: 'Final Day to Participate'
         }
       ],
       'webinar-invitation': [
@@ -286,7 +276,7 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           delayDays: 5,
           enabled: true,
           condition: 'no-response',
-          name: 'One Week Before Webinar' // Custom name
+          name: 'One Week Before Webinar'
         },
         { 
           id: `followup-${now}-2`,
@@ -294,7 +284,7 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           delayDays: 10,
           enabled: true,
           condition: 'no-response',
-          name: 'Day Before Reminder' // Custom name
+          name: 'Day Before Reminder'
         },
         { 
           id: `followup-${now}-3`,
@@ -302,7 +292,7 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           delayDays: 12,
           enabled: true,
           condition: 'no-response',
-          name: 'Last Chance to Register' // Custom name
+          name: 'Last Chance to Register'
         }
       ],
       'event-invitation': [
@@ -312,7 +302,7 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           delayDays: 7,
           enabled: true,
           condition: 'no-response',
-          name: 'Event Details Highlight' // Custom name
+          name: 'Event Details Highlight'
         },
         { 
           id: `followup-${now}-2`,
@@ -320,7 +310,7 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           delayDays: 14,
           enabled: true,
           condition: 'no-response',
-          name: 'One Week Until Event' // Custom name
+          name: 'One Week Until Event'
         },
         { 
           id: `followup-${now}-3`,
@@ -328,7 +318,7 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           delayDays: 20,
           enabled: true,
           condition: 'no-response',
-          name: 'Final Reminder' // Custom name
+          name: 'Final Reminder'
         }
       ],
       'announcement': [
@@ -338,7 +328,7 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           delayDays: 3,
           enabled: true,
           condition: 'no-response',
-          name: 'Announcement Reminder' // Custom name
+          name: 'Announcement Reminder'
         }
       ],
       'newsletter': [
@@ -348,7 +338,7 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           delayDays: 7,
           enabled: true,
           condition: 'no-response',
-          name: 'Featured Article Highlight' // Custom name
+          name: 'Featured Article Highlight'
         }
       ],
       'seasonal': [
@@ -358,7 +348,7 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           delayDays: 5,
           enabled: true,
           condition: 'no-response',
-          name: 'Special Holiday Offer' // Custom name
+          name: 'Special Holiday Offer'
         },
         { 
           id: `followup-${now}-2`,
@@ -366,7 +356,7 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           delayDays: 10,
           enabled: true,
           condition: 'no-response',
-          name: 'Last Day of Season' // Custom name
+          name: 'Last Day of Season'
         }
       ]
     };
@@ -374,18 +364,15 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
     return followUpConfigs[type] || [];
   };
 
-  // Pre-configure campaign based on type
   const getCampaignTemplate = (): Partial<Campaign> => {
     if (!selectedType) return {};
     
-    // Default values for all campaign types
     const defaultStartDate = getDefaultStartDate(selectedType);
     const defaultTemplateId = getDefaultTemplateId(selectedType);
     const defaultSendingWindow = getDefaultSendingWindow(selectedType);
-    const defaultTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const defaultTimeZone = '';
     const defaultFollowUps = getDefaultFollowUps(selectedType, defaultTemplateId);
     
-    // Base templates for different campaign types
     const templates: Record<CampaignType, Partial<Campaign>> = {
       'event-invitation': {
         name: '',
