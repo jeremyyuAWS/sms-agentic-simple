@@ -3,7 +3,6 @@ import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import CampaignFormStatus from './CampaignFormStatus';
 
 interface CampaignDetailsTabProps {
   name: string;
@@ -26,12 +25,8 @@ const CampaignDetailsTab: React.FC<CampaignDetailsTabProps> = ({
   
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center mb-2">
+      <div className="mb-2">
         <Label htmlFor="name" className="text-base font-medium">Campaign Name</Label>
-        <CampaignFormStatus 
-          isComplete={isNameComplete} 
-          fieldName="Campaign Name" 
-        />
       </div>
       <Input
         type="text"

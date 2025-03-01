@@ -1,13 +1,11 @@
-
 import React from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { AlertCircle } from 'lucide-react';
 import CampaignDetailsTab from './CampaignDetailsTab';
 import CampaignFollowupsTab from './CampaignFollowupsTab';
 import CampaignContactSelection from '../CampaignContactSelection';
 import CampaignScheduleTab from './CampaignScheduleTab';
 import { Template } from '@/lib/types';
+import CampaignFormStatus from './CampaignFormStatus';
 
 interface CampaignTabsProps {
   activeTab: string;
@@ -42,22 +40,12 @@ const CampaignTabs: React.FC<CampaignTabsProps> = ({
     const isComplete = completedSections.includes(section);
     const isSectionApproved = sectionApproved[section];
     
-    if (!isComplete || (section === 'messaging' && !isSectionApproved)) {
-      return (
-        <Badge variant="outline" 
-               className="bg-yellow-100 text-yellow-800 border-yellow-200">
-          <AlertCircle className="w-3 h-3 mr-1" />
-          Attention
-        </Badge>
-      );
-    }
-    
-    // Complete sections still show green badge
     return (
-      <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">
-        <AlertCircle className="w-3 h-3 mr-1" />
-        Complete
-      </Badge>
+      <CampaignFormStatus 
+        isComplete={isComplete && (section !== 'messaging' || isSectionApproved)} 
+        fieldName={section}
+        variant="tab"
+      />
     );
   };
 
