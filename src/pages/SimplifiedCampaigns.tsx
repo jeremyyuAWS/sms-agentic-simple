@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import { useApp } from '@/contexts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,7 +31,6 @@ const SimplifiedCampaigns: React.FC = () => {
   const [apiError, setApiError] = useState<string | null>(null);
   const [selectedCampaignType, setSelectedCampaignType] = useState<CampaignType | null>(null);
 
-  // Use our custom filters hook
   const {
     activeStatus,
     sortBy,
@@ -44,12 +42,10 @@ const SimplifiedCampaigns: React.FC = () => {
     setSearchQuery
   } = useCampaignFilters(campaigns);
 
-  // Get the selected campaign
   const selectedCampaign = selectedCampaignId 
     ? campaigns.find(c => c.id === selectedCampaignId) 
     : null;
 
-  // Event handlers
   const handleSelectCampaignType = useCallback((type: CampaignType) => {
     setSelectedCampaignType(type);
     setSelectedView('create');
@@ -118,7 +114,6 @@ const SimplifiedCampaigns: React.FC = () => {
     setApiError(null);
   }, []);
 
-  // Render the appropriate view
   const renderContent = () => {
     if (selectedView === 'type-selection') {
       return campaigns.length === 0 ? (
@@ -189,7 +184,6 @@ const SimplifiedCampaigns: React.FC = () => {
       );
     }
     
-    // Default to list view
     return (
       <LoadingState isLoading={isLoading} error={apiError}>
         <div className="space-y-4 px-4 sm:px-6">
@@ -209,7 +203,7 @@ const SimplifiedCampaigns: React.FC = () => {
               className="bg-[#9b87f5] hover:bg-[#8B5CF6] text-white"
             >
               <Plus className="mr-2 h-4 w-4" />
-              New Campaign
+              <span className="hidden sm:inline">New Campaign</span>
             </Button>
           </div>
         
@@ -242,17 +236,6 @@ const SimplifiedCampaigns: React.FC = () => {
           </p>
         </div>
         
-        {/* Only show New Campaign button in list view */}
-        {selectedView === 'list' && (
-          <Button 
-            onClick={handleNewCampaign}
-            className="bg-[#9b87f5] hover:bg-[#8B5CF6] text-white"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            <span className="hidden sm:inline">New Campaign</span>
-          </Button>
-        )}
-        
         {selectedView !== 'list' && selectedView !== 'type-selection' && (
           <Button variant="outline" onClick={handleBackToTypeSelection} className="text-sm">
             <Undo2 className="mr-2 h-4 w-4" />
@@ -263,7 +246,6 @@ const SimplifiedCampaigns: React.FC = () => {
 
       {renderContent()}
       
-      {/* Navigation Buttons */}
       <div className="mt-12">
         <NavigationButtons currentPage="simplified-campaigns" />
       </div>
