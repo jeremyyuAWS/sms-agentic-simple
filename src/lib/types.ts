@@ -1,4 +1,3 @@
-
 // Define common types for the application
 export interface Contact {
   id: string;
@@ -78,6 +77,7 @@ export interface FollowUp {
     onResponse?: string; // ID of next follow-up if response received
     onNoResponse?: string; // ID of next follow-up if no response
   };
+  name?: string; // Custom name for the follow-up message
 }
 
 // Define campaign goal types

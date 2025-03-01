@@ -153,14 +153,24 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           templateId,
           delayDays: 3,
           enabled: true,
-          condition: 'no-response'
+          condition: 'no-response',
+          name: 'Value Proposition' // Custom name for this follow-up
         },
         { 
           id: `followup-${now}-2`,
           templateId,
           delayDays: 7,
           enabled: true,
-          condition: 'no-response'
+          condition: 'no-response',
+          name: 'Case Study Share' // Custom name for this follow-up
+        },
+        { 
+          id: `followup-${now}-3`,
+          templateId,
+          delayDays: 12,
+          enabled: true,
+          condition: 'no-response',
+          name: 'Final Opportunity' // Added a third follow-up
         }
       ],
       'follow-up-reminder': [
@@ -169,21 +179,24 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           templateId,
           delayDays: 2,
           enabled: true,
-          condition: 'no-response'
+          condition: 'no-response',
+          name: 'Gentle Reminder' // Custom name
         },
         { 
           id: `followup-${now}-2`,
           templateId,
           delayDays: 5,
           enabled: true,
-          condition: 'no-response'
+          condition: 'no-response',
+          name: 'Additional Information' // Custom name
         },
         { 
           id: `followup-${now}-3`,
           templateId,
           delayDays: 10,
           enabled: true,
-          condition: 'no-response'
+          condition: 'no-response',
+          name: 'Check-In' // Custom name
         }
       ],
       'meeting-scheduling': [
@@ -192,14 +205,16 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           templateId,
           delayDays: 2,
           enabled: true,
-          condition: 'no-response'
+          condition: 'no-response',
+          name: 'Availability Options' // Custom name
         },
         { 
           id: `followup-${now}-2`,
           templateId,
           delayDays: 4,
-          enabled: true,
-          condition: 'no-response'
+          enabled: true, 
+          condition: 'no-response',
+          name: 'Final Scheduling Attempt' // Custom name
         }
       ],
       'customer-feedback': [
@@ -208,14 +223,16 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           templateId,
           delayDays: 3,
           enabled: true,
-          condition: 'no-response'
+          condition: 'no-response',
+          name: 'Feedback Importance' // Custom name
         },
         { 
           id: `followup-${now}-2`,
           templateId,
           delayDays: 7,
           enabled: true,
-          condition: 'no-response'
+          condition: 'no-response',
+          name: 'Last Chance for Input' // Custom name
         }
       ],
       'promotional': [
@@ -224,14 +241,24 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           templateId,
           delayDays: 1,
           enabled: true,
-          condition: 'no-response'
+          condition: 'no-response',
+          name: 'Special Offer Reminder' // Custom name
         },
         { 
           id: `followup-${now}-2`,
           templateId,
           delayDays: 3,
           enabled: true,
-          condition: 'no-response'
+          condition: 'no-response',
+          name: 'Last Day of Promotion' // Custom name
+        },
+        { 
+          id: `followup-${now}-3`,
+          templateId,
+          delayDays: 7,
+          enabled: true,
+          condition: 'no-response',
+          name: 'Extended Offer' // Custom name
         }
       ],
       'survey': [
@@ -240,37 +267,108 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           templateId,
           delayDays: 2,
           enabled: true,
-          condition: 'no-response'
+          condition: 'no-response',
+          name: 'Survey Reminder' // Custom name
         },
         { 
           id: `followup-${now}-2`,
           templateId,
           delayDays: 5,
           enabled: true,
-          condition: 'no-response'
+          condition: 'no-response',
+          name: 'Final Day to Participate' // Custom name
         }
       ],
       'webinar-invitation': [
         { 
           id: `followup-${now}-1`,
           templateId,
-          delayDays: 2,
+          delayDays: 5,
           enabled: true,
-          condition: 'no-response'
+          condition: 'no-response',
+          name: 'One Week Before Webinar' // Custom name
         },
         { 
           id: `followup-${now}-2`,
           templateId,
-          delayDays: 1,
+          delayDays: 10,
           enabled: true,
-          condition: 'no-response'
+          condition: 'no-response',
+          name: 'Day Before Reminder' // Custom name
+        },
+        { 
+          id: `followup-${now}-3`,
+          templateId,
+          delayDays: 12,
+          enabled: true,
+          condition: 'no-response',
+          name: 'Last Chance to Register' // Custom name
         }
       ],
-      // Default empty follow-ups for other campaign types
-      'event-invitation': [],
-      'announcement': [],
-      'newsletter': [],
-      'seasonal': []
+      'event-invitation': [
+        { 
+          id: `followup-${now}-1`,
+          templateId,
+          delayDays: 7,
+          enabled: true,
+          condition: 'no-response',
+          name: 'Event Details Highlight' // Custom name
+        },
+        { 
+          id: `followup-${now}-2`,
+          templateId,
+          delayDays: 14,
+          enabled: true,
+          condition: 'no-response',
+          name: 'One Week Until Event' // Custom name
+        },
+        { 
+          id: `followup-${now}-3`,
+          templateId,
+          delayDays: 20,
+          enabled: true,
+          condition: 'no-response',
+          name: 'Final Reminder' // Custom name
+        }
+      ],
+      'announcement': [
+        { 
+          id: `followup-${now}-1`,
+          templateId,
+          delayDays: 3,
+          enabled: true,
+          condition: 'no-response',
+          name: 'Announcement Reminder' // Custom name
+        }
+      ],
+      'newsletter': [
+        { 
+          id: `followup-${now}-1`,
+          templateId,
+          delayDays: 7,
+          enabled: true,
+          condition: 'no-response',
+          name: 'Featured Article Highlight' // Custom name
+        }
+      ],
+      'seasonal': [
+        { 
+          id: `followup-${now}-1`,
+          templateId,
+          delayDays: 5,
+          enabled: true,
+          condition: 'no-response',
+          name: 'Special Holiday Offer' // Custom name
+        },
+        { 
+          id: `followup-${now}-2`,
+          templateId,
+          delayDays: 10,
+          enabled: true,
+          condition: 'no-response',
+          name: 'Last Day of Season' // Custom name
+        }
+      ]
     };
     
     return followUpConfigs[type] || [];

@@ -48,6 +48,7 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
           delayDays: 3,
           enabled: true,
           condition: 'no-response',
+          name: 'Follow-up Message',
           conditions: [{ type: 'no-response' as FollowUpCondition['type'] }]
         }
       ];
@@ -116,6 +117,20 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
     });
   };
 
+  // Get the message title based on index and custom name
+  const getMessageTitle = (index: number, followUp: any) => {
+    if (index === 0) {
+      return 'Initial Message';
+    }
+    
+    // Use custom name if available, otherwise use a generic name
+    if (followUp.name) {
+      return followUp.name;
+    }
+    
+    return `Follow-up #${index}`;
+  };
+
   return (
     <div className="space-y-4">
       <div className="text-sm space-y-2 mt-2 mb-4">
@@ -135,7 +150,7 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
                     {index + 1}
                   </div>
                   <h4 className="font-medium">
-                    {index === 0 ? 'Initial Message' : `Follow-up #${index}`}
+                    {getMessageTitle(index, followUp)}
                   </h4>
                 </div>
                 <div className="flex items-center gap-2">
@@ -199,6 +214,7 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
                 templateId: selectedTemplateId,
                 delayDays: followUps.length > 0 ? followUps[followUps.length - 1].delayDays + 4 : 3,
                 enabled: true,
+                name: `Follow-up Message ${followUps.length}`,
                 conditions: [{ type: 'no-response' as FollowUpCondition['type'] }]
               };
               
@@ -224,7 +240,7 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
               </div>
               <span>
                 {index === 0 ? 'Initial message' : 
-                  `Follow-up ${index}: Sent after ${followUp.delayDays} days`}
+                  `${getMessageTitle(index, followUp)}: Sent after ${followUp.delayDays} days`}
               </span>
             </div>
           ))}
