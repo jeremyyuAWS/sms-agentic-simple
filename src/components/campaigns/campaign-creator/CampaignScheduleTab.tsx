@@ -27,10 +27,13 @@ const CampaignScheduleTab: React.FC<CampaignScheduleTabProps> = ({
   
   // Effect to check completeness whenever dependencies change
   useEffect(() => {
+    // Only mark as complete if both startDate and window are set
     const hasStartDate = !!startDate;
     const hasWindow = !!window;
-    setIsScheduleComplete(hasStartDate && hasWindow);
-  }, [startDate, window]);
+    const hasTimezone = !!timezone && timezone.trim() !== '';
+    
+    setIsScheduleComplete(hasStartDate && hasWindow && hasTimezone);
+  }, [startDate, window, timezone]);
 
   // Handle schedule change
   const handleScheduleChange = (date: Date) => {
@@ -67,6 +70,7 @@ const CampaignScheduleTab: React.FC<CampaignScheduleTabProps> = ({
           <ul className="list-disc pl-5 mt-1">
             {!startDate && <li>Select a start date for your campaign</li>}
             {!window && <li>Choose a sending window (days and times)</li>}
+            {(!timezone || timezone.trim() === '') && <li>Select a timezone</li>}
           </ul>
         </div>
       )}
