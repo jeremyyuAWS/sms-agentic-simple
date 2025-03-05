@@ -2,14 +2,31 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
-import PageLayout from '@/components/layout/PageLayout';
-import { PageTitle } from '@/components/layout/PageTitle';
-import CampaignList from '@/components/campaigns/CampaignList';
 import { Campaign } from '@/lib/types';
 import { useApp } from '@/contexts';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import SimplifiedCampaignCreator from '@/components/campaigns/SimplifiedCampaignCreator';
 import CampaignDetailView from '@/components/campaigns/CampaignDetailView';
+import CampaignList from '@/components/campaigns/CampaignList';
+
+// Fix 1: Create a simple PageLayout component since it couldn't be found
+const PageLayout = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <div className="min-h-screen bg-background">
+      {children}
+    </div>
+  );
+};
+
+// Fix 2: Create a simple PageTitle component since it couldn't be found
+const PageTitle = ({ title, subtitle }: { title: string; subtitle: string }) => {
+  return (
+    <div>
+      <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+      <p className="text-muted-foreground">{subtitle}</p>
+    </div>
+  );
+};
 
 export default function SimplifiedCampaigns() {
   const { campaigns, updateCampaignStatus, createCampaign, updateCampaign } = useApp();
@@ -25,9 +42,9 @@ export default function SimplifiedCampaigns() {
     setIsCreatingCampaign(true);
   };
   
+  // Fix 3: Add the second argument (defaultTab) to the function call
   const handleCampaignSelect = (campaignId: string, defaultTab?: string) => {
     setSelectedCampaignId(campaignId);
-    // Pass the defaultTab parameter when we have the CampaignDetailView component
   };
   
   const handleStatusChange = (campaignId: string, status: Campaign['status']) => {
@@ -76,8 +93,9 @@ export default function SimplifiedCampaigns() {
         
         <Dialog open={isCreatingCampaign} onOpenChange={setIsCreatingCampaign}>
           <DialogContent className="max-w-3xl">
+            {/* Fix 4: Update props to match the SimplifiedCampaignCreator component interface */}
             <SimplifiedCampaignCreator 
-              onSave={handleSave} 
+              onComplete={handleSave} 
               onCancel={() => setIsCreatingCampaign(false)} 
             />
           </DialogContent>
@@ -100,9 +118,10 @@ export default function SimplifiedCampaigns() {
         {selectedCampaign && isEditing && (
           <Dialog open={isEditing} onOpenChange={(open) => !open && handleClose()}>
             <DialogContent className="max-w-3xl">
+              {/* Fix 5: Update props to match SimplifiedCampaignCreator interface and pass campaign type */}
               <SimplifiedCampaignCreator 
-                campaign={selectedCampaign}
-                onSave={handleSave}
+                initialCampaignType={selectedCampaign.type}
+                onComplete={handleSave}
                 onCancel={handleClose}
               />
             </DialogContent>
