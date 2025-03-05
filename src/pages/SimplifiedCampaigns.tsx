@@ -104,6 +104,7 @@ export default function SimplifiedCampaigns() {
         <Dialog open={isCreatingCampaign} onOpenChange={setIsCreatingCampaign}>
           <DialogContent className="max-w-3xl">
             <SimplifiedCampaignCreator 
+              initialCampaignType="sales-outreach"
               onComplete={handleComplete} 
               onCancel={() => setIsCreatingCampaign(false)} 
             />
@@ -117,7 +118,7 @@ export default function SimplifiedCampaigns() {
                 campaign={selectedCampaign}
                 onClose={handleClose}
                 onStatusChange={handleStatusChange}
-                onEdit={handleEdit}
+                onEdit={(campaignId) => handleEdit(campaignId, "sales-outreach")}
                 defaultTab={defaultTab}
               />
             </DialogContent>
@@ -129,6 +130,7 @@ export default function SimplifiedCampaigns() {
             <DialogContent className="max-w-3xl">
               <SimplifiedCampaignCreator 
                 initialCampaignType="sales-outreach"
+                campaign={selectedCampaign}
                 onComplete={handleComplete}
                 onCancel={handleClose}
               />
