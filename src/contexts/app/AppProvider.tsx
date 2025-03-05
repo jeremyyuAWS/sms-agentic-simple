@@ -18,7 +18,7 @@ import { createMessageActions } from './actions/messageActions';
 import { createContactActions } from './actions/contactActions';
 import { createKnowledgeBaseActions } from './actions/knowledgeBaseActions';
 import { createCampaignActions } from './actions/campaignActions';
-import { createTemplateActions } from './actions/templateActions';
+import { createTemplateActions } from './actions/templates';
 import { createWorkflowActions } from './actions/workflowActions';
 import { createUIStateActions } from './actions/uiStateActions';
 import { createCategoryActions } from './actions/categoryActions';
