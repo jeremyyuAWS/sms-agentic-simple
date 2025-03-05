@@ -4,10 +4,9 @@ import App from './App.tsx'
 import './index.css'
 import React from 'react'
 
-// Improved logging throughout startup process
 console.log("Application starting...");
 
-// Create root with error handling
+// Create root with improved error handling
 const rootElement = document.getElementById("root");
 
 if (!rootElement) {
@@ -18,12 +17,12 @@ if (!rootElement) {
 const root = createRoot(rootElement);
 console.log("Root created successfully");
 
-// Basic fallback for critical errors
+// Simple error boundary component
 const ErrorFallback = ({ error }: { error: Error | string }) => (
-  <div className="min-h-screen flex items-center justify-center bg-background text-foreground p-4">
-    <div className="card p-6 max-w-md w-full bg-white shadow-lg rounded-lg border border-red-200">
+  <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div className="p-6 max-w-md w-full bg-white shadow-lg rounded-lg border border-red-200">
       <h1 className="text-xl font-bold mb-2 text-red-600">Something went wrong</h1>
-      <p className="text-gray-600 mb-4">The application failed to start. Please try refreshing the page.</p>
+      <p className="mb-4">The application failed to start. Please try refreshing the page.</p>
       <pre className="mt-4 p-4 bg-gray-100 rounded text-sm overflow-auto text-red-500 max-h-[300px]">
         {error instanceof Error ? `${error.message}\n\n${error.stack}` : String(error)}
       </pre>
@@ -31,10 +30,9 @@ const ErrorFallback = ({ error }: { error: Error | string }) => (
   </div>
 );
 
-// Render with explicit error handling
-console.log("Attempting to render App component");
+// Direct render without StrictMode to reduce complexity
 try {
-  // Removed StrictMode to prevent double-rendering which can complicate debugging
+  console.log("Attempting to render App component");
   root.render(<App />);
   console.log("App rendered successfully");
 } catch (error) {

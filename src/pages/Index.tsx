@@ -14,33 +14,28 @@ function Index() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Simplified useEffect with direct state update
   useEffect(() => {
-    console.log("Index component mounted, starting loading timer");
+    console.log("Index component mounted");
     
-    // Simpler loading approach
+    // Set a shorter timeout to avoid long white screen
     const timer = setTimeout(() => {
-      console.log("Loading timer completed, setting isLoaded to true");
+      console.log("Setting isLoaded to true");
       setIsLoaded(true);
-    }, 500);
+    }, 100);
     
     return () => {
-      console.log("Index component unmounting, clearing timer");
       clearTimeout(timer);
+      console.log("Index component unmounting");
     };
   }, []);
 
+  // Immediately render content for debugging
   console.log("Index rendering with states:", { isLoaded, error });
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Removed console.log and placed LoadingState component instead */}
-      <LoadingState 
-        isLoading={!isLoaded} 
-        error={error} 
-        loadingText="Loading homepage..."
-        className="min-h-[50vh]"
-      >
-        {/* Removed console.log and rendering Index content */}
+      {isLoaded ? (
         <div className="container mx-auto px-4 py-8 max-w-6xl">
           <div className="space-y-8">
             <div className="space-y-2 text-center">
@@ -152,7 +147,17 @@ function Index() {
 
           <NavigationButtons currentPage="home" />
         </div>
-      </LoadingState>
+      ) : (
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-pulse flex flex-col items-center">
+            <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center mb-4">
+              <MessageSquare className="h-6 w-6 text-blue-500" />
+            </div>
+            <div className="h-4 w-40 bg-gray-200 rounded mb-3"></div>
+            <div className="h-3 w-28 bg-gray-100 rounded"></div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
