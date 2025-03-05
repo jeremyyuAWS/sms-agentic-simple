@@ -51,7 +51,7 @@ export default function SimplifiedCampaigns() {
   };
   
   // Updated to accept an initialCampaignType parameter
-  const handleEdit = (campaignId: string, initialCampaignType?: string) => {
+  const handleEdit = (campaignId: string, initialCampaignType: string = "sales-outreach") => {
     const campaign = campaigns.find(c => c.id === campaignId);
     if (campaign && campaign.status !== 'completed') {
       setSelectedCampaignId(campaignId);
