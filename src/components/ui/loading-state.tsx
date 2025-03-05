@@ -18,9 +18,11 @@ const LoadingState: React.FC<LoadingStateProps> = ({
   children,
   className
 }) => {
+  console.log("LoadingState rendering, isLoading:", isLoading, "error:", error);
+  
   if (isLoading) {
     return (
-      <div className={cn("flex flex-col items-center justify-center p-6", className)}>
+      <div className={cn("flex flex-col items-center justify-center min-h-screen p-6", className)}>
         <Loader2 className="h-10 w-10 animate-spin text-primary mb-2" />
         <p className="text-muted-foreground">{loadingText}</p>
       </div>
@@ -29,7 +31,7 @@ const LoadingState: React.FC<LoadingStateProps> = ({
 
   if (error) {
     return (
-      <div className={cn("flex flex-col items-center justify-center p-6 bg-destructive/10 rounded-md", className)}>
+      <div className={cn("flex flex-col items-center justify-center min-h-screen p-6 bg-destructive/10 rounded-md", className)}>
         <p className="text-destructive font-medium">Error</p>
         <p className="text-destructive-foreground">{error}</p>
       </div>
