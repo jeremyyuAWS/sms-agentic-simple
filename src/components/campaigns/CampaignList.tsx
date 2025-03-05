@@ -7,7 +7,7 @@ interface CampaignListProps {
   campaigns: Campaign[];
   onSelect: (campaignId: string, defaultTab?: string) => void;
   onUpdateStatus: (campaignId: string, status: Campaign['status']) => void;
-  onEdit?: (campaignId: string) => void;
+  onEdit?: (campaignId: string, campaignType: string) => void;
   onDelete?: (campaignId: string) => void;
 }
 
@@ -27,6 +27,13 @@ const CampaignList: React.FC<CampaignListProps> = ({
     );
   }
 
+  // Updated wrapper function to ensure both arguments are always passed
+  const handleEdit = (campaignId: string) => {
+    if (onEdit) {
+      onEdit(campaignId, "sales-outreach");
+    }
+  };
+
   return (
     <div className="space-y-4">
       {campaigns.map((campaign, index) => (
@@ -36,7 +43,7 @@ const CampaignList: React.FC<CampaignListProps> = ({
           index={index}
           onSelect={onSelect}
           onUpdateStatus={onUpdateStatus}
-          onEdit={onEdit}
+          onEdit={handleEdit}
           onDelete={onDelete}
         />
       ))}

@@ -50,8 +50,8 @@ export default function SimplifiedCampaigns() {
     updateCampaignStatus(campaignId, status);
   };
   
-  // Fix: Ensure we always pass both arguments to onEdit
-  const handleEdit = (campaignId: string, campaignType: string = "sales-outreach") => {
+  // Always use both parameters to handle editing a campaign
+  const handleEdit = (campaignId: string, campaignType: string) => {
     const campaign = campaigns.find(c => c.id === campaignId);
     if (campaign && campaign.status !== 'completed') {
       setSelectedCampaignId(campaignId);
