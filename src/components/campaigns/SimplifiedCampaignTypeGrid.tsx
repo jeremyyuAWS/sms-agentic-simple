@@ -1,17 +1,9 @@
+
 import React from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CampaignType } from './CampaignTypeSelector';
 import { campaignTypes } from './types/campaignTypes';
-
-interface CampaignTypeInfo {
-  id: string;
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-  color: string;
-  bgColor: string;
-}
 
 interface SimplifiedCampaignTypeGridProps {
   onSelect: (type: CampaignType) => void;
@@ -36,9 +28,9 @@ const SimplifiedCampaignTypeGrid: React.FC<SimplifiedCampaignTypeGridProps> = ({
             className="cursor-pointer transition-all hover:border-primary hover:shadow-md overflow-hidden group h-full"
             onClick={() => onSelect(type.id as CampaignType)}
           >
-            <div className={`h-2 w-full ${type.bgColor} border-b ${type.color.replace('text-', 'border-')}`}></div>
+            <div className={`h-2 w-full ${type.color.replace('text-', 'bg-')} border-b ${type.color.replace('text-', 'border-')}`}></div>
             <CardHeader className="pb-2 space-y-3">
-              <div className={`p-3 rounded-full ${type.bgColor} ${type.color} w-fit mb-0 transition-transform group-hover:scale-110`}>
+              <div className={`p-3 rounded-full ${type.color.replace('text-', 'bg-')}/10 ${type.color} w-fit mb-0 transition-transform group-hover:scale-110`}>
                 {type.icon}
               </div>
               <CardTitle className="text-lg">{type.title}</CardTitle>
@@ -51,7 +43,7 @@ const SimplifiedCampaignTypeGrid: React.FC<SimplifiedCampaignTypeGridProps> = ({
             <CardFooter className="pt-2 pb-4">
               <Button 
                 variant="ghost" 
-                className={`w-full justify-start text-sm ${type.color} hover:${type.bgColor}`}
+                className={`w-full justify-start text-sm ${type.color} hover:${type.color.replace('text-', 'bg-')}/10`}
               >
                 Select This Campaign Type
               </Button>
