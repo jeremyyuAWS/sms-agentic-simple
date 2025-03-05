@@ -1,57 +1,33 @@
 
 import React from 'react';
-import { AlertTriangle, Loader2 } from 'lucide-react';
 
 interface FallbackProps {
-  error?: Error | null;
-  loading?: boolean;
-  message?: string;
+  error?: Error;
+  resetErrorBoundary?: () => void;
 }
 
-const Fallback: React.FC<FallbackProps> = ({
-  error,
-  loading = false,
-  message = "Something went wrong"
-}) => {
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh] p-6">
-        <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-        <p className="text-muted-foreground">Loading application...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh] p-6">
-        <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
-        <h2 className="text-xl font-semibold mb-2">Application Error</h2>
-        <p className="text-muted-foreground mb-4">{message}</p>
-        <p className="text-xs text-red-500 max-w-md overflow-auto p-2 bg-red-50 rounded">
-          {error.message}
-        </p>
-        <button 
-          onClick={() => window.location.reload()} 
-          className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
-        >
-          Reload Application
-        </button>
-      </div>
-    );
-  }
-
+const Fallback: React.FC<FallbackProps> = ({ error, resetErrorBoundary }) => {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[50vh] p-6">
-      <AlertTriangle className="h-12 w-12 text-amber-500 mb-4" />
-      <h2 className="text-xl font-semibold mb-2">Unexpected State</h2>
-      <p className="text-muted-foreground">{message}</p>
-      <button 
-        onClick={() => window.location.reload()} 
-        className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
-      >
-        Reload Application
-      </button>
+    <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
+      <div className="card p-6 max-w-md w-full border rounded shadow">
+        <h1 className="text-xl font-bold mb-2">Something went wrong</h1>
+        {error && (
+          <div className="mb-4 p-2 bg-red-50 border border-red-100 rounded text-sm text-red-800">
+            {error.message}
+          </div>
+        )}
+        <p className="text-muted-foreground mb-4">
+          The application encountered an error. Please try refreshing the page.
+        </p>
+        {resetErrorBoundary && (
+          <button
+            onClick={resetErrorBoundary}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Try again
+          </button>
+        )}
+      </div>
     </div>
   );
 };

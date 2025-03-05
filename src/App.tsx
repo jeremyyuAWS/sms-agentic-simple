@@ -11,20 +11,18 @@ import React from "react";
 
 function App() {
   return (
-    <React.StrictMode>
-      <AppProvider>
-        <Router>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/contacts" element={<Contacts />} />
-            <Route path="/campaigns" element={<Campaigns />} />
-            <Route path="/simplified-campaigns" element={<SimplifiedCampaigns />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          <Toaster />
-        </Router>
-      </AppProvider>
-    </React.StrictMode>
+    <AppProvider>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/contacts" element={<Contacts />} />
+          <Route path="/campaigns" element={<Campaigns />} />
+          <Route path="/simplified-campaigns" element={<SimplifiedCampaigns />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+        <Toaster />
+      </Router>
+    </AppProvider>
   );
 }
 
