@@ -55,7 +55,7 @@ export default function SimplifiedCampaigns() {
     if (campaign && campaign.status !== 'completed') {
       setSelectedCampaignId(campaignId);
       setIsEditing(true);
-      // Always provide the defaultTab parameter 
+      // Always set a default tab when editing
       setDefaultTab('overview');
     }
   };
