@@ -61,17 +61,21 @@ export default function SimplifiedCampaigns() {
     setIsEditing(false);
   };
   
-  // Make sure this function has the right parameter type to match SimplifiedCampaignCreator
-  const handleSave = (campaign: Campaign) => {
+  // Update to match the expected signature from SimplifiedCampaignCreator
+  const handleComplete = () => {
+    setIsCreatingCampaign(false);
+    setIsEditing(false);
+    setSelectedCampaignId(null);
+  };
+  
+  // This function will be used to actually save the campaign data
+  const handleSaveCampaign = (campaign: Campaign) => {
     if (selectedCampaignId) {
       updateCampaign(campaign);
     } else {
       createCampaign(campaign);
     }
-    
-    setIsCreatingCampaign(false);
-    setIsEditing(false);
-    setSelectedCampaignId(null);
+    handleComplete();
   };
 
   return (
@@ -96,7 +100,7 @@ export default function SimplifiedCampaigns() {
           <DialogContent className="max-w-3xl">
             {/* Fix the props to match the SimplifiedCampaignCreator component interface */}
             <SimplifiedCampaignCreator 
-              onComplete={handleSave} 
+              onComplete={handleComplete} 
               onCancel={() => setIsCreatingCampaign(false)} 
             />
           </DialogContent>
@@ -121,8 +125,8 @@ export default function SimplifiedCampaigns() {
             <DialogContent className="max-w-3xl">
               {/* Fix the props to match SimplifiedCampaignCreator interface */}
               <SimplifiedCampaignCreator 
-                initialCampaignType={selectedCampaign.type as any}
-                onComplete={handleSave}
+                initialCampaignType="cold-outreach" 
+                onComplete={handleComplete}
                 onCancel={handleClose}
               />
             </DialogContent>
