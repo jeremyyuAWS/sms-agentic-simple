@@ -1,7 +1,8 @@
+
 import React, { useState, useCallback } from 'react';
 import { useApp } from '@/contexts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Search, Undo2, Calendar } from 'lucide-react';
+import { Plus, Search, Undo2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import CampaignList from '@/components/campaigns/CampaignList';
