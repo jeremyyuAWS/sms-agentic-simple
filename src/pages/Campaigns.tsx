@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useApp } from '@/contexts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Undo2, ListFilter, CheckCircle, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Badge } from '@/components/ui/badge'; // Added missing Badge import
+import { Badge } from '@/components/ui/badge';
 import CampaignList from '@/components/campaigns/CampaignList';
 import CampaignCreator from '@/components/campaigns/CampaignCreator';
 import CampaignDetailView from '@/components/campaigns/CampaignDetailView';
@@ -42,7 +41,6 @@ const Campaigns: React.FC = () => {
         variant: "default"
       });
       
-      // Ensure we're checking if newCampaign is not undefined and has an id
       if (newCampaign && typeof newCampaign === 'object' && 'id' in newCampaign) {
         setSelectedCampaignId(newCampaign.id);
         setActiveTab('view');
@@ -60,7 +58,6 @@ const Campaigns: React.FC = () => {
   const handleUpdateCampaign = (campaignId: string, campaignData: any) => {
     try {
       setIsSubmitting(true);
-      // Using the updateCampaign method from context
       updateCampaign(campaignId, campaignData);
       setIsSubmitting(false);
       
@@ -82,7 +79,6 @@ const Campaigns: React.FC = () => {
 
   const handleDeleteCampaign = (campaignId: string) => {
     try {
-      // Using the deleteCampaign method from context
       deleteCampaign(campaignId);
       
       toast({
@@ -124,17 +120,14 @@ const Campaigns: React.FC = () => {
     setActiveTab('list');
   };
   
-  // Get the selected campaign
   const selectedCampaign = selectedCampaignId
     ? campaigns.find(c => c.id === selectedCampaignId)
     : null;
 
-  // For debugging
   console.log("Current activeTab:", activeTab);
   console.log("Campaigns data:", campaigns);
   console.log("Selected campaign:", selectedCampaign);
 
-  // Organize campaigns by status
   const activeCampaigns = campaigns.filter(c => c.status === 'active');
   const draftCampaigns = campaigns.filter(c => c.status === 'draft');
   const completedCampaigns = campaigns.filter(c => c.status === 'completed' || c.status === 'paused');
@@ -142,7 +135,7 @@ const Campaigns: React.FC = () => {
   return (
     <div className="container mx-auto py-6 max-w-7xl">
       <div className="flex justify-between items-center mb-6">
-        <div className="space-y-1">
+        <div className="space-y-1 text-left">
           <h1 className="text-3xl font-bold tracking-tight">Campaigns</h1>
           <p className="text-muted-foreground">
             Create and manage your outreach campaigns
@@ -194,7 +187,6 @@ const Campaigns: React.FC = () => {
                 </div>
               </div>
           
-              {/* Active Campaigns */}
               {activeCampaigns.length > 0 && (
                 <Card>
                   <CardHeader className="pb-3">
@@ -219,7 +211,6 @@ const Campaigns: React.FC = () => {
                 </Card>
               )}
               
-              {/* Draft Campaigns */}
               {draftCampaigns.length > 0 && (
                 <Card>
                   <CardHeader className="pb-3">
@@ -244,7 +235,6 @@ const Campaigns: React.FC = () => {
                 </Card>
               )}
               
-              {/* Completed & Paused Campaigns */}
               {completedCampaigns.length > 0 && (
                 <Card>
                   <CardHeader className="pb-3">
@@ -296,7 +286,6 @@ const Campaigns: React.FC = () => {
         />
       )}
 
-      {/* Navigation Buttons */}
       <NavigationButtons currentPage="campaigns" />
     </div>
   );
