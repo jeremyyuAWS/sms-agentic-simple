@@ -2,7 +2,7 @@
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BookUser, Import, List } from 'lucide-react';
-import { useContactsContext } from '../context/ContactsContext';
+import { useContacts } from '@/hooks/use-contacts';
 import PageHeader from '../PageHeader';
 import ContactsTab from '../tabs/ContactsTab';
 import ImportsTab from '../tabs/ImportsTab';
@@ -31,8 +31,9 @@ const ContactsLayout: React.FC = () => {
     handleDeleteContactList,
     handleCreateListFromSource,
     handleDeleteImportPrompt,
-    handleConfirmDeleteImport
-  } = useContactsContext();
+    handleConfirmDeleteImport,
+    handleOpenNewListDialog
+  } = useContacts();
 
   return (
     <div className="container mx-auto py-6 max-w-7xl">
@@ -69,7 +70,7 @@ const ContactsLayout: React.FC = () => {
         <TabsContent value="lists">
           <ListsTab 
             contactLists={contactLists}
-            onCreateList={handleEditContactList}
+            onCreateList={handleOpenNewListDialog}
             onEditList={handleEditContactList}
             onDeleteList={handleDeleteContactList}
           />

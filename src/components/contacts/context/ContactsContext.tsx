@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState } from 'react';
 import { Contact, ContactList } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
@@ -57,7 +56,6 @@ export const ContactsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [deletingImportId, setDeletingImportId] = useState<string | null>(null);
   const [deletingImportName, setDeletingImportName] = useState('');
 
-  // Group contacts by their source
   const groupedContacts = contacts.reduce((groups, contact) => {
     if (!contact.source) {
       const key = 'Untracked';
