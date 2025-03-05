@@ -1,4 +1,4 @@
-import React, { Suspense, useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -8,31 +8,39 @@ import { Button } from "@/components/ui/button";
 import LoadingState from "@/components/ui/loading-state";
 
 function Index() {
+  console.log("Index component function starting");
+  
   const [isLoaded, setIsLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    console.log("Index component mounted");
+    console.log("Index component mounted, starting loading timer");
     
-    try {
-      // Simulate checking if resources are loaded
-      const timer = setTimeout(() => {
-        console.log("Setting isLoaded to true");
-        setIsLoaded(true);
-      }, 500); // Increased timeout for testing
-      
-      return () => clearTimeout(timer);
-    } catch (err) {
-      console.error("Error in Index useEffect:", err);
-      setError(err instanceof Error ? err.message : "Unknown error occurred");
-    }
+    // Simpler loading approach
+    const timer = setTimeout(() => {
+      console.log("Loading timer completed, setting isLoaded to true");
+      setIsLoaded(true);
+    }, 500);
+    
+    return () => {
+      console.log("Index component unmounting, clearing timer");
+      clearTimeout(timer);
+    };
   }, []);
 
-  console.log("Index rendering, isLoaded:", isLoaded, "error:", error);
+  console.log("Index rendering with states:", { isLoaded, error });
 
   return (
     <div className="min-h-screen bg-background">
-      <LoadingState isLoading={!isLoaded} error={error} loadingText="Loading homepage...">
+      {/* Using LoadingState with explicit log to track rendering */}
+      {console.log("About to render LoadingState component")}
+      <LoadingState 
+        isLoading={!isLoaded} 
+        error={error} 
+        loadingText="Loading homepage..."
+        className="min-h-[50vh]"
+      >
+        {console.log("Rendering Index content inside LoadingState")}
         <div className="container mx-auto px-4 py-8 max-w-6xl">
           <div className="space-y-8">
             <div className="space-y-2 text-center">

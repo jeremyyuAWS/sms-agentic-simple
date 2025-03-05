@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -18,11 +18,18 @@ const LoadingState: React.FC<LoadingStateProps> = ({
   children,
   className
 }) => {
-  console.log("LoadingState rendering, isLoading:", isLoading, "error:", error);
-  
+  useEffect(() => {
+    console.log("LoadingState mounted with:", { isLoading, error });
+    
+    return () => {
+      console.log("LoadingState unmounting");
+    };
+  }, [isLoading, error]);
+
   if (isLoading) {
+    console.log("Rendering loading state with text:", loadingText);
     return (
-      <div className={cn("flex flex-col items-center justify-center min-h-screen p-6", className)}>
+      <div className={cn("flex flex-col items-center justify-center min-h-[50vh] p-6", className)}>
         <Loader2 className="h-10 w-10 animate-spin text-primary mb-2" />
         <p className="text-muted-foreground">{loadingText}</p>
       </div>
@@ -30,14 +37,16 @@ const LoadingState: React.FC<LoadingStateProps> = ({
   }
 
   if (error) {
+    console.log("Rendering error state:", error);
     return (
-      <div className={cn("flex flex-col items-center justify-center min-h-screen p-6 bg-destructive/10 rounded-md", className)}>
+      <div className={cn("flex flex-col items-center justify-center min-h-[50vh] p-6 bg-destructive/10 rounded-md", className)}>
         <p className="text-destructive font-medium">Error</p>
         <p className="text-destructive-foreground">{error}</p>
       </div>
     );
   }
 
+  console.log("Rendering children in LoadingState");
   return <>{children}</>;
 };
 

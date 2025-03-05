@@ -7,14 +7,21 @@ import Contacts from "./pages/Contacts";
 import Campaigns from "./pages/Campaigns";
 import SimplifiedCampaigns from "./pages/SimplifiedCampaigns";
 import { AppProvider } from "./contexts";
-import React from "react";
+import React, { useEffect } from "react";
 
 function App() {
+  useEffect(() => {
+    console.log("App component mounted");
+    return () => console.log("App component unmounting");
+  }, []);
+
   console.log("App component rendering");
+  
   return (
     <AppProvider>
       <Router>
         <div className="app-container">
+          {console.log("Router and app-container rendered")}
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/contacts" element={<Contacts />} />
