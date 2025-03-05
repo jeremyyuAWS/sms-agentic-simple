@@ -45,6 +45,9 @@ const CampaignTabs: React.FC<CampaignTabsProps> = ({
                              !!formState.sendingWindow && 
                              !!formState.timeZone && 
                              formState.timeZone.trim() !== '';
+                             
+  // Check if messaging is complete - requires sequence approval
+  const isMessagingComplete = sectionApproved['messaging'] === true;
   
   const renderStatusBadge = (section: string) => {
     // For details tab, use our direct check
@@ -58,7 +61,7 @@ const CampaignTabs: React.FC<CampaignTabsProps> = ({
       );
     }
     
-    // For schedule tab, use our new direct check
+    // For schedule tab, use our direct check
     if (section === 'schedule') {
       return (
         <CampaignFormStatus 
@@ -69,13 +72,23 @@ const CampaignTabs: React.FC<CampaignTabsProps> = ({
       );
     }
     
+    // For messaging tab, use our direct check
+    if (section === 'messaging') {
+      return (
+        <CampaignFormStatus 
+          isComplete={isMessagingComplete} 
+          fieldName={section}
+          variant="tab"
+        />
+      );
+    }
+    
     // For other tabs, use the completedSections array
     const isComplete = completedSections.includes(section);
-    const isSectionApproved = sectionApproved[section];
     
     return (
       <CampaignFormStatus 
-        isComplete={isComplete && (section !== 'messaging' || isSectionApproved)} 
+        isComplete={isComplete} 
         fieldName={section}
         variant="tab"
       />
