@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,15 +33,14 @@ function Index() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Using LoadingState with explicit log to track rendering */}
-      {console.log("About to render LoadingState component")}
+      {/* Removed console.log and placed LoadingState component instead */}
       <LoadingState 
         isLoading={!isLoaded} 
         error={error} 
         loadingText="Loading homepage..."
         className="min-h-[50vh]"
       >
-        {console.log("Rendering Index content inside LoadingState")}
+        {/* Removed console.log and rendering Index content */}
         <div className="container mx-auto px-4 py-8 max-w-6xl">
           <div className="space-y-8">
             <div className="space-y-2 text-center">

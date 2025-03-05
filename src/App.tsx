@@ -21,7 +21,7 @@ function App() {
     <AppProvider>
       <Router>
         <div className="app-container">
-          {console.log("Router and app-container rendered")}
+          {/* Log statement moved out of direct JSX */}
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/contacts" element={<Contacts />} />
