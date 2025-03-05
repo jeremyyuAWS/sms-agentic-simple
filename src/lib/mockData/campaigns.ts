@@ -41,18 +41,18 @@ export const campaigns: Campaign[] = [
       {
         id: 'fu-1',
         name: "Initial Value Proposition",
-        description: "Highlights key benefits relevant to their industry",
-        waitDays: 2,
-        condition: "no-response",
-        templateId: "3"
+        templateId: "3",
+        delayDays: 2,
+        enabled: true,
+        condition: "no-response"
       },
       {
         id: 'fu-2',
         name: "Case Study Sharing",
-        description: "Shares relevant success story from similar company",
-        waitDays: 4,
-        condition: "no-response",
-        templateId: "4"
+        templateId: "4",
+        delayDays: 4,
+        enabled: true,
+        condition: "no-response"
       }
     ]
   },
@@ -75,10 +75,10 @@ export const campaigns: Campaign[] = [
       {
         id: 'fu-3',
         name: "Value Proposition Follow-up",
-        description: "Key benefits reminder with social proof",
-        waitDays: 3,
-        condition: "no-response",
-        templateId: "3"
+        templateId: "3",
+        delayDays: 3,
+        enabled: true,
+        condition: "no-response"
       }
     ]
   },
@@ -120,18 +120,18 @@ export const campaigns: Campaign[] = [
       {
         id: 'fu-4',
         name: "Feature Highlight",
-        description: "Focused on the most popular new feature",
-        waitDays: 2,
-        condition: "no-response",
-        templateId: "5"
+        templateId: "5",
+        delayDays: 2,
+        enabled: true,
+        condition: "no-response"
       },
       {
         id: 'fu-5',
         name: "Early Adopter Incentive",
-        description: "Special offer for early feature adoption",
-        waitDays: 5,
-        condition: "no-response",
-        templateId: "3"
+        templateId: "3",
+        delayDays: 5,
+        enabled: true,
+        condition: "no-response"
       }
     ]
   },
@@ -172,18 +172,18 @@ export const campaigns: Campaign[] = [
       {
         id: 'fu-6',
         name: "Executive Summary",
-        description: "Concise business value proposition",
-        waitDays: 3,
-        condition: "no-response",
-        templateId: "3"
+        templateId: "3",
+        delayDays: 3,
+        enabled: true,
+        condition: "no-response"
       },
       {
         id: 'fu-7',
         name: "ROI Calculator Offer",
-        description: "Personalized ROI projection tool",
-        waitDays: 5,
-        condition: "no-response",
-        templateId: "4"
+        templateId: "4",
+        delayDays: 5,
+        enabled: true,
+        condition: "no-response"
       }
     ]
   },
@@ -224,18 +224,18 @@ export const campaigns: Campaign[] = [
       {
         id: 'fu-8',
         name: "New Features Overview",
-        description: "Highlights improvements since last engagement",
-        waitDays: 2,
-        condition: "no-response",
-        templateId: "5"
+        templateId: "5",
+        delayDays: 2,
+        enabled: true,
+        condition: "no-response"
       },
       {
         id: 'fu-9',
         name: "Special Return Offer",
-        description: "Incentive for reactivating account",
-        waitDays: 4,
-        condition: "no-response",
-        templateId: "3"
+        templateId: "3",
+        delayDays: 4,
+        enabled: true,
+        condition: "no-response"
       }
     ]
   },
@@ -276,18 +276,18 @@ export const campaigns: Campaign[] = [
       {
         id: 'fu-10',
         name: "Feature Deep Dive",
-        description: "In-depth explanation of most valuable feature",
-        waitDays: 3,
-        condition: "all",
-        templateId: "5"
+        templateId: "5",
+        delayDays: 3,
+        enabled: true,
+        condition: "all"
       },
       {
         id: 'fu-11',
         name: "Usage Tips & Tricks",
-        description: "Practical applications and power user tips",
-        waitDays: 6,
-        condition: "all",
-        templateId: "4"
+        templateId: "4",
+        delayDays: 6,
+        enabled: true,
+        condition: "all"
       }
     ]
   },
@@ -329,18 +329,18 @@ export const campaigns: Campaign[] = [
       {
         id: 'fu-12',
         name: "Conference Highlights",
-        description: "Recap of key points from presentation",
-        waitDays: 2,
-        condition: "no-response",
-        templateId: "3"
+        templateId: "3",
+        delayDays: 2,
+        enabled: true,
+        condition: "no-response"
       },
       {
         id: 'fu-13',
         name: "Industry Report Offer",
-        description: "Exclusive research report mentioned at event",
-        waitDays: 4,
-        condition: "all",
-        templateId: "5"
+        templateId: "5",
+        delayDays: 4,
+        enabled: true,
+        condition: "all"
       }
     ]
   },
@@ -382,18 +382,18 @@ export const campaigns: Campaign[] = [
       {
         id: 'fu-14',
         name: "Pro Feature Showcase",
-        description: "Visual comparison of basic vs pro features",
-        waitDays: 2,
-        condition: "all",
-        templateId: "5"
+        templateId: "5",
+        delayDays: 2,
+        enabled: true,
+        condition: "all"
       },
       {
         id: 'fu-15',
         name: "ROI Calculator",
-        description: "Personalized value assessment for upgrade",
-        waitDays: 4,
-        condition: "no-response",
-        templateId: "4"
+        templateId: "4",
+        delayDays: 4,
+        enabled: true,
+        condition: "no-response"
       }
     ]
   },
@@ -416,18 +416,18 @@ export const campaigns: Campaign[] = [
       {
         id: 'fu-16',
         name: "Usage Report Share",
-        description: "Personalized annual usage statistics",
-        waitDays: 3,
-        condition: "all",
-        templateId: "4"
+        templateId: "4",
+        delayDays: 3,
+        enabled: true,
+        condition: "all"
       },
       {
         id: 'fu-17',
         name: "2024 Feature Preview",
-        description: "Roadmap and coming enhancements",
-        waitDays: 5,
-        condition: "all",
-        templateId: "5"
+        templateId: "5",
+        delayDays: 5,
+        enabled: true,
+        condition: "all"
       }
     ]
   },
@@ -450,18 +450,18 @@ export const campaigns: Campaign[] = [
       {
         id: 'fu-18',
         name: "Partnership Model Overview",
-        description: "Detailed breakdown of partner program",
-        waitDays: 2,
-        condition: "all",
-        templateId: "5"
+        templateId: "5",
+        delayDays: 2,
+        enabled: true,
+        condition: "all"
       },
       {
         id: 'fu-19',
         name: "Success Stories",
-        description: "Case studies from existing partners",
-        waitDays: 4,
-        condition: "no-response",
-        templateId: "4"
+        templateId: "4",
+        delayDays: 4,
+        enabled: true,
+        condition: "no-response"
       }
     ]
   }
