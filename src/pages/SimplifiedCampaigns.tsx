@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
@@ -49,7 +50,8 @@ export default function SimplifiedCampaigns() {
     updateCampaignStatus(campaignId, status);
   };
   
-  const handleEdit = (campaignId: string) => {
+  // Updated to accept an initialCampaignType parameter
+  const handleEdit = (campaignId: string, initialCampaignType?: string) => {
     const campaign = campaigns.find(c => c.id === campaignId);
     if (campaign && campaign.status !== 'completed') {
       setSelectedCampaignId(campaignId);
