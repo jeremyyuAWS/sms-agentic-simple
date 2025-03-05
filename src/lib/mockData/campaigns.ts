@@ -22,8 +22,14 @@ export const campaigns: Campaign[] = [
       daysOfWeek: [1, 2, 3, 4, 5]
     },
     messagesSent: 87,
-    responsesReceived: 32,
-    positiveResponseCount: 18,
+    performance: {
+      totalResponses: 32,
+      positiveResponses: 18,
+      negativeResponses: 8,
+      neutralResponses: 6,
+      conversionCount: 12,
+      goalCompletionRate: 0.37
+    },
     meetings: 12,
     aiAnalysis: {
       trends: [
@@ -101,8 +107,14 @@ export const campaigns: Campaign[] = [
       daysOfWeek: [1, 2, 3, 4, 5]
     },
     messagesSent: 250,
-    responsesReceived: 105,
-    positiveResponseCount: 78,
+    performance: {
+      totalResponses: 105,
+      positiveResponses: 78,
+      negativeResponses: 15,
+      neutralResponses: 12,
+      conversionCount: 42,
+      goalCompletionRate: 0.40
+    },
     meetings: 42,
     aiAnalysis: {
       insights: [
@@ -153,8 +165,14 @@ export const campaigns: Campaign[] = [
       daysOfWeek: [2, 4]
     },
     messagesSent: 48,
-    responsesReceived: 9,
-    positiveResponseCount: 7,
+    performance: {
+      totalResponses: 9,
+      positiveResponses: 7,
+      negativeResponses: 1,
+      neutralResponses: 1,
+      conversionCount: 5,
+      goalCompletionRate: 0.55
+    },
     meetings: 5,
     aiAnalysis: {
       trends: [
@@ -205,8 +223,14 @@ export const campaigns: Campaign[] = [
       daysOfWeek: [1, 3, 5]
     },
     messagesSent: 128,
-    responsesReceived: 40,
-    positiveResponseCount: 23,
+    performance: {
+      totalResponses: 40,
+      positiveResponses: 23,
+      negativeResponses: 10,
+      neutralResponses: 7,
+      conversionCount: 16,
+      goalCompletionRate: 0.40
+    },
     meetings: 16,
     aiAnalysis: {
       trends: [
@@ -257,8 +281,14 @@ export const campaigns: Campaign[] = [
       daysOfWeek: [1, 2, 3, 4, 5]
     },
     messagesSent: 175,
-    responsesReceived: 84,
-    positiveResponseCount: 70,
+    performance: {
+      totalResponses: 84,
+      positiveResponses: 70,
+      negativeResponses: 5,
+      neutralResponses: 9,
+      conversionCount: 32,
+      goalCompletionRate: 0.38
+    },
     meetings: 32,
     aiAnalysis: {
       trends: [
@@ -310,8 +340,14 @@ export const campaigns: Campaign[] = [
       daysOfWeek: [1, 2, 3, 4, 5]
     },
     messagesSent: 95,
-    responsesReceived: 51,
-    positiveResponseCount: 38,
+    performance: {
+      totalResponses: 51,
+      positiveResponses: 38,
+      negativeResponses: 8,
+      neutralResponses: 5,
+      conversionCount: 27,
+      goalCompletionRate: 0.71
+    },
     meetings: 27,
     aiAnalysis: {
       insights: [
@@ -363,8 +399,14 @@ export const campaigns: Campaign[] = [
       daysOfWeek: [1, 3, 5]
     },
     messagesSent: 150,
-    responsesReceived: 56,
-    positiveResponseCount: 32,
+    performance: {
+      totalResponses: 56,
+      positiveResponses: 32,
+      negativeResponses: 15,
+      neutralResponses: 9,
+      conversionCount: 24,
+      goalCompletionRate: 0.43
+    },
     meetings: 24,
     aiAnalysis: {
       insights: [
