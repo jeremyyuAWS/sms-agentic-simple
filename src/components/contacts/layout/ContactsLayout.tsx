@@ -56,7 +56,11 @@ const ContactsLayout: React.FC = () => {
           </TabsTrigger>
         </TabsList>
 
-        <Suspense fallback={<LoadingState isLoading={true} />}>
+        <Suspense fallback={
+          <LoadingState isLoading={true}>
+            <div>Loading contacts data...</div>
+          </LoadingState>
+        }>
           <TabsContent value="contacts">
             <ContactsTab onContactsUploaded={handleContactsUploaded} />
           </TabsContent>
