@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
@@ -50,13 +49,11 @@ export default function SimplifiedCampaigns() {
     updateCampaignStatus(campaignId, status);
   };
   
-  // Fixed: Update handleEdit to only expect campaignId parameter
   const handleEdit = (campaignId: string) => {
     const campaign = campaigns.find(c => c.id === campaignId);
     if (campaign && campaign.status !== 'completed') {
       setSelectedCampaignId(campaignId);
       setIsEditing(true);
-      // Always set a default tab when editing
       setDefaultTab('overview');
     }
   };
