@@ -92,6 +92,7 @@ export default function SimplifiedCampaigns() {
           onSelect={handleCampaignSelect}
           onUpdateStatus={handleStatusChange}
           onEdit={handleEdit}
+          onDelete={(campaignId) => console.log('Delete campaign:', campaignId)}
         />
         
         <Dialog open={isCreatingCampaign} onOpenChange={setIsCreatingCampaign}>
