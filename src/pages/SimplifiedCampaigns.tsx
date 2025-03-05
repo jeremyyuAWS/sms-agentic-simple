@@ -96,7 +96,7 @@ export default function SimplifiedCampaigns() {
           campaigns={campaigns}
           onSelect={handleCampaignSelect}
           onUpdateStatus={handleStatusChange}
-          onEdit={(campaignId) => handleEdit(campaignId, "sales-outreach")}
+          onEdit={handleEdit}
           onDelete={(campaignId) => console.log('Delete campaign:', campaignId)}
         />
         
