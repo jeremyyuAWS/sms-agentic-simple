@@ -51,7 +51,7 @@ const CampaignDetailView: React.FC<CampaignDetailViewProps> = ({
   // Get campaign-specific messages for analytics
   const campaignMessages = messages.filter(m => m.campaignId === campaign.id);
   
-  // Generate analytics data - we explicitly set shouldUseDemoData to true for completed campaigns
+  // Generate analytics data - we explicitly force demo data for completed campaigns
   const shouldUseDemoData = campaign.status === 'completed';
   
   // Generate analytics data with demo mode if needed
@@ -61,6 +61,17 @@ const CampaignDetailView: React.FC<CampaignDetailViewProps> = ({
   const sentimentOverTimeData = generateSentimentOverTimeData(campaignMessages, shouldUseDemoData);
   const messageActivityData = generateMessageActivityData(campaignMessages, shouldUseDemoData);
   const positiveSentimentPercentage = calculatePositiveSentimentPercentage(campaignMessages, shouldUseDemoData);
+  
+  console.log("Campaign status:", campaign.status);
+  console.log("Should use demo data:", shouldUseDemoData);
+  console.log("Generated analytics data:", {
+    timeOfDayData,
+    dayOfWeekData,
+    sentimentData,
+    sentimentOverTimeData,
+    messageActivityData,
+    positiveSentimentPercentage
+  });
   
   const getTemplate = () => {
     if (!campaign.templateId) return 'No template selected';

@@ -50,6 +50,7 @@ export default function SimplifiedCampaigns() {
     updateCampaignStatus(campaignId, status);
   };
   
+  // Fix: Ensure we always pass both arguments to onEdit
   const handleEdit = (campaignId: string, campaignType: string = "sales-outreach") => {
     const campaign = campaigns.find(c => c.id === campaignId);
     if (campaign && campaign.status !== 'completed') {
@@ -96,7 +97,7 @@ export default function SimplifiedCampaigns() {
           campaigns={campaigns}
           onSelect={handleCampaignSelect}
           onUpdateStatus={handleStatusChange}
-          onEdit={(campaignId) => handleEdit(campaignId, "sales-outreach")}
+          onEdit={handleEdit}
           onDelete={(campaignId) => console.log('Delete campaign:', campaignId)}
         />
         
