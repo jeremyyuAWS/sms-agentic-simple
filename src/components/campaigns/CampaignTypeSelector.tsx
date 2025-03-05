@@ -12,7 +12,11 @@ import {
   Gift, 
   PartyPopper,
   Send,
-  Clipboard
+  Clipboard,
+  BookOpen,
+  ShoppingCart,
+  Award,
+  Truck
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -27,7 +31,11 @@ export type CampaignType =
   | 'promotional'
   | 'seasonal'
   | 'survey'
-  | 'webinar-invitation';
+  | 'webinar-invitation'
+  | 'product-launch'
+  | 'onboarding'
+  | 'renewal'
+  | 'order-confirmation';
 
 interface CampaignTypeInfo {
   id: CampaignType;
@@ -123,6 +131,34 @@ const CampaignTypeSelector: React.FC<CampaignTypeSelectorProps> = ({
       description: 'Invite contacts to attend your online webinar or presentation',
       icon: <Radio className="h-8 w-8" />,
       color: 'text-violet-500'
+    },
+    {
+      id: 'product-launch',
+      title: 'Product Launch',
+      description: 'Introduce and promote new products or services to your audience',
+      icon: <ShoppingCart className="h-8 w-8" />,
+      color: 'text-yellow-600'
+    },
+    {
+      id: 'onboarding',
+      title: 'Customer Onboarding',
+      description: 'Guide new customers through your product or service setup process',
+      icon: <BookOpen className="h-8 w-8" />,
+      color: 'text-blue-700'
+    },
+    {
+      id: 'renewal',
+      title: 'Subscription Renewal',
+      description: 'Remind customers about upcoming renewals and encourage continuation',
+      icon: <Award className="h-8 w-8" />,
+      color: 'text-teal-600'
+    },
+    {
+      id: 'order-confirmation',
+      title: 'Order Confirmation',
+      description: 'Confirm orders and provide tracking information to customers',
+      icon: <Truck className="h-8 w-8" />,
+      color: 'text-slate-700'
     }
   ];
 

@@ -86,7 +86,11 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
       'promotional': 'Special Offer',
       'seasonal': 'Seasonal Greeting',
       'survey': 'Customer Survey',
-      'webinar-invitation': 'Webinar Invitation'
+      'webinar-invitation': 'Webinar Invitation',
+      'product-launch': 'Product Launch',
+      'onboarding': 'Customer Onboarding',
+      'renewal': 'Subscription Renewal',
+      'order-confirmation': 'Order Confirmation'
     };
 
     const matchingTemplate = templates.find(t => 
@@ -113,6 +117,26 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
         startTime: '07:00',
         endTime: '10:00',
         daysOfWeek: [2, 4] // Tuesday and Thursday mornings
+      },
+      'product-launch': {
+        startTime: '10:00',
+        endTime: '16:00',
+        daysOfWeek: [2, 3, 4] // Tuesday, Wednesday, Thursday
+      },
+      'onboarding': {
+        startTime: '09:00',
+        endTime: '18:00',
+        daysOfWeek: [1, 2, 3, 4, 5] // Monday to Friday
+      },
+      'renewal': {
+        startTime: '10:00',
+        endTime: '17:00',
+        daysOfWeek: [1, 3, 5] // Monday, Wednesday, Friday
+      },
+      'order-confirmation': {
+        startTime: '08:00',
+        endTime: '20:00',
+        daysOfWeek: [0, 1, 2, 3, 4, 5, 6] // All days
       }
     };
 
@@ -128,6 +152,16 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
       const nextWeek = new Date(now);
       nextWeek.setDate(nextWeek.getDate() + 7);
       return nextWeek;
+    }
+    
+    if (type === 'product-launch') {
+      const twoWeeks = new Date(now);
+      twoWeeks.setDate(twoWeeks.getDate() + 14);
+      return twoWeeks;
+    }
+    
+    if (type === 'order-confirmation') {
+      return now; // Immediate start
     }
     
     return tomorrow;
@@ -358,6 +392,126 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
           condition: 'no-response',
           name: 'Last Day of Season'
         }
+      ],
+      'product-launch': [
+        { 
+          id: `followup-${now}-1`,
+          templateId,
+          delayDays: 3,
+          enabled: true,
+          condition: 'no-response',
+          name: 'Product Features Highlight'
+        },
+        { 
+          id: `followup-${now}-2`,
+          templateId,
+          delayDays: 7,
+          enabled: true,
+          condition: 'no-response',
+          name: 'Early Adopter Offer'
+        },
+        { 
+          id: `followup-${now}-3`,
+          templateId,
+          delayDays: 10,
+          enabled: true,
+          condition: 'no-response',
+          name: 'Launch Day Reminder'
+        },
+        { 
+          id: `followup-${now}-4`,
+          templateId,
+          delayDays: 15,
+          enabled: true,
+          condition: 'no-response',
+          name: 'Post-Launch Feedback Request'
+        }
+      ],
+      'onboarding': [
+        { 
+          id: `followup-${now}-1`,
+          templateId,
+          delayDays: 1,
+          enabled: true,
+          condition: 'no-response',
+          name: 'Welcome Message'
+        },
+        { 
+          id: `followup-${now}-2`,
+          templateId,
+          delayDays: 3,
+          enabled: true,
+          condition: 'no-response',
+          name: 'Getting Started Guide'
+        },
+        { 
+          id: `followup-${now}-3`,
+          templateId,
+          delayDays: 7,
+          enabled: true,
+          condition: 'no-response',
+          name: 'First Feature Tutorial'
+        },
+        { 
+          id: `followup-${now}-4`,
+          templateId,
+          delayDays: 14,
+          enabled: true,
+          condition: 'no-response',
+          name: 'Check-In & Support Offer'
+        },
+        { 
+          id: `followup-${now}-5`,
+          templateId,
+          delayDays: 30,
+          enabled: true,
+          condition: 'no-response',
+          name: '30-Day Usage Review'
+        }
+      ],
+      'renewal': [
+        { 
+          id: `followup-${now}-1`,
+          templateId,
+          delayDays: 30,
+          enabled: true,
+          condition: 'no-response',
+          name: 'Early Renewal Notice'
+        },
+        { 
+          id: `followup-${now}-2`,
+          templateId,
+          delayDays: 15,
+          enabled: true,
+          condition: 'no-response',
+          name: 'Renewal Benefits'
+        },
+        { 
+          id: `followup-${now}-3`,
+          templateId,
+          delayDays: 7,
+          enabled: true,
+          condition: 'no-response',
+          name: 'Final Renewal Reminder'
+        }
+      ],
+      'order-confirmation': [
+        { 
+          id: `followup-${now}-1`,
+          templateId,
+          delayDays: 0,
+          enabled: true,
+          condition: 'no-response',
+          name: 'Order Confirmation'
+        },
+        { 
+          id: `followup-${now}-2`,
+          templateId,
+          delayDays: 1,
+          enabled: true,
+          condition: 'no-response',
+          name: 'Shipping Notification'
+        }
       ]
     };
     
@@ -488,6 +642,50 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
         name: '',
         description: '',
         goal: { type: 'webinar-invitation' },
+        templateId: defaultTemplateId,
+        scheduledStartDate: defaultStartDate,
+        sendingWindow: defaultSendingWindow,
+        timeZone: defaultTimeZone,
+        followUps: defaultFollowUps,
+        contactCount: 0
+      },
+      'product-launch': {
+        name: '',
+        description: '',
+        goal: { type: 'product-announcement' },
+        templateId: defaultTemplateId,
+        scheduledStartDate: defaultStartDate,
+        sendingWindow: defaultSendingWindow,
+        timeZone: defaultTimeZone,
+        followUps: defaultFollowUps,
+        contactCount: 0
+      },
+      'onboarding': {
+        name: '',
+        description: '',
+        goal: { type: 'other' },
+        templateId: defaultTemplateId,
+        scheduledStartDate: defaultStartDate,
+        sendingWindow: defaultSendingWindow,
+        timeZone: defaultTimeZone,
+        followUps: defaultFollowUps,
+        contactCount: 0
+      },
+      'renewal': {
+        name: '',
+        description: '',
+        goal: { type: 'sales' },
+        templateId: defaultTemplateId,
+        scheduledStartDate: defaultStartDate,
+        sendingWindow: defaultSendingWindow,
+        timeZone: defaultTimeZone,
+        followUps: defaultFollowUps,
+        contactCount: 0
+      },
+      'order-confirmation': {
+        name: '',
+        description: '',
+        goal: { type: 'other' },
         templateId: defaultTemplateId,
         scheduledStartDate: defaultStartDate,
         sendingWindow: defaultSendingWindow,

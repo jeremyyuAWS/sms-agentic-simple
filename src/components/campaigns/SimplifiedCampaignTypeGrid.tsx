@@ -12,7 +12,11 @@ import {
   Gift, 
   PartyPopper,
   Send,
-  Clipboard
+  Clipboard,
+  BookOpen,
+  ShoppingCart,
+  Award,
+  Truck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CampaignType } from './CampaignTypeSelector';
@@ -121,6 +125,38 @@ const SimplifiedCampaignTypeGrid: React.FC<SimplifiedCampaignTypeGridProps> = ({
       icon: <Radio className="h-10 w-10" />,
       color: 'text-violet-500',
       bgColor: 'bg-violet-50'
+    },
+    {
+      id: 'product-launch',
+      title: 'Product Launch',
+      description: 'Introduce and promote new products or services to your audience',
+      icon: <ShoppingCart className="h-10 w-10" />,
+      color: 'text-yellow-600',
+      bgColor: 'bg-yellow-50'
+    },
+    {
+      id: 'onboarding',
+      title: 'Customer Onboarding',
+      description: 'Guide new customers through your product or service setup process',
+      icon: <BookOpen className="h-10 w-10" />,
+      color: 'text-blue-700',
+      bgColor: 'bg-blue-50'
+    },
+    {
+      id: 'renewal',
+      title: 'Subscription Renewal',
+      description: 'Remind customers about upcoming renewals and encourage continuation',
+      icon: <Award className="h-10 w-10" />,
+      color: 'text-teal-600',
+      bgColor: 'bg-teal-50'
+    },
+    {
+      id: 'order-confirmation',
+      title: 'Order Confirmation',
+      description: 'Confirm orders and provide tracking information to customers',
+      icon: <Truck className="h-10 w-10" />,
+      color: 'text-slate-700',
+      bgColor: 'bg-slate-50'
     }
   ];
 
