@@ -51,13 +51,19 @@ const CampaignCard = memo(({
     onSelect(campaign.id, 'analytics');
   }, [campaign.id, onSelect]);
 
+  const handleCardClick = useCallback(() => {
+    // Always pass both arguments to onSelect
+    onSelect(
+      campaign.id, 
+      campaign.status === 'completed' ? 'analytics' : 'overview'
+    );
+  }, [campaign.id, campaign.status, onSelect]);
+
   return (
     <AnimatedCard
       className="cursor-pointer hover:shadow-md transition-shadow"
       animationDelay={index * 100}
-      onClick={() => campaign.status === 'completed' 
-        ? onSelect(campaign.id, 'analytics') 
-        : onSelect(campaign.id, 'overview')}
+      onClick={handleCardClick}
     >
       <div className="flex items-center justify-between">
         <div>
