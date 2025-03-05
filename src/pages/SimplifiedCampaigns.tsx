@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
@@ -97,7 +96,7 @@ export default function SimplifiedCampaigns() {
           campaigns={campaigns}
           onSelect={handleCampaignSelect}
           onUpdateStatus={handleStatusChange}
-          onEdit={handleEdit}
+          onEdit={(campaignId) => handleEdit(campaignId, "sales-outreach")}
           onDelete={(campaignId) => console.log('Delete campaign:', campaignId)}
         />
         

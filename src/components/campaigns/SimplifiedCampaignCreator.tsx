@@ -9,12 +9,14 @@ import { useCampaignTemplates } from '@/hooks/campaign-type/useCampaignTemplates
 
 interface SimplifiedCampaignCreatorProps {
   initialCampaignType?: CampaignType | null;
+  campaign?: Campaign; // Added this line to accept a campaign for editing
   onCancel: () => void;
   onComplete: () => void;
 }
 
 const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({ 
   initialCampaignType = null,
+  campaign, // Added this parameter
   onCancel, 
   onComplete 
 }) => {
@@ -45,10 +47,10 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
     setStep('campaign-creation');
   };
 
-  const handleCreateCampaign = (campaign: Omit<Campaign, 'id' | 'createdAt'>) => {
+  const handleCreateCampaign = (campaignData: Omit<Campaign, 'id' | 'createdAt'>) => {
     setIsSubmitting(true);
     try {
-      createCampaign(campaign);
+      createCampaign(campaignData);
       onComplete();
     } catch (error) {
       console.error("Error creating campaign:", error);
@@ -57,10 +59,10 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
     }
   };
 
-  const handleUpdateCampaign = (campaignId: string, campaign: Partial<Omit<Campaign, 'id' | 'createdAt'>>) => {
+  const handleUpdateCampaign = (campaignId: string, campaignData: Partial<Omit<Campaign, 'id' | 'createdAt'>>) => {
     setIsSubmitting(true);
     try {
-      updateCampaign(campaignId, campaign);
+      updateCampaign(campaignId, campaignData);
       onComplete();
     } catch (error) {
       console.error("Error updating campaign:", error);
@@ -89,7 +91,7 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
 
   return (
     <CampaignCreator
-      campaign={getCampaignTemplate(selectedType) as any}
+      campaign={campaign || getCampaignTemplate(selectedType) as any}
       contacts={contacts}
       contactLists={contactLists}
       templates={templates}
