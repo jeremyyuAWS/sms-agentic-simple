@@ -17,13 +17,13 @@ const generateMessages = () => {
     
     // For completed campaigns, generate a full set of messages over the campaign duration
     const campaignContacts = contacts.slice(0, campaign.contactCount || 3);
-    const messageDensity = isCompleted ? 0.8 : 0.4; // Higher density for completed campaigns
+    const messageDensity = isCompleted ? 0.95 : 0.4; // Much higher density for completed campaigns
     
     // Calculate the number of messages to generate based on contact count
-    // More messages for completed campaigns
+    // Many more messages for completed campaigns
     const contactsToUse = Math.min(campaign.contactCount || 3, 100);
     const messageCount = isCompleted 
-      ? Math.floor(contactsToUse * messageDensity * 2.5)
+      ? Math.floor(contactsToUse * messageDensity * 4.5) // Generate 4.5x more messages for completed campaigns
       : Math.floor(contactsToUse * messageDensity * 1.2);
     
     // Calculate campaign duration for message spread
@@ -43,8 +43,17 @@ const generateMessages = () => {
       // For active campaigns, concentrate more messages in recent days
       let dayOffset: number;
       if (isCompleted) {
-        // Even distribution across the campaign duration
-        dayOffset = Math.floor((i / messageCount) * campaignDurationDays);
+        // Generate more varied distribution for completed campaigns
+        if (i < messageCount * 0.3) {
+          // First 30% of messages more dense at the beginning (first third of campaign)
+          dayOffset = Math.floor((i / (messageCount * 0.3)) * (campaignDurationDays / 3));
+        } else if (i < messageCount * 0.7) {
+          // Middle 40% distributed through the middle
+          dayOffset = Math.floor(campaignDurationDays / 3 + ((i - messageCount * 0.3) / (messageCount * 0.4)) * (campaignDurationDays / 3));
+        } else {
+          // Last 30% distributed through the final third
+          dayOffset = Math.floor(2 * campaignDurationDays / 3 + ((i - messageCount * 0.7) / (messageCount * 0.3)) * (campaignDurationDays / 3));
+        }
       } else {
         // More recent messages for active campaigns (logarithmic distribution)
         dayOffset = Math.floor(Math.log(1 + (i / messageCount) * 10) / Math.log(11) * campaignDurationDays);
@@ -72,20 +81,32 @@ const generateMessages = () => {
       allMessages.push(outboundMsg);
       
       // Determine response probability based on campaign's response rate
-      const responseRate = campaign.responseRate || 0.3;
-      const willRespond = Math.random() < (isCompleted ? responseRate * 1.2 : responseRate);
+      // Higher response rates for completed campaigns
+      const baseResponseRate = campaign.responseRate || 0.3;
+      const responseRate = isCompleted ? Math.min(0.85, baseResponseRate * (1.5 + (dayOffset / campaignDurationDays) * 0.5)) : baseResponseRate;
+      const willRespond = Math.random() < responseRate;
       
       if (willRespond) {
         // Add some realism with response delay
         const responseDelayMinutes = Math.floor(Math.random() * 180) + 10; // 10 min to 3 hours
         const responseDate = new Date(messageDate.getTime() + responseDelayMinutes * 60 * 1000);
         
-        // Distribution of response types varies by campaign type
-        // Completed campaigns have more positive responses
+        // Distribution of response types varies by campaign type and progression
+        // Completed campaigns have more positive responses, especially toward the end
         let responseTypeChances: Record<string, number>;
         
         if (isCompleted) {
-          responseTypeChances = { positive: 0.65, negative: 0.15, neutral: 0.2 };
+          // For completed campaigns, increase positive responses as campaign progresses
+          const campaignProgress = dayOffset / campaignDurationDays;
+          const positiveChance = 0.45 + (campaignProgress * 0.3); // 45-75% positive, increasing over time
+          const negativeChance = 0.35 - (campaignProgress * 0.25); // 10-35% negative, decreasing over time
+          const neutralChance = 1 - positiveChance - negativeChance; // 15-20% neutral
+          
+          responseTypeChances = { 
+            positive: positiveChance, 
+            negative: negativeChance, 
+            neutral: neutralChance 
+          };
         } else {
           responseTypeChances = { positive: 0.5, negative: 0.3, neutral: 0.2 };
         }
