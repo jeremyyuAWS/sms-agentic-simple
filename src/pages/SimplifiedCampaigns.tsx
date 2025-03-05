@@ -1,257 +1,114 @@
 
-import React, { useState, useCallback } from 'react';
-import { useApp } from '@/contexts';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Search, Undo2 } from 'lucide-react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Plus } from 'lucide-react';
+import PageLayout from '@/components/layout/PageLayout';
+import { PageTitle } from '@/components/layout/PageTitle';
 import CampaignList from '@/components/campaigns/CampaignList';
-import CampaignDetailView from '@/components/campaigns/CampaignDetailView';
-import NavigationButtons from '@/components/ui/navigation-buttons';
-import CampaignFilters from '@/components/campaigns/CampaignFilters';
 import { Campaign } from '@/lib/types';
-import LoadingState from '@/components/ui/loading-state';
-import { useCampaignFilters } from '@/hooks/use-campaign-filters';
+import { useApp } from '@/contexts';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import SimplifiedCampaignCreator from '@/components/campaigns/SimplifiedCampaignCreator';
-import SimplifiedCampaignTypeGrid from '@/components/campaigns/SimplifiedCampaignTypeGrid';
-import { CampaignType } from '@/components/campaigns/CampaignTypeSelector';
+import CampaignDetailView from '@/components/campaigns/CampaignDetailView';
 
-type CampaignView = 'list' | 'create' | 'detail' | 'type-selection';
-
-const SimplifiedCampaigns: React.FC = () => {
-  const { 
-    campaigns, 
-    updateCampaignStatus,
-    updateCampaign,
-    deleteCampaign,
-  } = useApp();
-  
+export default function SimplifiedCampaigns() {
+  const { campaigns, updateCampaignStatus, createCampaign, updateCampaign } = useApp();
+  const [isCreatingCampaign, setIsCreatingCampaign] = useState(false);
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
-  const [selectedView, setSelectedView] = useState<CampaignView>('type-selection');
-  const [isLoading, setIsLoading] = useState(false);
-  const [apiError, setApiError] = useState<string | null>(null);
-  const [selectedCampaignType, setSelectedCampaignType] = useState<CampaignType | null>(null);
-
-  const {
-    activeStatus,
-    sortBy,
-    searchQuery,
-    filteredCampaigns,
-    statusCounts,
-    setActiveStatus,
-    setSortBy,
-    setSearchQuery
-  } = useCampaignFilters(campaigns);
-
+  const [isEditing, setIsEditing] = useState(false);
+  
   const selectedCampaign = selectedCampaignId 
     ? campaigns.find(c => c.id === selectedCampaignId) 
     : null;
-
-  const handleSelectCampaignType = useCallback((type: CampaignType) => {
-    setSelectedCampaignType(type);
-    setSelectedView('create');
-    setApiError(null);
-  }, []);
-
-  const handleNewCampaign = useCallback(() => {
-    setSelectedCampaignId(null);
-    setSelectedView('type-selection');
-    setApiError(null);
-  }, []);
-
-  const handleViewCampaign = useCallback((campaignId: string) => {
+  
+  const handleCreateCampaign = () => {
+    setIsCreatingCampaign(true);
+  };
+  
+  const handleCampaignSelect = (campaignId: string, defaultTab?: string) => {
     setSelectedCampaignId(campaignId);
-    setSelectedView('detail');
-    setApiError(null);
-  }, []);
-
-  const handleEditCampaign = useCallback((campaignId: string) => {
+    // Pass the defaultTab parameter when we have the CampaignDetailView component
+  };
+  
+  const handleStatusChange = (campaignId: string, status: Campaign['status']) => {
+    updateCampaignStatus(campaignId, status);
+  };
+  
+  const handleEdit = (campaignId: string) => {
     setSelectedCampaignId(campaignId);
-    setSelectedView('create');
-    setApiError(null);
-  }, []);
-
-  const handleDeleteCampaign = useCallback((campaignId: string) => {
-    setIsLoading(true);
-    setApiError(null);
-    
-    try {
-      deleteCampaign(campaignId);
-      
-      if (selectedCampaignId === campaignId) {
-        setSelectedCampaignId(null);
-        setSelectedView('type-selection');
-      }
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : "Failed to delete campaign";
-      setApiError(errorMsg);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [deleteCampaign, selectedCampaignId]);
-
-  const handleBackToList = useCallback(() => {
+    setIsEditing(true);
+  };
+  
+  const handleClose = () => {
     setSelectedCampaignId(null);
-    setSelectedView('list');
-    setApiError(null);
-  }, []);
-
-  const handleBackToTypeSelection = useCallback(() => {
+    setIsEditing(false);
+  };
+  
+  const handleSave = (campaign: Campaign) => {
+    if (selectedCampaignId) {
+      updateCampaign(campaign);
+    } else {
+      createCampaign(campaign);
+    }
+    
+    setIsCreatingCampaign(false);
+    setIsEditing(false);
     setSelectedCampaignId(null);
-    setSelectedView('type-selection');
-    setApiError(null);
-  }, []);
-
-  const handleStatusChange = useCallback((status: string) => {
-    setActiveStatus(status as any);
-  }, [setActiveStatus]);
-
-  const handleSortChange = useCallback((sort: string) => {
-    setSortBy(sort as any);
-  }, [setSortBy]);
-
-  const handleCampaignCreated = useCallback(() => {
-    setSelectedView('list');
-    setApiError(null);
-  }, []);
-
-  const renderContent = () => {
-    if (selectedView === 'type-selection') {
-      return campaigns.length === 0 ? (
-        <div className="space-y-8 px-4 sm:px-6">
-          <div className="text-center space-y-4 max-w-2xl mx-auto">
-            <h2 className="text-2xl font-bold">Welcome to the SMS Campaign Creator</h2>
-            <p className="text-muted-foreground">
-              Create your first campaign by selecting a campaign type below. Each tile represents a different 
-              outreach scenario with pre-configured templates and settings.
-            </p>
-          </div>
-          <SimplifiedCampaignTypeGrid onSelect={handleSelectCampaignType} />
-        </div>
-      ) : (
-        <div className="space-y-8 px-4 sm:px-6">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold">Your Existing Campaigns</h2>
-            <Button 
-              variant="outline" 
-              onClick={() => setSelectedView('list')}
-              className="text-sm"
-            >
-              View All Campaigns
-            </Button>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredCampaigns.slice(0, 3).map((campaign) => (
-              <Card key={campaign.id} className="overflow-hidden hover:shadow-md cursor-pointer transition-all" onClick={() => handleViewCampaign(campaign.id)}>
-                <div className="h-2 bg-purple-100 w-full"></div>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">{campaign.name}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground line-clamp-2">{campaign.description || 'No description'}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          <SimplifiedCampaignTypeGrid onSelect={handleSelectCampaignType} />
-        </div>
-      );
-    }
-    
-    if (selectedView === 'create') {
-      return (
-        <div className="px-4 sm:px-6">
-          <SimplifiedCampaignCreator
-            initialCampaignType={selectedCampaignType}
-            onCancel={handleBackToTypeSelection}
-            onComplete={handleCampaignCreated}
-          />
-        </div>
-      );
-    }
-    
-    if (selectedView === 'detail' && selectedCampaign) {
-      return (
-        <div className="px-4 sm:px-6">
-          <CampaignDetailView
-            campaign={selectedCampaign}
-            onClose={handleBackToTypeSelection}
-            onStatusChange={updateCampaignStatus}
-            onEdit={handleEditCampaign}
-          />
-        </div>
-      );
-    }
-    
-    return (
-      <LoadingState isLoading={isLoading} error={apiError}>
-        <div className="space-y-4 px-4 sm:px-6">
-          <div className="flex flex-col sm:flex-row gap-4 mb-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Search campaigns..."
-                className="pl-8"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <Button 
-              onClick={handleNewCampaign}
-              className="bg-[#9b87f5] hover:bg-[#8B5CF6] text-white"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              <span className="hidden sm:inline">New Campaign</span>
-            </Button>
-          </div>
-        
-          <CampaignFilters 
-            activeStatus={activeStatus}
-            onStatusChange={handleStatusChange}
-            onSortChange={handleSortChange}
-            totalCount={statusCounts.all}
-          />
-          
-          <CampaignList 
-            campaigns={filteredCampaigns}
-            onSelect={handleViewCampaign}
-            onUpdateStatus={updateCampaignStatus}
-            onEdit={handleEditCampaign}
-            onDelete={handleDeleteCampaign}
-          />
-        </div>
-      </LoadingState>
-    );
   };
 
   return (
-    <div className="container mx-auto py-6 max-w-7xl">
-      <div className="flex justify-between items-center mb-6 px-4 sm:px-6">
-        <div className="text-left">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">SMS Campaigns</h1>
-          <p className="text-muted-foreground mt-1">
-            Create and manage automated outreach campaigns
-          </p>
+    <PageLayout>
+      <div className="container mx-auto py-6">
+        <div className="flex justify-between items-center mb-6">
+          <PageTitle title="Campaigns" subtitle="Create and manage your outreach campaigns" />
+          <Button onClick={handleCreateCampaign}>
+            <Plus className="h-4 w-4 mr-2" />
+            New Campaign
+          </Button>
         </div>
         
-        {selectedView !== 'list' && selectedView !== 'type-selection' && (
-          <Button variant="outline" onClick={handleBackToTypeSelection} className="text-sm">
-            <Undo2 className="mr-2 h-4 w-4" />
-            <span className="hidden sm:inline">Back to Campaign Types</span>
-          </Button>
+        <CampaignList 
+          campaigns={campaigns}
+          onSelect={handleCampaignSelect}
+          onUpdateStatus={handleStatusChange}
+          onEdit={handleEdit}
+        />
+        
+        <Dialog open={isCreatingCampaign} onOpenChange={setIsCreatingCampaign}>
+          <DialogContent className="max-w-3xl">
+            <SimplifiedCampaignCreator 
+              onSave={handleSave} 
+              onCancel={() => setIsCreatingCampaign(false)} 
+            />
+          </DialogContent>
+        </Dialog>
+        
+        {selectedCampaign && !isEditing && (
+          <Dialog open={!!selectedCampaign} onOpenChange={(open) => !open && handleClose()}>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              <CampaignDetailView 
+                campaign={selectedCampaign}
+                onClose={handleClose}
+                onStatusChange={handleStatusChange}
+                onEdit={() => setIsEditing(true)}
+                defaultTab={selectedCampaign.status === 'completed' ? 'analytics' : undefined}
+              />
+            </DialogContent>
+          </Dialog>
+        )}
+        
+        {selectedCampaign && isEditing && (
+          <Dialog open={isEditing} onOpenChange={(open) => !open && handleClose()}>
+            <DialogContent className="max-w-3xl">
+              <SimplifiedCampaignCreator 
+                campaign={selectedCampaign}
+                onSave={handleSave}
+                onCancel={handleClose}
+              />
+            </DialogContent>
+          </Dialog>
         )}
       </div>
-
-      {renderContent()}
-      
-      <div className="mt-12">
-        <NavigationButtons currentPage="simplified-campaigns" />
-      </div>
-    </div>
+    </PageLayout>
   );
-};
-
-export default SimplifiedCampaigns;
+}

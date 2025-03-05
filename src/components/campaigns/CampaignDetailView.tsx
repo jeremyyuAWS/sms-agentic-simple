@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '@/contexts';
 import { Campaign } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
@@ -26,16 +26,27 @@ interface CampaignDetailViewProps {
   onClose: () => void;
   onStatusChange: (campaignId: string, status: Campaign['status']) => void;
   onEdit: (campaignId: string) => void;
+  defaultTab?: string;
 }
 
 const CampaignDetailView: React.FC<CampaignDetailViewProps> = ({
   campaign,
   onClose,
   onStatusChange,
-  onEdit
+  onEdit,
+  defaultTab = 'overview'
 }) => {
   const { contacts, templates, contactLists, messages } = useApp();
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState(defaultTab);
+  
+  // Set default tab based on campaign status or provided default
+  useEffect(() => {
+    if (campaign.status === 'completed' && !defaultTab) {
+      setActiveTab('analytics');
+    } else if (defaultTab) {
+      setActiveTab(defaultTab);
+    }
+  }, [campaign.status, defaultTab]);
   
   // Determine if we should use demo data - always use demo for completed campaigns
   // or if campaign has very few messages

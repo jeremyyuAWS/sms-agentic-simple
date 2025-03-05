@@ -12,14 +12,15 @@ import {
   BarChart3,
   Clock,
   Edit,
-  Trash2
+  Trash2,
+  Eye
 } from 'lucide-react';
 import { formatDistance } from 'date-fns';
 import StatusBadge from './StatusBadge';
 
 interface CampaignListProps {
   campaigns: Campaign[];
-  onSelect: (campaignId: string) => void;
+  onSelect: (campaignId: string, defaultTab?: string) => void;
   onUpdateStatus: (campaignId: string, status: Campaign['status']) => void;
   onEdit?: (campaignId: string) => void;
   onDelete?: (campaignId: string) => void;
@@ -36,7 +37,7 @@ const CampaignCard = memo(({
 }: { 
   campaign: Campaign; 
   index: number;
-  onSelect: (campaignId: string) => void;
+  onSelect: (campaignId: string, defaultTab?: string) => void;
   onUpdateStatus: (campaignId: string, status: Campaign['status']) => void;
   onEdit?: (campaignId: string) => void;
   onDelete?: (campaignId: string) => void;
@@ -62,6 +63,12 @@ const CampaignCard = memo(({
       onDelete(campaign.id);
     }
   }, [campaign.id, onDelete]);
+  
+  const handleView = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    // For completed campaigns, navigate directly to analytics tab
+    onSelect(campaign.id, 'analytics');
+  }, [campaign.id, onSelect]);
 
   const getStatusActions = () => {
     switch (campaign.status) {
@@ -162,6 +169,19 @@ const CampaignCard = memo(({
             </Button>
           </>
         );
+      case 'completed':
+        return (
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8"
+              onClick={handleView}
+            >
+              <Eye className="h-3.5 w-3.5 mr-1" /> View Results
+            </Button>
+          </>
+        );
       default:
         return (
           <>
@@ -184,7 +204,7 @@ const CampaignCard = memo(({
     <AnimatedCard
       className="cursor-pointer hover:shadow-md transition-shadow"
       animationDelay={index * 100}
-      onClick={() => onSelect(campaign.id)}
+      onClick={() => campaign.status === 'completed' ? onSelect(campaign.id, 'analytics') : onSelect(campaign.id)}
     >
       <div className="flex items-center justify-between">
         <div>
