@@ -53,10 +53,8 @@ const CampaignCard = memo(({
 
   const handleCardClick = useCallback(() => {
     // Always pass both arguments to onSelect
-    onSelect(
-      campaign.id, 
-      campaign.status === 'completed' ? 'analytics' : 'overview'
-    );
+    const defaultTab = campaign.status === 'completed' ? 'analytics' : 'overview';
+    onSelect(campaign.id, defaultTab);
   }, [campaign.id, campaign.status, onSelect]);
 
   return (
