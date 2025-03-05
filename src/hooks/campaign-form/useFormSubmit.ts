@@ -35,23 +35,8 @@ export const useFormSubmit = (
       return;
     }
 
-    // Validate template selection - The issue is here
-    // We need to check followUps[0].templateId as well since that's where the template ID might be
-    const hasTemplate = formState.templateId || 
-      (formState.followUps && 
-       formState.followUps.length > 0 && 
-       formState.followUps[0].templateId);
-       
-    if (!hasTemplate) {
-      toast({
-        title: "Validation Error",
-        description: "You must select a template",
-        variant: "destructive",
-      });
-      setActiveTab('messaging');
-      return;
-    }
-
+    // Template validation check has been removed
+    
     try {
       setIsSubmitting(true);
       

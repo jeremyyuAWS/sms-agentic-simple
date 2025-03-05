@@ -36,14 +36,14 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
   // Use our custom hooks
   const { updateFollowUp, getMessageTitle } = useFollowUpManagement(followUps, onFollowUpsChange);
 
-  // Generate follow-ups if none exist
+  // Generate follow-ups if none exist (but don't require templateId)
   useEffect(() => {
-    if (followUps.length === 0 && selectedTemplateId) {
-      // Create default follow-up sequence with selectedTemplateId
+    if (followUps.length === 0) {
+      // Create default follow-up sequence, template ID is now optional
       const defaultFollowUps = [
         {
           id: `followup-${Date.now()}-1`,
-          templateId: selectedTemplateId, // Use the selected template ID
+          templateId: selectedTemplateId || '', // Make template ID optional
           delayDays: 0, // Initial message has no delay
           enabled: true,
           condition: 'no-response',
@@ -54,7 +54,7 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
       
       onFollowUpsChange(defaultFollowUps);
     } else if (followUps.length > 0 && selectedTemplateId && !followUps[0].templateId) {
-      // If follow-ups exist but first one has no templateId, update it
+      // If follow-ups exist and a template is selected, update first follow-up with templateId
       const updatedFollowUps = [...followUps];
       updatedFollowUps[0] = {
         ...updatedFollowUps[0],
@@ -86,7 +86,7 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
   const handleAddFollowUp = () => {
     const newFollowUp = {
       id: `followup-${Date.now()}-${followUps.length + 1}`,
-      templateId: selectedTemplateId,
+      templateId: selectedTemplateId || '', // Make template ID optional
       delayDays: followUps.length > 0 ? followUps[followUps.length - 1].delayDays + 4 : 3,
       enabled: true,
       name: `Follow-up Message ${followUps.length}`,
