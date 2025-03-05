@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useApp } from '@/contexts';
 import { Contact, ContactList } from '@/lib/types';
@@ -169,7 +168,7 @@ const Contacts: React.FC = () => {
 
   return (
     <div className="container mx-auto py-6 max-w-7xl">
-      <PageHeader onCreateList={handleOpenNewListDialog} />
+      <PageHeader />
 
       <Tabs defaultValue="contacts" value={activeTabPage} onValueChange={setActiveTabPage}>
         <TabsList className="mb-6">
