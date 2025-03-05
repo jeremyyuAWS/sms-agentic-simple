@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
@@ -116,7 +117,7 @@ export default function SimplifiedCampaigns() {
                 campaign={selectedCampaign}
                 onClose={handleClose}
                 onStatusChange={handleStatusChange}
-                onEdit={(campaignId) => handleEdit(campaignId, "sales-outreach")}
+                onEdit={(campaignId, campaignType) => handleEdit(campaignId, campaignType || "sales-outreach")}
                 defaultTab={defaultTab}
               />
             </DialogContent>
