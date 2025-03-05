@@ -1,41 +1,49 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Message } from '@/lib/types';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { SentimentChart } from './SentimentChart';
 import { TimeDistributionChart } from './TimeDistributionChart';
 import { TimeSeriesChart } from './TimeSeriesChart';
+import * as analyticsUtils from './analyticsUtils';
 
 interface AnalyticsTabProps {
   campaignMessages: Message[];
   responseRate?: number;
-  timeOfDayData: Array<{ hour: string; count: number }>;
-  dayOfWeekData: Array<{ day: string; count: number }>;
-  sentimentData: Array<{ name: string; value: number }>;
-  sentimentOverTimeData: Array<{ 
-    date: string; 
-    positive: number;
-    neutral: number;
-    negative: number;
-  }>;
-  messageActivityData: Array<{ 
-    date: string; 
-    outbound: number;
-    inbound: number;
-  }>;
-  positiveSentimentPercentage: string;
+  isCompleted?: boolean;
+  campaignName?: string;
 }
 
 export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
   campaignMessages,
   responseRate,
-  timeOfDayData,
-  dayOfWeekData,
-  sentimentData,
-  sentimentOverTimeData,
-  messageActivityData,
-  positiveSentimentPercentage
+  isCompleted = false,
+  campaignName = ''
 }) => {
+  // Use demo data for completed campaigns or when explicitly requested
+  const useDemoData = isCompleted || campaignMessages.length === 0;
+  
+  // Generate data
+  const timeOfDayData = analyticsUtils.generateTimeOfDayData(campaignMessages, useDemoData);
+  const dayOfWeekData = analyticsUtils.generateDayOfWeekData(campaignMessages, useDemoData);
+  const sentimentData = analyticsUtils.generateSentimentData(campaignMessages, useDemoData);
+  const sentimentOverTimeData = analyticsUtils.generateSentimentOverTimeData(campaignMessages, useDemoData);
+  const messageActivityData = analyticsUtils.generateMessageActivityData(campaignMessages, useDemoData);
+  const positiveSentimentPercentage = analyticsUtils.calculatePositiveSentimentPercentage(campaignMessages, useDemoData);
+  
+  // Calculate totals for demo or real data
+  const totalMessages = useDemoData 
+    ? messageActivityData.reduce((sum, day) => sum + (Number(day.outbound) || 0), 0)
+    : campaignMessages.filter(m => m.type === 'outbound').length;
+  
+  const totalResponses = useDemoData
+    ? messageActivityData.reduce((sum, day) => sum + (Number(day.inbound) || 0), 0)
+    : campaignMessages.filter(m => m.type === 'inbound').length;
+  
+  const calculatedResponseRate = totalMessages > 0 
+    ? ((totalResponses / totalMessages) * 100).toFixed(1)
+    : '0.0';
+
   return (
     <div className="space-y-8">
       {/* Top analytics overview cards */}
@@ -45,8 +53,8 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
             <CardTitle className="text-sm font-medium">Message Activity</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{campaignMessages.length}</div>
-            <p className="text-xs text-muted-foreground">Total messages sent and received</p>
+            <div className="text-2xl font-bold">{totalMessages}</div>
+            <p className="text-xs text-muted-foreground">Total messages sent</p>
           </CardContent>
         </Card>
         
@@ -56,7 +64,7 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {responseRate ? `${(responseRate * 100).toFixed(1)}%` : '0.0%'}
+              {responseRate ? `${(responseRate * 100).toFixed(1)}%` : `${calculatedResponseRate}%`}
             </div>
             <p className="text-xs text-muted-foreground">Of messages received a reply</p>
           </CardContent>
@@ -75,40 +83,23 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
         </Card>
       </div>
       
-      {/* Time of Day Distribution */}
+      {/* Message Activity Over Time */}
       <Card>
         <CardHeader>
-          <CardTitle>Time of Day Analysis</CardTitle>
+          <CardTitle>Message Activity</CardTitle>
           <CardDescription>
-            Message activity distribution by hour of day
+            Message volume over the campaign duration
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <TimeDistributionChart 
-            data={timeOfDayData} 
-            xAxisKey="hour" 
-            barKey="count" 
-            barColor="#8884d8"
-            barName="Messages"
-          />
-        </CardContent>
-      </Card>
-      
-      {/* Day of Week Distribution */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Day of Week Analysis</CardTitle>
-          <CardDescription>
-            Message activity distribution by day of week
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <TimeDistributionChart 
-            data={dayOfWeekData} 
-            xAxisKey="day" 
-            barKey="count" 
-            barColor="#82ca9d"
-            barName="Messages"
+          <TimeSeriesChart 
+            data={messageActivityData}
+            xAxisKey="date"
+            lines={[
+              { dataKey: "outbound", stroke: "#8884d8", name: "Outbound" },
+              { dataKey: "inbound", stroke: "#82ca9d", name: "Inbound" }
+            ]}
+            emptyMessage="No message activity data available yet"
           />
         </CardContent>
       </Card>
@@ -122,7 +113,10 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <SentimentChart sentimentData={sentimentData} />
+          <SentimentChart 
+            sentimentData={sentimentData} 
+            emptyMessage="No response sentiment data available yet"
+          />
         </CardContent>
       </Card>
       
@@ -143,26 +137,55 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
               { dataKey: "neutral", stroke: "#a1a1aa", name: "Neutral" },
               { dataKey: "negative", stroke: "#f87171", name: "Negative" }
             ]}
+            emptyMessage="No sentiment trend data available yet"
           />
         </CardContent>
       </Card>
       
-      {/* Message Activity Over Time */}
+      {/* Time of Day Distribution */}
       <Card>
         <CardHeader>
-          <CardTitle>Message Activity</CardTitle>
+          <CardTitle>Time of Day Analysis</CardTitle>
           <CardDescription>
-            Message volume over the campaign duration
+            Message activity and response distribution by hour of day
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <TimeSeriesChart 
-            data={messageActivityData}
-            xAxisKey="date"
-            lines={[
-              { dataKey: "outbound", stroke: "#8884d8", name: "Outbound" },
-              { dataKey: "inbound", stroke: "#82ca9d", name: "Inbound" }
-            ]}
+          <TimeDistributionChart 
+            data={timeOfDayData} 
+            xAxisKey="hour" 
+            barKey="count" 
+            barColor="#8884d8"
+            barName="Messages Sent"
+            showResponseData={true}
+            responseKey="responses"
+            responseBarColor="#82ca9d"
+            responseName="Responses"
+            emptyMessage="No time of day data available yet"
+          />
+        </CardContent>
+      </Card>
+      
+      {/* Day of Week Distribution */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Day of Week Analysis</CardTitle>
+          <CardDescription>
+            Message activity and response distribution by day of week
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <TimeDistributionChart 
+            data={dayOfWeekData} 
+            xAxisKey="day" 
+            barKey="count" 
+            barColor="#8884d8"
+            barName="Messages Sent"
+            showResponseData={true}
+            responseKey="positive"
+            responseBarColor="#4ade80"
+            responseName="Positive Responses"
+            emptyMessage="No day of week data available yet"
           />
         </CardContent>
       </Card>
