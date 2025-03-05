@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { campaigns, contacts, conversations, templates, metrics } from '@/lib/mockData';
+import { campaigns, contacts, conversations, templates, metrics, messages } from '@/lib/mockData';
 import { 
   Campaign, 
   Contact, 
@@ -11,7 +11,8 @@ import {
   ContactTag,
   ContactSegment,
   ContactList,
-  TemplateCategory
+  TemplateCategory,
+  Message
 } from '@/lib/types';
 import { AppContext } from './AppContext';
 import { createMessageActions } from './actions/messageActions';
@@ -47,6 +48,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     isPublic: Math.random() > 0.5
   })));
   const [metricsState, setMetrics] = useState<MetricItem[]>(metrics);
+  const [messagesState, setMessages] = useState<Message[]>(messages); // Add messages state
   const [knowledgeBasesState, setKnowledgeBases] = useState<KnowledgeBase[]>([]);
   const [contactTagsState, setContactTags] = useState<ContactTag[]>([]);
   const [contactSegmentsState, setContactSegments] = useState<ContactSegment[]>([]);
@@ -134,6 +136,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
         contactSegments: contactSegmentsState,
         contactLists: contactListsState,
         templateCategories: templateCategoriesState,
+        messages: messagesState, // Add messages to the context value
         
         // UI State
         ...uiStateActions,

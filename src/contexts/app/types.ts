@@ -63,6 +63,7 @@ export interface AppContextProps {
   activeConversation: Conversation | null;
   activeTemplate: Template | null;
   sidebarOpen: boolean;
+  messages: Message[]; // Added missing messages property
   
   // New workflow state
   workflow: WorkflowState;
