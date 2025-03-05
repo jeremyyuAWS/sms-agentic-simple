@@ -82,15 +82,15 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
     <div className="space-y-8">
       {/* Simulate Data button */}
       {shouldShowSimulateButton && (
-        <div className="flex justify-end">
+        <div className="flex justify-center mb-6">
           <Button 
             variant="outline" 
-            size="sm" 
+            size="lg" 
             onClick={handleSimulateData}
-            className="mb-4"
+            className="shadow-sm hover:shadow border border-dashed"
           >
-            <Zap className="h-4 w-4 mr-2" />
-            Simulate Data
+            <Zap className="h-4 w-4 mr-2 text-amber-500" />
+            Generate Simulated Analytics Data
           </Button>
         </div>
       )}

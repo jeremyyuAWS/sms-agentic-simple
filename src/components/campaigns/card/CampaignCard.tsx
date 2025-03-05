@@ -70,7 +70,7 @@ const CampaignCard = memo(({
         </div>
         <div className="flex items-center gap-2">
           <StatusBadge status={campaign.status} />
-          {onDelete && (
+          {onDelete && campaign.status !== 'completed' && (
             <Button
               variant="ghost"
               size="icon"

@@ -54,52 +54,51 @@ export const CampaignHeader: React.FC<CampaignHeaderProps> = ({
         </CardDescription>
       </div>
       
-      <div className="flex items-center gap-2">
-        {/* Only show Edit button if campaign is not completed */}
-        {campaign.status !== 'completed' && (
+      {campaign.status !== 'completed' && (
+        <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => onEdit(campaign.id)}>
             <Edit className="h-4 w-4 mr-1" />
             Edit
           </Button>
-        )}
-        
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <MoreVertical className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {campaign.status === 'active' && (
-              <DropdownMenuItem onClick={() => handleStatusChange('paused')}>
-                <PauseCircle className="h-4 w-4 mr-2" />
-                Pause Campaign
-              </DropdownMenuItem>
-            )}
-            
-            {campaign.status === 'paused' && (
-              <DropdownMenuItem onClick={() => handleStatusChange('active')}>
-                <PlayCircle className="h-4 w-4 mr-2" />
-                Resume Campaign
-              </DropdownMenuItem>
-            )}
-            
-            {campaign.status === 'draft' && (
-              <DropdownMenuItem onClick={() => handleStatusChange('active')}>
-                <PlayCircle className="h-4 w-4 mr-2" />
-                Start Campaign
-              </DropdownMenuItem>
-            )}
-            
-            {(campaign.status === 'active' || campaign.status === 'paused') && (
-              <DropdownMenuItem onClick={() => handleStatusChange('completed')}>
-                <CheckCircle className="h-4 w-4 mr-2" />
-                Complete Campaign
-              </DropdownMenuItem>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {campaign.status === 'active' && (
+                <DropdownMenuItem onClick={() => handleStatusChange('paused')}>
+                  <PauseCircle className="h-4 w-4 mr-2" />
+                  Pause Campaign
+                </DropdownMenuItem>
+              )}
+              
+              {campaign.status === 'paused' && (
+                <DropdownMenuItem onClick={() => handleStatusChange('active')}>
+                  <PlayCircle className="h-4 w-4 mr-2" />
+                  Resume Campaign
+                </DropdownMenuItem>
+              )}
+              
+              {campaign.status === 'draft' && (
+                <DropdownMenuItem onClick={() => handleStatusChange('active')}>
+                  <PlayCircle className="h-4 w-4 mr-2" />
+                  Start Campaign
+                </DropdownMenuItem>
+              )}
+              
+              {(campaign.status === 'active' || campaign.status === 'paused') && (
+                <DropdownMenuItem onClick={() => handleStatusChange('completed')}>
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Complete Campaign
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      )}
     </div>
   );
 };
