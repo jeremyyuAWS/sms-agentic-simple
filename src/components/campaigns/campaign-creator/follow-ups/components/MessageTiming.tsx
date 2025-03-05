@@ -14,8 +14,10 @@ export interface TimingOption {
 }
 
 interface MessageTimingProps {
-  value: string;
-  onChange: (value: string) => void;
+  value?: string;
+  onChange?: (value: string) => void;
+  delayDays?: number | string;
+  onDelayChange?: (days: number | string) => void;
   isInitialMessage: boolean;
 }
 
@@ -28,17 +30,33 @@ export const commonDelayOptions: TimingOption[] = [
   { value: "14", label: "14 days (very patient)" }
 ];
 
-const MessageTiming: React.FC<MessageTimingProps> = ({ value, onChange, isInitialMessage }) => {
+const MessageTiming: React.FC<MessageTimingProps> = ({ 
+  value, 
+  onChange, 
+  delayDays, 
+  onDelayChange, 
+  isInitialMessage 
+}) => {
   if (isInitialMessage) {
     return null;
   }
+
+  // Use either value/onChange or delayDays/onDelayChange
+  const currentValue = value || (delayDays?.toString() || "3");
+  const handleChange = (newValue: string) => {
+    if (onChange) {
+      onChange(newValue);
+    } else if (onDelayChange) {
+      onDelayChange(newValue);
+    }
+  };
 
   return (
     <div>
       <label className="text-sm font-medium mb-1 block">When to send this message:</label>
       <Select
-        value={value}
-        onValueChange={onChange}
+        value={currentValue}
+        onValueChange={handleChange}
       >
         <SelectTrigger className="w-full">
           <SelectValue placeholder="Select timing" />

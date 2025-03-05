@@ -158,6 +158,7 @@ const FollowUpItem: React.FC<FollowUpItemProps> = ({
             <MessageTiming 
               delayDays={followUp.delayDays}
               onDelayChange={(days) => updateFollowUp(index, { delayDays: days })}
+              isInitialMessage={index === 0}
             />
           )}
           
