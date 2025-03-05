@@ -50,7 +50,7 @@ export default function SimplifiedCampaigns() {
     updateCampaignStatus(campaignId, status);
   };
   
-  // Always use both parameters to handle editing a campaign
+  // Properly typed function to handle editing a campaign
   const handleEdit = (campaignId: string, campaignType: string) => {
     const campaign = campaigns.find(c => c.id === campaignId);
     if (campaign && campaign.status !== 'completed') {
