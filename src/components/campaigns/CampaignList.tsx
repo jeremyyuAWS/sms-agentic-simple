@@ -203,7 +203,9 @@ const CampaignCard = memo(({
     <AnimatedCard
       className="cursor-pointer hover:shadow-md transition-shadow"
       animationDelay={index * 100}
-      onClick={() => campaign.status === 'completed' ? onSelect(campaign.id, 'analytics') : onSelect(campaign.id)}
+      onClick={() => campaign.status === 'completed' 
+        ? onSelect(campaign.id, 'analytics') 
+        : onSelect(campaign.id, 'overview')}
     >
       <div className="flex items-center justify-between">
         <div>
