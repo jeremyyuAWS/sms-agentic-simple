@@ -9,7 +9,7 @@ import SimplifiedCampaignCreator from '@/components/campaigns/SimplifiedCampaign
 import CampaignDetailView from '@/components/campaigns/CampaignDetailView';
 import CampaignList from '@/components/campaigns/CampaignList';
 
-// Fix 1: Create a simple PageLayout component since it couldn't be found
+// Create a simple PageLayout component since it couldn't be found
 const PageLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="min-h-screen bg-background">
@@ -18,7 +18,7 @@ const PageLayout = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-// Fix 2: Create a simple PageTitle component since it couldn't be found
+// Create a simple PageTitle component since it couldn't be found
 const PageTitle = ({ title, subtitle }: { title: string; subtitle: string }) => {
   return (
     <div>
@@ -42,7 +42,7 @@ export default function SimplifiedCampaigns() {
     setIsCreatingCampaign(true);
   };
   
-  // Fix 3: Add the second argument (defaultTab) to the function call
+  // Add defaultTab parameter
   const handleCampaignSelect = (campaignId: string, defaultTab?: string) => {
     setSelectedCampaignId(campaignId);
   };
@@ -61,6 +61,7 @@ export default function SimplifiedCampaigns() {
     setIsEditing(false);
   };
   
+  // Make sure this function has the right parameter type to match SimplifiedCampaignCreator
   const handleSave = (campaign: Campaign) => {
     if (selectedCampaignId) {
       updateCampaign(campaign);
@@ -93,7 +94,7 @@ export default function SimplifiedCampaigns() {
         
         <Dialog open={isCreatingCampaign} onOpenChange={setIsCreatingCampaign}>
           <DialogContent className="max-w-3xl">
-            {/* Fix 4: Update props to match the SimplifiedCampaignCreator component interface */}
+            {/* Fix the props to match the SimplifiedCampaignCreator component interface */}
             <SimplifiedCampaignCreator 
               onComplete={handleSave} 
               onCancel={() => setIsCreatingCampaign(false)} 
@@ -118,9 +119,9 @@ export default function SimplifiedCampaigns() {
         {selectedCampaign && isEditing && (
           <Dialog open={isEditing} onOpenChange={(open) => !open && handleClose()}>
             <DialogContent className="max-w-3xl">
-              {/* Fix 5: Update props to match SimplifiedCampaignCreator interface and pass campaign type */}
+              {/* Fix the props to match SimplifiedCampaignCreator interface */}
               <SimplifiedCampaignCreator 
-                initialCampaignType={selectedCampaign.type}
+                initialCampaignType={selectedCampaign.type as any}
                 onComplete={handleSave}
                 onCancel={handleClose}
               />
