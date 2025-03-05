@@ -1,57 +1,6 @@
 
-import { Campaign, Contact, Conversation, Message, Template, MetricItem } from './types';
-import { 
-  MessageSquare, 
-  BarChart,
-  Calendar,
-  CheckCircle2,
-  AlertTriangle
-} from 'lucide-react';
-import { addDays, subDays, subHours, subMinutes } from 'date-fns';
-
-// Mock templates
-export const templates: Template[] = [
-  {
-    id: '1',
-    name: 'Initial Outreach',
-    body: 'Hi {name}, I\'m Alex from Taikis. Do you have 5 minutes to discuss our Mediterranean franchise opportunity?',
-    createdAt: new Date('2023-09-15'),
-    updatedAt: new Date('2023-09-15'),
-    variables: ['name']
-  },
-  {
-    id: '2',
-    name: 'Conference Follow-up',
-    body: 'Hi {name}, it was great connecting at {conference}! Would you like to schedule a follow-up to discuss how we can help your business?',
-    createdAt: new Date('2023-10-01'),
-    updatedAt: new Date('2023-10-05'),
-    variables: ['name', 'conference']
-  },
-  {
-    id: '3',
-    name: 'No Response Follow-up',
-    body: 'Hi {name}, I wanted to follow up on my previous message. Are you interested in learning more about our solutions?',
-    createdAt: new Date('2023-10-10'),
-    updatedAt: new Date('2023-10-10'),
-    variables: ['name']
-  },
-  {
-    id: '4',
-    name: 'Product Demo Invitation',
-    body: 'Hi {name}, would you be interested in a personalized demo of our {product} solution? It takes just 15 minutes and I can show you how it can help with {pain_point}.',
-    createdAt: new Date('2023-11-05'),
-    updatedAt: new Date('2023-11-12'),
-    variables: ['name', 'product', 'pain_point']
-  },
-  {
-    id: '5',
-    name: 'New Feature Announcement',
-    body: 'Hi {name}, I\'m excited to share that we\'ve just launched {feature_name} which addresses {pain_point} you mentioned in our last conversation. Would you like to see how it works?',
-    createdAt: new Date('2023-12-01'),
-    updatedAt: new Date('2023-12-10'),
-    variables: ['name', 'feature_name', 'pain_point']
-  }
-];
+import { Campaign } from '../types';
+import { subDays } from 'date-fns';
 
 // Generate richer campaign data
 export const campaigns: Campaign[] = [
@@ -94,7 +43,7 @@ export const campaigns: Campaign[] = [
         name: "Initial Value Proposition",
         description: "Highlights key benefits relevant to their industry",
         waitDays: 2,
-        condition: "no_response",
+        condition: "no-response",
         templateId: "3"
       },
       {
@@ -102,7 +51,7 @@ export const campaigns: Campaign[] = [
         name: "Case Study Sharing",
         description: "Shares relevant success story from similar company",
         waitDays: 4,
-        condition: "no_response",
+        condition: "no-response",
         templateId: "4"
       }
     ]
@@ -128,7 +77,7 @@ export const campaigns: Campaign[] = [
         name: "Value Proposition Follow-up",
         description: "Key benefits reminder with social proof",
         waitDays: 3,
-        condition: "no_response",
+        condition: "no-response",
         templateId: "3"
       }
     ]
@@ -173,7 +122,7 @@ export const campaigns: Campaign[] = [
         name: "Feature Highlight",
         description: "Focused on the most popular new feature",
         waitDays: 2,
-        condition: "no_response",
+        condition: "no-response",
         templateId: "5"
       },
       {
@@ -181,7 +130,7 @@ export const campaigns: Campaign[] = [
         name: "Early Adopter Incentive",
         description: "Special offer for early feature adoption",
         waitDays: 5,
-        condition: "no_response",
+        condition: "no-response",
         templateId: "3"
       }
     ]
@@ -225,7 +174,7 @@ export const campaigns: Campaign[] = [
         name: "Executive Summary",
         description: "Concise business value proposition",
         waitDays: 3,
-        condition: "no_response",
+        condition: "no-response",
         templateId: "3"
       },
       {
@@ -233,7 +182,7 @@ export const campaigns: Campaign[] = [
         name: "ROI Calculator Offer",
         description: "Personalized ROI projection tool",
         waitDays: 5,
-        condition: "no_response",
+        condition: "no-response",
         templateId: "4"
       }
     ]
@@ -277,7 +226,7 @@ export const campaigns: Campaign[] = [
         name: "New Features Overview",
         description: "Highlights improvements since last engagement",
         waitDays: 2,
-        condition: "no_response",
+        condition: "no-response",
         templateId: "5"
       },
       {
@@ -285,7 +234,7 @@ export const campaigns: Campaign[] = [
         name: "Special Return Offer",
         description: "Incentive for reactivating account",
         waitDays: 4,
-        condition: "no_response",
+        condition: "no-response",
         templateId: "3"
       }
     ]
@@ -329,7 +278,7 @@ export const campaigns: Campaign[] = [
         name: "Feature Deep Dive",
         description: "In-depth explanation of most valuable feature",
         waitDays: 3,
-        condition: "opened",
+        condition: "all",
         templateId: "5"
       },
       {
@@ -337,7 +286,7 @@ export const campaigns: Campaign[] = [
         name: "Usage Tips & Tricks",
         description: "Practical applications and power user tips",
         waitDays: 6,
-        condition: "responded",
+        condition: "all",
         templateId: "4"
       }
     ]
@@ -382,7 +331,7 @@ export const campaigns: Campaign[] = [
         name: "Conference Highlights",
         description: "Recap of key points from presentation",
         waitDays: 2,
-        condition: "no_response",
+        condition: "no-response",
         templateId: "3"
       },
       {
@@ -390,7 +339,7 @@ export const campaigns: Campaign[] = [
         name: "Industry Report Offer",
         description: "Exclusive research report mentioned at event",
         waitDays: 4,
-        condition: "opened",
+        condition: "all",
         templateId: "5"
       }
     ]
@@ -435,7 +384,7 @@ export const campaigns: Campaign[] = [
         name: "Pro Feature Showcase",
         description: "Visual comparison of basic vs pro features",
         waitDays: 2,
-        condition: "opened",
+        condition: "all",
         templateId: "5"
       },
       {
@@ -443,7 +392,7 @@ export const campaigns: Campaign[] = [
         name: "ROI Calculator",
         description: "Personalized value assessment for upgrade",
         waitDays: 4,
-        condition: "no_response",
+        condition: "no-response",
         templateId: "4"
       }
     ]
@@ -469,7 +418,7 @@ export const campaigns: Campaign[] = [
         name: "Usage Report Share",
         description: "Personalized annual usage statistics",
         waitDays: 3,
-        condition: "opened",
+        condition: "all",
         templateId: "4"
       },
       {
@@ -477,7 +426,7 @@ export const campaigns: Campaign[] = [
         name: "2024 Feature Preview",
         description: "Roadmap and coming enhancements",
         waitDays: 5,
-        condition: "responded",
+        condition: "all",
         templateId: "5"
       }
     ]
@@ -503,7 +452,7 @@ export const campaigns: Campaign[] = [
         name: "Partnership Model Overview",
         description: "Detailed breakdown of partner program",
         waitDays: 2,
-        condition: "opened",
+        condition: "all",
         templateId: "5"
       },
       {
@@ -511,229 +460,9 @@ export const campaigns: Campaign[] = [
         name: "Success Stories",
         description: "Case studies from existing partners",
         waitDays: 4,
-        condition: "no_response",
+        condition: "no-response",
         templateId: "4"
       }
     ]
   }
 ];
-
-// Mock contacts
-export const contacts: Contact[] = [
-  {
-    id: '1',
-    name: 'John Smith',
-    phoneNumber: '+1 (555) 123-4567',
-    email: 'john.smith@company.com',
-    linkedinUrl: 'https://linkedin.com/in/johnsmith',
-    attendingConference: true,
-    company: 'Acme Inc.',
-    position: 'CTO'
-  },
-  {
-    id: '2',
-    name: 'Sarah Johnson',
-    phoneNumber: '+1 (555) 987-6543',
-    email: 'sarah.j@tech.org',
-    linkedinUrl: 'https://linkedin.com/in/sarahjohnson',
-    attendingConference: false,
-    company: 'Tech Solutions',
-    position: 'Marketing Director'
-  },
-  {
-    id: '3',
-    name: 'Michael Chen',
-    phoneNumber: '+1 (555) 456-7890',
-    email: 'michael.chen@innovate.io',
-    linkedinUrl: 'https://linkedin.com/in/michaelchen',
-    attendingConference: true,
-    company: 'Innovate IO',
-    position: 'CEO'
-  }
-];
-
-// Generate more dynamic message data for richer demo
-const generateMessages = () => {
-  const now = new Date();
-  let messageId = 1;
-  let allMessages: Message[] = [];
-  
-  // Generate messages for each campaign
-  campaigns.filter(c => c.status !== 'draft').forEach(campaign => {
-    const campaignContacts = contacts.slice(0, campaign.contactCount || 3);
-    const messageCount = campaign.messagesSent || Math.floor(Math.random() * 50) + 10;
-    const responseRate = campaign.responseRate || Math.random() * 0.5;
-    
-    // Generate initial outbound messages
-    campaignContacts.slice(0, messageCount).forEach((contact, idx) => {
-      // Create outbound message
-      const sentDate = subDays(now, Math.floor(Math.random() * 14));
-      const outboundMsg: Message = {
-        id: String(messageId++),
-        contactId: contact.id,
-        campaignId: campaign.id,
-        content: `Hi ${contact.name}, this is a personalized message for our ${campaign.name} campaign.`,
-        body: `Hi ${contact.name}, this is a personalized message for our ${campaign.name} campaign.`,
-        sentAt: sentDate,
-        status: 'delivered',
-        type: 'outbound'
-      };
-      allMessages.push(outboundMsg);
-      
-      // Add responses based on response rate
-      if (Math.random() < responseRate) {
-        const responseTypes = ['positive', 'negative', 'neutral'];
-        const responseType = responseTypes[Math.floor(Math.random() * responseTypes.length)];
-        const responseDelay = Math.floor(Math.random() * 120) + 10; // 10-130 minutes
-        
-        const responseContent = responseType === 'positive' 
-          ? "Thanks for reaching out! I'd like to learn more about this."
-          : responseType === 'negative'
-            ? "Not interested at this time, please remove me from your list."
-            : "Can you provide more information about what you're offering?";
-        
-        const inboundMsg: Message = {
-          id: String(messageId++),
-          contactId: contact.id,
-          campaignId: campaign.id,
-          content: responseContent,
-          body: responseContent,
-          sentAt: new Date(sentDate.getTime() + responseDelay * 60000),
-          status: 'received',
-          type: 'inbound',
-          responseType: responseType
-        };
-        allMessages.push(inboundMsg);
-        
-        // Add follow-up for positive/neutral responses
-        if (responseType !== 'negative' && Math.random() > 0.3) {
-          const followUpDelay = Math.floor(Math.random() * 90) + 30; // 30-120 minutes
-          const followUpContent = "Great! I'd be happy to share more details. How about a quick call next week?";
-          
-          const followUpMsg: Message = {
-            id: String(messageId++),
-            contactId: contact.id,
-            campaignId: campaign.id,
-            content: followUpContent,
-            body: followUpContent,
-            sentAt: new Date(inboundMsg.sentAt.getTime() + followUpDelay * 60000),
-            status: 'delivered',
-            type: 'outbound'
-          };
-          allMessages.push(followUpMsg);
-        }
-      }
-    });
-  });
-  
-  return allMessages;
-};
-
-// Generate all messages
-export const messages: Message[] = generateMessages();
-
-// Generate more dynamic conversations from messages
-export const conversations: Conversation[] = (() => {
-  const conversationsMap = new Map<string, Conversation>();
-  
-  // Group messages by contact
-  messages.forEach(message => {
-    const key = message.contactId;
-    const contact = contacts.find(c => c.id === message.contactId);
-    
-    if (!contact) return;
-    
-    if (!conversationsMap.has(key)) {
-      conversationsMap.set(key, {
-        id: `conv-${key}`,
-        contactId: contact.id,
-        contactName: contact.name,
-        contactPhone: contact.phoneNumber,
-        lastMessage: message.content,
-        lastMessageAt: message.sentAt,
-        lastMessagePreview: message.content.substring(0, 100),
-        status: 'new',
-        unreadCount: message.type === 'inbound' ? 1 : 0,
-        messages: [message]
-      });
-    } else {
-      const conversation = conversationsMap.get(key)!;
-      conversation.messages.push(message);
-      
-      // Update last message info if this is newer
-      if (message.sentAt > conversation.lastMessageAt) {
-        conversation.lastMessage = message.content;
-        conversation.lastMessageAt = message.sentAt;
-        conversation.lastMessagePreview = message.content.substring(0, 100);
-        
-        // Update unread count for inbound messages
-        if (message.type === 'inbound') {
-          conversation.unreadCount += 1;
-        }
-      }
-      
-      // Update conversation status based on messages
-      const hasPositive = conversation.messages.some(
-        m => m.type === 'inbound' && m.responseType === 'positive'
-      );
-      const hasNegative = conversation.messages.some(
-        m => m.type === 'inbound' && m.responseType === 'negative'
-      );
-      
-      if (hasNegative) {
-        conversation.status = 'do-not-disturb';
-      } else if (hasPositive) {
-        conversation.status = 'interested';
-      } else if (conversation.messages.some(m => m.type === 'inbound')) {
-        conversation.status = 'responded';
-      }
-    }
-  });
-  
-  return Array.from(conversationsMap.values());
-})();
-
-// Mock metrics
-export const metrics: MetricItem[] = [
-  {
-    label: 'Total Conversations',
-    value: 385,
-    previousValue: 310,
-    change: 24.19,
-    changeType: 'increase',
-    icon: MessageSquare
-  },
-  {
-    label: 'Response Rate',
-    value: '32%',
-    previousValue: '28%',
-    change: 14.29,
-    changeType: 'increase',
-    icon: BarChart
-  },
-  {
-    label: 'Meetings Booked',
-    value: 42,
-    previousValue: 36,
-    change: 16.67,
-    changeType: 'increase',
-    icon: Calendar
-  },
-  {
-    label: 'Successful Deliveries',
-    value: '98%',
-    previousValue: '97%',
-    change: 1.03,
-    changeType: 'increase',
-    icon: CheckCircle2
-  },
-  {
-    label: 'Opt-Out Rate',
-    value: '3.2%',
-    previousValue: '3.5%',
-    change: -8.57,
-    changeType: 'decrease',
-    icon: AlertTriangle
-  }
-];
-
