@@ -8,6 +8,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import SimplifiedCampaignCreator from '@/components/campaigns/SimplifiedCampaignCreator';
 import CampaignDetailView from '@/components/campaigns/CampaignDetailView';
 import CampaignList from '@/components/campaigns/CampaignList';
+import { CampaignType } from '@/components/campaigns/types/campaignTypes';
 
 // Create a simple PageLayout component since it couldn't be found
 const PageLayout = ({ children }: { children: React.ReactNode }) => {
@@ -42,8 +43,8 @@ export default function SimplifiedCampaigns() {
     setIsCreatingCampaign(true);
   };
   
-  // Add defaultTab parameter
-  const handleCampaignSelect = (campaignId: string, defaultTab?: string) => {
+  // Fix #1: Add the defaultTab parameter with a default value to match the expected signature
+  const handleCampaignSelect = (campaignId: string, defaultTab: string = 'overview') => {
     setSelectedCampaignId(campaignId);
   };
   
@@ -123,9 +124,9 @@ export default function SimplifiedCampaigns() {
         {selectedCampaign && isEditing && (
           <Dialog open={isEditing} onOpenChange={(open) => !open && handleClose()}>
             <DialogContent className="max-w-3xl">
-              {/* Fix the props to match SimplifiedCampaignCreator interface */}
+              {/* Fix #2: Use a proper CampaignType value instead of a string literal */}
               <SimplifiedCampaignCreator 
-                initialCampaignType="cold-outreach" 
+                initialCampaignType="sales-outreach" 
                 onComplete={handleComplete}
                 onCancel={handleClose}
               />
