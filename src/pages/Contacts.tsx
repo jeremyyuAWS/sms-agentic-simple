@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useApp } from '@/contexts';
 import { Contact, ContactList } from '@/lib/types';
@@ -63,7 +62,6 @@ const Contacts: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSourceFilter, setSelectedSourceFilter] = useState<string>('all');
   
-  // For delete import confirmation dialog
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deletingImportId, setDeletingImportId] = useState<string | null>(null);
   const [deleteImportWithContacts, setDeleteImportWithContacts] = useState(false);
@@ -80,17 +78,14 @@ const Contacts: React.FC = () => {
     uploadContacts(newContacts, source);
   };
 
-  // Group contacts by their source
   const groupedContacts = contacts.reduce((groups, contact) => {
     if (!contact.source) {
-      // Group contacts with no source as "Untracked"
       const key = 'Untracked';
       if (!groups[key]) {
         groups[key] = [];
       }
       groups[key].push(contact);
     } else {
-      // Group by import batch name
       const key = contact.source.name;
       if (!groups[key]) {
         groups[key] = [];
@@ -100,7 +95,6 @@ const Contacts: React.FC = () => {
     return groups;
   }, {} as Record<string, Contact[]>);
 
-  // Sort groups by date (newest first) or alphabetically if no date
   const sortedGroups = Object.entries(groupedContacts).sort((a, b) => {
     const dateA = a[1][0]?.source?.importedAt;
     const dateB = b[1][0]?.source?.importedAt;
@@ -113,7 +107,6 @@ const Contacts: React.FC = () => {
     return a[0].localeCompare(b[0]);
   });
 
-  // Handle creating a new contact list
   const handleCreateContactList = () => {
     if (!newListName.trim()) {
       toast({
@@ -134,7 +127,6 @@ const Contacts: React.FC = () => {
     }
     
     if (editingContactList) {
-      // Update existing list
       updateContactList(editingContactList.id, {
         name: newListName,
         description: newListDescription,
@@ -146,7 +138,6 @@ const Contacts: React.FC = () => {
         description: `Successfully updated "${newListName}" with ${selectedContactIds.length} contacts.`
       });
     } else {
-      // Create new list
       createContactList({
         name: newListName,
         description: newListDescription,
@@ -160,7 +151,6 @@ const Contacts: React.FC = () => {
       });
     }
     
-    // Reset form and close dialog
     setNewListName('');
     setNewListDescription('');
     setSelectedContactIds([]);
@@ -169,7 +159,6 @@ const Contacts: React.FC = () => {
     setSelectedSourceFilter('all');
   };
 
-  // Handle opening the edit dialog for a contact list
   const handleEditContactList = (list: ContactList) => {
     setEditingContactList(list);
     setNewListName(list.name);
@@ -179,7 +168,6 @@ const Contacts: React.FC = () => {
     setSelectedSourceFilter('all');
   };
 
-  // Handle deleting a contact list
   const handleDeleteContactList = (listId: string) => {
     if (confirm("Are you sure you want to delete this contact list? This action cannot be undone.")) {
       deleteContactList(listId);
@@ -191,7 +179,6 @@ const Contacts: React.FC = () => {
     }
   };
 
-  // Handle opening the dialog for creating a new list
   const handleOpenNewListDialog = () => {
     setEditingContactList(null);
     setNewListName('');
@@ -201,7 +188,6 @@ const Contacts: React.FC = () => {
     setSelectedSourceFilter('all');
   };
 
-  // Prompt to delete an import
   const handleDeleteImportPrompt = (batchId: string, name: string) => {
     setDeletingImportId(batchId);
     setDeletingImportName(name);
@@ -209,24 +195,19 @@ const Contacts: React.FC = () => {
     setIsDeleteDialogOpen(true);
   };
 
-  // Actually delete the import
   const handleDeleteImport = () => {
     if (!deletingImportId) return;
     
-    // Call the deleteContactImport function
     if (deleteContactImport) {
       deleteContactImport(deletingImportId, deleteImportWithContacts);
     }
     
-    // Reset state and close dialog
     setDeletingImportId(null);
     setDeletingImportName('');
     setIsDeleteDialogOpen(false);
   };
 
-  // Filter contacts based on search query and source filter
   const filteredContacts = contacts.filter(contact => {
-    // First filter by source if not "all"
     if (selectedSourceFilter !== 'all') {
       if (selectedSourceFilter === 'untracked') {
         if (contact.source) return false;
@@ -235,7 +216,6 @@ const Contacts: React.FC = () => {
       }
     }
     
-    // Then filter by search query if present
     if (searchQuery.trim()) {
       return (
         contact.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -249,7 +229,6 @@ const Contacts: React.FC = () => {
     return true;
   });
 
-  // Toggle contact selection
   const toggleContactSelection = (contactId: string) => {
     setSelectedContactIds(prev => 
       prev.includes(contactId)
@@ -258,7 +237,6 @@ const Contacts: React.FC = () => {
     );
   };
 
-  // Select/deselect all contacts
   const toggleSelectAllContacts = () => {
     if (selectedContactIds.length === filteredContacts.length) {
       setSelectedContactIds([]);
@@ -267,20 +245,16 @@ const Contacts: React.FC = () => {
     }
   };
 
-  // Auto-suggest list name when selecting a source
   const handleSourceFilterChange = (sourceKey: string) => {
     setSelectedSourceFilter(sourceKey);
     
-    // Only suggest name if creating a new list (not editing) and no name has been entered
     if (!editingContactList && !newListName.trim() && sourceKey !== 'all' && sourceKey !== 'untracked') {
       setNewListName(`Contacts from "${sourceKey}"`);
     }
     
-    // Clear selections when changing source filter
     setSelectedContactIds([]);
   };
 
-  // Count contacts per source for the select dropdown
   const getSourceCount = (sourceKey: string): number => {
     if (sourceKey === 'all') return contacts.length;
     if (sourceKey === 'untracked') {
@@ -299,12 +273,10 @@ const Contacts: React.FC = () => {
           </p>
         </div>
         
-        {activeTabPage === 'lists' && (
-          <Button onClick={handleOpenNewListDialog} className="bg-[#8B5CF6] hover:bg-[#7E69AB]">
-            <Plus className="mr-2 h-4 w-4" />
-            New List
-          </Button>
-        )}
+        <Button onClick={handleOpenNewListDialog} className="bg-[#8B5CF6] hover:bg-[#7E69AB]">
+          <Plus className="mr-2 h-4 w-4" />
+          New List
+        </Button>
       </div>
 
       <Tabs defaultValue="contacts" value={activeTabPage} onValueChange={setActiveTabPage}>
@@ -531,10 +503,8 @@ const Contacts: React.FC = () => {
         </TabsContent>
       </Tabs>
 
-      {/* Navigation Buttons */}
       <NavigationButtons currentPage="contacts" />
 
-      {/* Contact List Creation/Edit Dialog */}
       <Dialog open={isContactListDialogOpen} onOpenChange={setIsContactListDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -582,7 +552,6 @@ const Contacts: React.FC = () => {
                 </h3>
                 
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                  {/* Source Filter Dropdown */}
                   <div className="w-full sm:w-[220px]">
                     <Select
                       value={selectedSourceFilter}
@@ -605,7 +574,6 @@ const Contacts: React.FC = () => {
                     </Select>
                   </div>
                   
-                  {/* Search Input */}
                   <div className="w-full sm:w-[250px] relative">
                     <Input
                       placeholder="Search contacts..."
@@ -623,7 +591,6 @@ const Contacts: React.FC = () => {
                     )}
                   </div>
                   
-                  {/* Select All Button */}
                   <Button 
                     variant="outline" 
                     size="sm"
@@ -637,7 +604,6 @@ const Contacts: React.FC = () => {
                 </div>
               </div>
               
-              {/* Active Filters Display */}
               {(selectedSourceFilter !== 'all' || searchQuery) && (
                 <div className="flex flex-wrap gap-2 p-2 bg-muted/40 rounded-md">
                   <div className="text-xs text-muted-foreground flex items-center">
@@ -681,7 +647,6 @@ const Contacts: React.FC = () => {
                 </div>
               )}
               
-              {/* Contact Selection Table */}
               <div className="border rounded-md h-[400px] overflow-y-auto">
                 <Table>
                   <TableHeader className="sticky top-0 bg-background z-10">
@@ -783,7 +748,6 @@ const Contacts: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Import Confirmation Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
