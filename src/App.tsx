@@ -10,7 +10,6 @@ import { AppProvider } from "./contexts";
 import React, { useEffect } from "react";
 
 function App() {
-  // Move useEffect outside of render for cleaner logging
   useEffect(() => {
     console.log("App component mounted");
     return () => console.log("App component unmounting");
@@ -22,6 +21,7 @@ function App() {
     <AppProvider>
       <Router>
         <div className="app-container">
+          {/* Log statement moved out of direct JSX */}
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/contacts" element={<Contacts />} />
