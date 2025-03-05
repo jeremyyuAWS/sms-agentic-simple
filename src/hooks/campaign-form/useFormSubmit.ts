@@ -35,14 +35,20 @@ export const useFormSubmit = (
       return;
     }
 
-    // Validate template selection
-    if (!formState.templateId) {
+    // Validate template selection - The issue is here
+    // We need to check followUps[0].templateId as well since that's where the template ID might be
+    const hasTemplate = formState.templateId || 
+      (formState.followUps && 
+       formState.followUps.length > 0 && 
+       formState.followUps[0].templateId);
+       
+    if (!hasTemplate) {
       toast({
         title: "Validation Error",
         description: "You must select a template",
         variant: "destructive",
       });
-      setActiveTab('template');
+      setActiveTab('messaging');
       return;
     }
 
@@ -54,7 +60,7 @@ export const useFormSubmit = (
       const campaignData = {
         name: formState.name,
         description: formState.description,
-        templateId: formState.templateId,
+        templateId: formState.templateId || (formState.followUps && formState.followUps.length > 0 ? formState.followUps[0].templateId : ''),
         knowledgeBaseId: formState.knowledgeBaseId,
         scheduledStartDate: formState.scheduledStartDate,
         timeZone: formState.timeZone,

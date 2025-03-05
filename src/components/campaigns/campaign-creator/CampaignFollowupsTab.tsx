@@ -38,12 +38,12 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
 
   // Generate follow-ups if none exist
   useEffect(() => {
-    if (followUps.length === 0) {
+    if (followUps.length === 0 && selectedTemplateId) {
       // Create default follow-up sequence with selectedTemplateId
       const defaultFollowUps = [
         {
           id: `followup-${Date.now()}-1`,
-          templateId: selectedTemplateId,
+          templateId: selectedTemplateId, // Use the selected template ID
           delayDays: 0, // Initial message has no delay
           enabled: true,
           condition: 'no-response',
@@ -53,6 +53,14 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
       ];
       
       onFollowUpsChange(defaultFollowUps);
+    } else if (followUps.length > 0 && selectedTemplateId && !followUps[0].templateId) {
+      // If follow-ups exist but first one has no templateId, update it
+      const updatedFollowUps = [...followUps];
+      updatedFollowUps[0] = {
+        ...updatedFollowUps[0],
+        templateId: selectedTemplateId
+      };
+      onFollowUpsChange(updatedFollowUps);
     }
   }, [followUps.length, selectedTemplateId, onFollowUpsChange]);
 
