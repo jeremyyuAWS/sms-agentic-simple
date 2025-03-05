@@ -173,6 +173,16 @@ export interface Campaign {
     conversionCount: number;
     goalCompletionRate?: number;
   };
+
+  // New field for meetings count
+  meetings?: number;
+  
+  // AI analysis data
+  aiAnalysis?: {
+    trends?: string[];
+    forecasts?: string[];
+    insights?: string[];
+  };
 }
 
 export interface Message {
