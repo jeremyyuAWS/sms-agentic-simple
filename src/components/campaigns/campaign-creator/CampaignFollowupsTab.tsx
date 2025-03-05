@@ -20,6 +20,7 @@ interface CampaignFollowupsTabProps {
   knowledgeBaseId?: string;
   knowledgeBases?: any[];
   onComplete?: () => void;
+  campaignType?: string;
 }
 
 const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
@@ -29,6 +30,7 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
   selectedTemplateId,
   onFollowUpsChange,
   onComplete,
+  campaignType = 'event-invitation'
 }) => {
   const { toast } = useToast();
   const [approved, setApproved] = useState(false);
@@ -108,6 +110,7 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
           getMessageTitle={getMessageTitle}
           updateFollowUp={updateFollowUp}
           onAddFollowUp={handleAddFollowUp}
+          campaignType={campaignType}
         />
       </div>
 

@@ -98,6 +98,7 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
       onUpdateCampaign={handleUpdateCampaign}
       onCancel={handleBack}
       isSubmitting={isSubmitting}
+      campaignType={selectedType || undefined}
     />
   );
 };

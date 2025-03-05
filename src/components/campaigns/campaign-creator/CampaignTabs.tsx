@@ -7,6 +7,7 @@ import CampaignContactSelection from '../CampaignContactSelection';
 import CampaignScheduleTab from './CampaignScheduleTab';
 import { Template } from '@/lib/types';
 import CampaignFormStatus from './CampaignFormStatus';
+import { CampaignType } from '../CampaignTypeSelector';
 
 interface CampaignTabsProps {
   activeTab: string;
@@ -21,6 +22,7 @@ interface CampaignTabsProps {
   handleSegmentSelect: (segmentId?: string) => void;
   setIsFollowUpsEnabled: (enabled: boolean) => void;
   handleMessageSequenceApproved: () => void;
+  campaignType?: CampaignType;
 }
 
 const CampaignTabs: React.FC<CampaignTabsProps> = ({
@@ -35,7 +37,8 @@ const CampaignTabs: React.FC<CampaignTabsProps> = ({
   handleListSelect,
   handleSegmentSelect,
   setIsFollowUpsEnabled,
-  handleMessageSequenceApproved
+  handleMessageSequenceApproved,
+  campaignType
 }) => {
   // Check if campaign name has content to determine details completion
   const isDetailsComplete = formState.name && formState.name.trim().length > 0;
@@ -148,6 +151,7 @@ const CampaignTabs: React.FC<CampaignTabsProps> = ({
               templates={templates}
               onFollowUpsChange={(followUps) => handleInputChange('followUps', followUps)}
               onComplete={handleMessageSequenceApproved}
+              campaignType={campaignType}
             />
           </div>
         </TabsContent>

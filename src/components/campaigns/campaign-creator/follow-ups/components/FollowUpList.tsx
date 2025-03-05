@@ -1,15 +1,16 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
 import FollowUpItem from '../FollowUpItem';
-import { PlusCircle } from 'lucide-react';
 
 interface FollowUpListProps {
   followUps: any[];
   selectedTemplateId: string;
   getMessageTitle: (index: number, followUp: any) => string;
-  updateFollowUp: (index: number, updates: Partial<any>) => void;
+  updateFollowUp: (index: number, update: Partial<any>) => void;
   onAddFollowUp: () => void;
+  campaignType?: string;
 }
 
 const FollowUpList: React.FC<FollowUpListProps> = ({
@@ -17,30 +18,43 @@ const FollowUpList: React.FC<FollowUpListProps> = ({
   selectedTemplateId,
   getMessageTitle,
   updateFollowUp,
-  onAddFollowUp
+  onAddFollowUp,
+  campaignType = 'event-invitation'
 }) => {
+  const [openIndex, setOpenIndex] = useState<number | null>(0);
+
+  const handleToggle = (index: number) => {
+    setOpenIndex(openIndex === index ? null : index);
+  };
+
   return (
-    <div className="space-y-6">
-      {/* Pre-defined message sequence */}
-      {followUps.map((followUp, index) => (
-        <FollowUpItem
-          key={followUp.id}
-          followUp={followUp}
-          index={index}
-          totalCount={followUps.length}
-          getMessageTitle={getMessageTitle}
-          updateFollowUp={updateFollowUp}
-        />
-      ))}
+    <div className="space-y-4">
+      <div className="flex justify-between items-center mb-2">
+        <h3 className="text-base font-medium">Message Sequence</h3>
+      </div>
       
-      {/* Add follow-up button with enhanced styling */}
+      <div className="space-y-3">
+        {followUps.map((followUp, index) => (
+          <FollowUpItem
+            key={followUp.id}
+            followUp={followUp}
+            index={index}
+            isOpen={openIndex === index}
+            onToggle={() => handleToggle(index)}
+            getMessageTitle={getMessageTitle}
+            updateFollowUp={updateFollowUp}
+            campaignType={campaignType}
+          />
+        ))}
+      </div>
+      
       <Button 
         variant="outline" 
-        className="w-full mt-6 py-6 border-dashed border-2 text-primary bg-primary/5 hover:bg-primary/10 hover:text-primary hover:border-primary transition-all duration-300"
         onClick={onAddFollowUp}
+        className="w-full"
       >
-        <PlusCircle className="mr-2 h-5 w-5" />
-        <span className="font-medium">Add Follow-up Message</span>
+        <Plus className="h-4 w-4 mr-2" />
+        Add Follow-Up Message
       </Button>
     </div>
   );

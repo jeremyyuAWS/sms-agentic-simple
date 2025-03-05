@@ -11,6 +11,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import LoadingState from '@/components/ui/loading-state';
 import { useCampaignForm } from '@/hooks/use-campaign-form';
 import { useCampaignCompletion } from '@/hooks/use-campaign-completion';
+import { CampaignType } from './CampaignTypeSelector';
 
 // Import subcomponents
 import CampaignCreatorHeader from './campaign-creator/CampaignCreatorHeader';
@@ -27,6 +28,7 @@ interface CampaignCreatorProps {
   onUpdateCampaign: (campaignId: string, campaign: Partial<Omit<Campaign, 'id' | 'createdAt'>>) => void;
   onCancel: () => void;
   isSubmitting?: boolean;
+  campaignType?: CampaignType;
 }
 
 const CampaignCreator: React.FC<CampaignCreatorProps> = ({ 
@@ -39,6 +41,7 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
   onUpdateCampaign,
   onCancel,
   isSubmitting: externalIsSubmitting,
+  campaignType
 }) => {
   const { 
     formState,
@@ -91,6 +94,7 @@ const CampaignCreator: React.FC<CampaignCreatorProps> = ({
               handleSegmentSelect={handleSegmentSelect}
               setIsFollowUpsEnabled={setIsFollowUpsEnabled}
               handleMessageSequenceApproved={handleMessageSequenceApproved}
+              campaignType={campaignType}
             />
             
             <CampaignCreatorFooter
