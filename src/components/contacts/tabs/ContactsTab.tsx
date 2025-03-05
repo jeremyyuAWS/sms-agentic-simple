@@ -5,9 +5,9 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Import, Info } from 'lucide-react';
 import CSVUploader from '@/components/contacts/CSVUploader';
 import { Contact } from '@/lib/types';
+import { useContacts } from '@/hooks/use-contacts';
 
 interface ContactsTabProps {
-  contacts: Contact[];
   onContactsUploaded: (
     newContacts: Contact[], 
     source: {
@@ -19,9 +19,10 @@ interface ContactsTabProps {
 }
 
 const ContactsTab: React.FC<ContactsTabProps> = ({ 
-  contacts, 
   onContactsUploaded 
 }) => {
+  const { contacts } = useContacts();
+
   return (
     <>
       <Card>

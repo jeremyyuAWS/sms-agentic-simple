@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Contact, ContactList } from '@/lib/types';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -9,12 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from '@/components/ui/badge';
 import { Users, Filter, X } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { useContacts } from '@/hooks/use-contacts';
 
 interface ContactListDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  contacts: Contact[];
   editingContactList: ContactList | null;
   onCreateList: (name: string, description: string, contactIds: string[]) => void;
   groupedContacts: Record<string, Contact[]>;
@@ -24,12 +22,12 @@ interface ContactListDialogProps {
 const ContactListDialog: React.FC<ContactListDialogProps> = ({
   isOpen,
   onOpenChange,
-  contacts,
   editingContactList,
   onCreateList,
   groupedContacts,
   sortedGroups
 }) => {
+  const { contacts } = useContacts();
   const [newListName, setNewListName] = useState('');
   const [newListDescription, setNewListDescription] = useState('');
   const [selectedContactIds, setSelectedContactIds] = useState<string[]>([]);
