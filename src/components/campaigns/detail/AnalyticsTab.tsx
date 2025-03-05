@@ -50,7 +50,7 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
     : campaignMessages.filter(m => m.type === 'inbound').length;
   
   const calculatedResponseRate = totalMessages > 0 
-    ? ((totalResponses / totalMessages) * a100).toFixed(1)
+    ? ((totalResponses / totalMessages) * 100).toFixed(1)
     : '0.0';
 
   // Prepare data for charts
