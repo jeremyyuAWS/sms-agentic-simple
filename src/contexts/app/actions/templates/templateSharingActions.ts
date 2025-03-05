@@ -75,9 +75,6 @@ export const createTemplateSharingActions = (
         }
       };
       
-      // Create initial version for the copied template
-      const { toast, ...otherProps } = createTemplateSharingActions(setTemplates);
-      
       toast({
         title: "Template Copied",
         description: `Shared template "${templateToCopy.name}" has been copied to your templates`
