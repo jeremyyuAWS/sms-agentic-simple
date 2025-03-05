@@ -83,6 +83,30 @@ const CampaignSetupGuide: React.FC<CampaignSetupGuideProps> = ({
         'template': 'Choose a template that includes webinar topic, date, time, and registration link.',
         'schedule': 'Send at least 1 week before with a reminder closer to the event.',
         'followups': 'A day-before reminder has been configured.'
+      },
+      'product-launch': {
+        'details': 'This campaign is designed to announce and promote your new product launch.',
+        'template': 'Select a template that highlights key features and benefits of your new product.',
+        'schedule': 'We recommend scheduling 1-2 weeks before launch with multiple follow-ups.',
+        'followups': 'A multi-step sequence is included to build anticipation and engagement.'
+      },
+      'onboarding': {
+        'details': 'This campaign will guide new customers through your product or service.',
+        'template': 'Choose a template that welcomes new users and provides initial instructions.',
+        'schedule': 'An immediate welcome message with scheduled follow-ups is pre-configured.',
+        'followups': 'A comprehensive 5-step onboarding sequence has been prepared.'
+      },
+      'renewal': {
+        'details': 'This campaign helps remind customers about upcoming subscription renewals.',
+        'template': 'Select a template that emphasizes the value they\'ve received and renewal benefits.',
+        'schedule': 'We suggest sending 30 days before renewal with strategic follow-ups.',
+        'followups': 'Multiple reminders at decreasing intervals as the renewal date approaches.'
+      },
+      'order-confirmation': {
+        'details': 'This campaign provides order confirmations and shipping updates to customers.',
+        'template': 'Choose a template with clear order details and tracking information.',
+        'schedule': 'Immediate confirmation with shipping update follow-ups is pre-configured.',
+        'followups': 'Automated shipping and delivery notification follow-ups are included.'
       }
     };
     
