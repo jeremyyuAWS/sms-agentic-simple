@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
@@ -40,6 +41,8 @@ export default function SimplifiedCampaigns() {
     setIsCreatingCampaign(true);
   };
   
+  // Fixed function to ensure it always has both parameters
+  // The second parameter defaultTab is now explicitly optional with a default value
   const handleCampaignSelect = (campaignId: string, defaultTab: string = 'overview') => {
     setSelectedCampaignId(campaignId);
   };
@@ -121,7 +124,7 @@ export default function SimplifiedCampaigns() {
           <Dialog open={isEditing} onOpenChange={(open) => !open && handleClose()}>
             <DialogContent className="max-w-3xl">
               <SimplifiedCampaignCreator 
-                initialCampaignType="sales-outreach" 
+                initialCampaignType="sales-outreach"
                 onComplete={handleComplete}
                 onCancel={handleClose}
               />
