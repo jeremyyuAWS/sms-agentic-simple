@@ -48,12 +48,11 @@ const CampaignDetailView: React.FC<CampaignDetailViewProps> = ({
     }
   }, [campaign.status, defaultTab]);
   
-  // Determine if we should use demo data - always use demo for completed campaigns
-  // or if campaign has very few messages
-  const shouldUseDemoData = campaign.status === 'completed' || true;
-  
   // Get campaign-specific messages for analytics
   const campaignMessages = messages.filter(m => m.campaignId === campaign.id);
+  
+  // Generate analytics data - we explicitly set shouldUseDemoData to true for completed campaigns
+  const shouldUseDemoData = campaign.status === 'completed';
   
   // Generate analytics data with demo mode if needed
   const timeOfDayData = generateTimeOfDayData(campaignMessages, shouldUseDemoData);

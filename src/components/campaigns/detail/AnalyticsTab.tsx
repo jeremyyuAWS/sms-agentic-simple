@@ -39,8 +39,8 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
   messageActivityData,
   positiveSentimentPercentage
 }) => {
-  // Add state to control demo data visibility
-  const [useDemoData, setUseDemoData] = useState(campaignMessages.length === 0 || isCompleted);
+  // Add state to control demo data visibility - initialize to true for completed campaigns
+  const [useDemoData, setUseDemoData] = useState(isCompleted || campaignMessages.length === 0);
   
   // Function to toggle demo data
   const handleSimulateData = () => {
@@ -75,12 +75,12 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
   const displayResponseRate = useDemoData ? '42.5%' : (responseRate ? `${(responseRate * 100).toFixed(1)}%` : `${calculatedResponseRate}%`);
   const displayPositiveSentiment = useDemoData ? '68.4%' : (positiveSentimentPercentage ? `${positiveSentimentPercentage}%` : '0.0%');
 
-  // Check if we should show the Simulate Data button
-  const shouldShowSimulateButton = !useDemoData || campaignMessages.length === 0;
+  // Check if we should show the Simulate Data button - only for non-completed campaigns with little data
+  const shouldShowSimulateButton = !useDemoData && campaignMessages.length < 5;
 
   return (
     <div className="space-y-8">
-      {/* Simulate Data button */}
+      {/* Simulate Data button - only shown for campaigns with no data and not completed */}
       {shouldShowSimulateButton && (
         <div className="flex justify-center mb-6">
           <Button 
