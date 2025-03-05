@@ -1,25 +1,8 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-  CalendarClock, 
-  Users, 
-  Bell, 
-  Calendar, 
-  Megaphone, 
-  MessageSquare, 
-  Radio, 
-  Gift, 
-  PartyPopper,
-  Send,
-  Clipboard,
-  BookOpen,
-  ShoppingCart,
-  Award,
-  Truck
-} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CampaignType } from './CampaignTypeSelector';
+import { campaignTypes } from './types/campaignTypes';
 
 interface CampaignTypeInfo {
   id: string;
@@ -37,129 +20,6 @@ interface SimplifiedCampaignTypeGridProps {
 const SimplifiedCampaignTypeGrid: React.FC<SimplifiedCampaignTypeGridProps> = ({ 
   onSelect 
 }) => {
-  const campaignTypes: CampaignTypeInfo[] = [
-    {
-      id: 'event-invitation',
-      title: 'Event Invitation',
-      description: 'Invite contacts to upcoming events, webinars, or conferences',
-      icon: <Calendar className="h-10 w-10" />,
-      color: 'text-blue-500',
-      bgColor: 'bg-blue-50'
-    },
-    {
-      id: 'sales-outreach',
-      title: 'Sales Outreach',
-      description: 'Connect with potential customers to promote products or services',
-      icon: <Users className="h-10 w-10" />,
-      color: 'text-green-500',
-      bgColor: 'bg-green-50'
-    },
-    {
-      id: 'follow-up-reminder',
-      title: 'Follow-Up Reminder',
-      description: 'Send reminders to contacts who haven\'t responded to previous messages',
-      icon: <Bell className="h-10 w-10" />,
-      color: 'text-purple-500',
-      bgColor: 'bg-purple-50'
-    },
-    {
-      id: 'meeting-scheduling',
-      title: 'Meeting Scheduling',
-      description: 'Coordinate and schedule meetings with prospects or clients',
-      icon: <CalendarClock className="h-10 w-10" />,
-      color: 'text-orange-500',
-      bgColor: 'bg-orange-50'
-    },
-    {
-      id: 'announcement',
-      title: 'General Announcement',
-      description: 'Share important information or announcements with your audience',
-      icon: <Megaphone className="h-10 w-10" />,
-      color: 'text-red-500',
-      bgColor: 'bg-red-50'
-    },
-    {
-      id: 'customer-feedback',
-      title: 'Customer Feedback',
-      description: 'Collect feedback and insights from your customers',
-      icon: <MessageSquare className="h-10 w-10" />,
-      color: 'text-cyan-500',
-      bgColor: 'bg-cyan-50'
-    },
-    {
-      id: 'newsletter',
-      title: 'Newsletter Campaign',
-      description: 'Send regular updates and news to your contact list',
-      icon: <Send className="h-10 w-10" />,
-      color: 'text-indigo-500',
-      bgColor: 'bg-indigo-50'
-    },
-    {
-      id: 'promotional',
-      title: 'Promotional Campaign',
-      description: 'Send special offers, discounts, and promotions to drive sales',
-      icon: <Gift className="h-10 w-10" />,
-      color: 'text-pink-500',
-      bgColor: 'bg-pink-50'
-    },
-    {
-      id: 'seasonal',
-      title: 'Seasonal Greeting',
-      description: 'Send holiday or seasonal greetings to maintain customer relationships',
-      icon: <PartyPopper className="h-10 w-10" />,
-      color: 'text-amber-500',
-      bgColor: 'bg-amber-50'
-    },
-    {
-      id: 'survey',
-      title: 'Survey Campaign',
-      description: 'Collect data and insights through structured surveys',
-      icon: <Clipboard className="h-10 w-10" />,
-      color: 'text-emerald-500',
-      bgColor: 'bg-emerald-50'
-    },
-    {
-      id: 'webinar-invitation',
-      title: 'Webinar Invitation',
-      description: 'Invite contacts to attend your online webinar or presentation',
-      icon: <Radio className="h-10 w-10" />,
-      color: 'text-violet-500',
-      bgColor: 'bg-violet-50'
-    },
-    {
-      id: 'product-launch',
-      title: 'Product Launch',
-      description: 'Introduce and promote new products or services to your audience',
-      icon: <ShoppingCart className="h-10 w-10" />,
-      color: 'text-yellow-600',
-      bgColor: 'bg-yellow-50'
-    },
-    {
-      id: 'onboarding',
-      title: 'Customer Onboarding',
-      description: 'Guide new customers through your product or service setup process',
-      icon: <BookOpen className="h-10 w-10" />,
-      color: 'text-blue-700',
-      bgColor: 'bg-blue-50'
-    },
-    {
-      id: 'renewal',
-      title: 'Subscription Renewal',
-      description: 'Remind customers about upcoming renewals and encourage continuation',
-      icon: <Award className="h-10 w-10" />,
-      color: 'text-teal-600',
-      bgColor: 'bg-teal-50'
-    },
-    {
-      id: 'order-confirmation',
-      title: 'Order Confirmation',
-      description: 'Confirm orders and provide tracking information to customers',
-      icon: <Truck className="h-10 w-10" />,
-      color: 'text-slate-700',
-      bgColor: 'bg-slate-50'
-    }
-  ];
-
   return (
     <div className="space-y-8">
       <div className="text-center mb-8">
