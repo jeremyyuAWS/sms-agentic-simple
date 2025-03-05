@@ -50,8 +50,7 @@ export default function SimplifiedCampaigns() {
     updateCampaignStatus(campaignId, status);
   };
   
-  // Modify the handleEdit function to properly match the expected signature
-  // This function is called with only campaignId in some places
+  // Fixed: Update handleEdit to only expect campaignId parameter
   const handleEdit = (campaignId: string) => {
     const campaign = campaigns.find(c => c.id === campaignId);
     if (campaign && campaign.status !== 'completed') {
