@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
@@ -7,7 +8,6 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import SimplifiedCampaignCreator from '@/components/campaigns/SimplifiedCampaignCreator';
 import CampaignDetailView from '@/components/campaigns/CampaignDetailView';
 import CampaignList from '@/components/campaigns/CampaignList';
-import { CampaignType } from '@/components/campaigns/types/campaignTypes';
 
 const PageLayout = ({ children }: { children: React.ReactNode }) => {
   return (
