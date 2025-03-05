@@ -8,7 +8,7 @@ import StatusBadge from '../StatusBadge';
 interface CampaignHeaderProps {
   campaign: Campaign;
   onStatusChange: (campaignId: string, status: Campaign['status']) => void;
-  onEdit: (campaignId: string, campaignType?: string) => void;
+  onEdit: (campaignId: string, campaignType: string) => void;
 }
 
 export const CampaignHeader: React.FC<CampaignHeaderProps> = ({

@@ -25,7 +25,7 @@ interface CampaignDetailViewProps {
   campaign: Campaign;
   onClose: () => void;
   onStatusChange: (campaignId: string, status: Campaign['status']) => void;
-  onEdit: (campaignId: string, campaignType?: string) => void;
+  onEdit: (campaignId: string, campaignType: string) => void;
   defaultTab?: string;
 }
 
