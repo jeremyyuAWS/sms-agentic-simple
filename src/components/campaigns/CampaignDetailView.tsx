@@ -37,16 +37,20 @@ const CampaignDetailView: React.FC<CampaignDetailViewProps> = ({
   const { contacts, templates, contactLists, messages } = useApp();
   const [activeTab, setActiveTab] = useState('overview');
   
+  // Determine if we should use demo data - always use demo for completed campaigns
+  // or if campaign has very few messages
+  const shouldUseDemoData = campaign.status === 'completed' || true;
+  
   // Get campaign-specific messages for analytics
   const campaignMessages = messages.filter(m => m.campaignId === campaign.id);
   
-  // Generate analytics data
-  const timeOfDayData = generateTimeOfDayData(campaignMessages);
-  const dayOfWeekData = generateDayOfWeekData(campaignMessages);
-  const sentimentData = generateSentimentData(campaignMessages);
-  const sentimentOverTimeData = generateSentimentOverTimeData(campaignMessages);
-  const messageActivityData = generateMessageActivityData(campaignMessages);
-  const positiveSentimentPercentage = calculatePositiveSentimentPercentage(campaignMessages);
+  // Generate analytics data with demo mode if needed
+  const timeOfDayData = generateTimeOfDayData(campaignMessages, shouldUseDemoData);
+  const dayOfWeekData = generateDayOfWeekData(campaignMessages, shouldUseDemoData);
+  const sentimentData = generateSentimentData(campaignMessages, shouldUseDemoData);
+  const sentimentOverTimeData = generateSentimentOverTimeData(campaignMessages, shouldUseDemoData);
+  const messageActivityData = generateMessageActivityData(campaignMessages, shouldUseDemoData);
+  const positiveSentimentPercentage = calculatePositiveSentimentPercentage(campaignMessages, shouldUseDemoData);
   
   const getTemplate = () => {
     if (!campaign.templateId) return 'No template selected';
@@ -98,7 +102,9 @@ const CampaignDetailView: React.FC<CampaignDetailViewProps> = ({
             <TabsContent value="analytics">
               <AnalyticsTab 
                 campaignMessages={campaignMessages}
-                responseRate={campaign.responseRate}
+                responseRate={campaign.responseRate || 0}
+                isCompleted={campaign.status === 'completed'}
+                campaignName={campaign.name}
                 timeOfDayData={timeOfDayData}
                 dayOfWeekData={dayOfWeekData}
                 sentimentData={sentimentData}
