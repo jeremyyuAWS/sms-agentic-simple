@@ -50,7 +50,7 @@ export default function SimplifiedCampaigns() {
     updateCampaignStatus(campaignId, status);
   };
   
-  const handleEdit = (campaignId: string, initialCampaignType: string = "sales-outreach") => {
+  const handleEdit = (campaignId: string, campaignType: string = "sales-outreach") => {
     const campaign = campaigns.find(c => c.id === campaignId);
     if (campaign && campaign.status !== 'completed') {
       setSelectedCampaignId(campaignId);
@@ -117,7 +117,7 @@ export default function SimplifiedCampaigns() {
                 campaign={selectedCampaign}
                 onClose={handleClose}
                 onStatusChange={handleStatusChange}
-                onEdit={(campaignId, campaignType) => handleEdit(campaignId, campaignType || "sales-outreach")}
+                onEdit={handleEdit}
                 defaultTab={defaultTab}
               />
             </DialogContent>
