@@ -1,4 +1,3 @@
-
 import { Message, Conversation } from '../types';
 import { contacts } from './contacts';
 import { campaigns } from './campaigns';
@@ -34,6 +33,32 @@ const generateMessages = () => {
       Math.ceil((campaignEndDate.getTime() - campaignStartDate.getTime()) / (1000 * 60 * 60 * 24))
     );
     
+    // Define time of day distribution patterns for more realistic data
+    // This creates "hot spots" during business hours
+    const timeOfDayDistribution = [
+      { hours: [0, 1, 2, 3, 4], weight: 0.05 },  // Early morning (very low)
+      { hours: [5, 6, 7], weight: 0.15 },        // Early morning (low)
+      { hours: [8, 9], weight: 0.8 },            // Morning start (high)
+      { hours: [10, 11], weight: 1.0 },          // Late morning (peak)
+      { hours: [12, 13], weight: 0.6 },          // Lunch (medium)
+      { hours: [14, 15, 16], weight: 0.9 },      // Afternoon (high)
+      { hours: [17, 18], weight: 0.5 },          // Evening (medium)
+      { hours: [19, 20, 21], weight: 0.3 },      // Late evening (low)
+      { hours: [22, 23], weight: 0.1 }           // Night (very low)
+    ];
+    
+    // Define day of week patterns for more realistic data
+    // This weights weekdays higher than weekends
+    const dayOfWeekDistribution = [
+      { day: 0, name: 'Sunday', weight: 0.2 },    // Weekend (low)
+      { day: 1, name: 'Monday', weight: 0.85 },   // Weekday (high) - people catching up
+      { day: 2, name: 'Tuesday', weight: 1.0 },   // Weekday (peak)
+      { day: 3, name: 'Wednesday', weight: 0.95 }, // Weekday (high)
+      { day: 4, name: 'Thursday', weight: 0.9 },  // Weekday (high)
+      { day: 5, name: 'Friday', weight: 0.7 },    // Weekday (medium) - winding down
+      { day: 6, name: 'Saturday', weight: 0.15 }  // Weekend (low)
+    ];
+    
     // Generate a more realistic distribution of messages over campaign duration
     for (let i = 0; i < messageCount; i++) {
       // Select a contact (cycling through available contacts)
@@ -63,8 +88,78 @@ const generateMessages = () => {
       const messageDate = new Date(campaignStartDate);
       messageDate.setDate(messageDate.getDate() + dayOffset);
       
-      // Add random hours to spread messages throughout the day
-      messageDate.setHours(9 + Math.floor(Math.random() * 8)); // Business hours 9am-5pm
+      // Use weighted random selection for day of week (for completed campaigns only)
+      if (isCompleted && campaignDurationDays > 7) {
+        // Only adjust day of week if we have enough campaign duration to play with
+        const currentDayOfWeek = messageDate.getDay();
+        
+        // Calculate how far we could shift the date in either direction without going outside campaign bounds
+        const maxShiftBackward = Math.min(dayOffset, 6); // Maximum 6 days back
+        const maxShiftForward = Math.min(campaignDurationDays - dayOffset - 1, 6); // Maximum 6 days forward
+        
+        // Try to find a better day of week using weighted random selection
+        const attemptDayAdjustment = Math.random() < 0.8; // 80% chance to optimize day of week
+        
+        if (attemptDayAdjustment) {
+          // Get weights for all possible days we could shift to
+          const possibleDays = [];
+          
+          for (let shift = -maxShiftBackward; shift <= maxShiftForward; shift++) {
+            if (shift === 0) continue; // Skip current day, it's already counted
+            
+            const newDate = new Date(messageDate);
+            newDate.setDate(newDate.getDate() + shift);
+            const newDayOfWeek = newDate.getDay();
+            
+            possibleDays.push({
+              shift,
+              weight: dayOfWeekDistribution[newDayOfWeek].weight
+            });
+          }
+          
+          // Sort by weight (descending) to prioritize higher weighted days
+          possibleDays.sort((a, b) => b.weight - a.weight);
+          
+          // 70% chance to pick from top 3 days (if we have that many options)
+          if (possibleDays.length > 0) {
+            const useTopDay = Math.random() < 0.7;
+            const selectedShift = useTopDay 
+              ? possibleDays[Math.floor(Math.random() * Math.min(3, possibleDays.length))].shift
+              : possibleDays[Math.floor(Math.random() * possibleDays.length)].shift;
+            
+            messageDate.setDate(messageDate.getDate() + selectedShift);
+          }
+        }
+      }
+      
+      // Distribute time of day (weighted random) based on business hours for better realism
+      // Select a random hour with weighted probability favoring business hours
+      let hourBucket: number[];
+      
+      // Get total weight for normalization
+      const totalWeight = timeOfDayDistribution.reduce((sum, bucket) => sum + bucket.weight, 0);
+      
+      // Select a random weighted bucket
+      let random = Math.random() * totalWeight;
+      let accumulatedWeight = 0;
+      
+      for (let bucket of timeOfDayDistribution) {
+        accumulatedWeight += bucket.weight;
+        if (random <= accumulatedWeight) {
+          hourBucket = bucket.hours;
+          break;
+        }
+      }
+      
+      if (!hourBucket) {
+        hourBucket = timeOfDayDistribution[4].hours; // Default to midday if something went wrong
+      }
+      
+      // Select a random hour from the chosen bucket
+      const hour = hourBucket[Math.floor(Math.random() * hourBucket.length)];
+      
+      // Set the hour and add random minutes
+      messageDate.setHours(hour);
       messageDate.setMinutes(Math.floor(Math.random() * 60));
       
       // Create outbound message
