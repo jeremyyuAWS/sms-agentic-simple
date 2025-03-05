@@ -1,42 +1,47 @@
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Message } from '@/lib/types';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { SentimentChart } from './SentimentChart';
 import { TimeDistributionChart } from './TimeDistributionChart';
 import { TimeSeriesChart } from './TimeSeriesChart';
-import * as analyticsUtils from './analyticsUtils';
 
 interface AnalyticsTabProps {
   campaignMessages: Message[];
   responseRate?: number;
   isCompleted?: boolean;
   campaignName?: string;
+  // These props are passed from CampaignDetailView but were missing from the interface
+  timeOfDayData?: any[];
+  dayOfWeekData?: any[];
+  sentimentData?: any[];
+  sentimentOverTimeData?: any[];
+  messageActivityData?: any[];
+  positiveSentimentPercentage?: string | number;
 }
 
 export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
   campaignMessages,
   responseRate,
   isCompleted = false,
-  campaignName = ''
+  campaignName = '',
+  // Use the passed data if available, otherwise generate it
+  timeOfDayData,
+  dayOfWeekData,
+  sentimentData,
+  sentimentOverTimeData,
+  messageActivityData,
+  positiveSentimentPercentage
 }) => {
   // Use demo data for completed campaigns or when explicitly requested
   const useDemoData = isCompleted || campaignMessages.length === 0;
   
-  // Generate data
-  const timeOfDayData = analyticsUtils.generateTimeOfDayData(campaignMessages, useDemoData);
-  const dayOfWeekData = analyticsUtils.generateDayOfWeekData(campaignMessages, useDemoData);
-  const sentimentData = analyticsUtils.generateSentimentData(campaignMessages, useDemoData);
-  const sentimentOverTimeData = analyticsUtils.generateSentimentOverTimeData(campaignMessages, useDemoData);
-  const messageActivityData = analyticsUtils.generateMessageActivityData(campaignMessages, useDemoData);
-  const positiveSentimentPercentage = analyticsUtils.calculatePositiveSentimentPercentage(campaignMessages, useDemoData);
-  
   // Calculate totals for demo or real data
-  const totalMessages = useDemoData 
+  const totalMessages = useDemoData && messageActivityData
     ? messageActivityData.reduce((sum, day) => sum + (Number(day.outbound) || 0), 0)
     : campaignMessages.filter(m => m.type === 'outbound').length;
   
-  const totalResponses = useDemoData
+  const totalResponses = useDemoData && messageActivityData
     ? messageActivityData.reduce((sum, day) => sum + (Number(day.inbound) || 0), 0)
     : campaignMessages.filter(m => m.type === 'inbound').length;
   
@@ -76,7 +81,7 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {positiveSentimentPercentage}%
+              {positiveSentimentPercentage ? `${positiveSentimentPercentage}%` : '0.0%'}
             </div>
             <p className="text-xs text-muted-foreground">Of responses were positive</p>
           </CardContent>
@@ -93,7 +98,7 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
         </CardHeader>
         <CardContent>
           <TimeSeriesChart 
-            data={messageActivityData}
+            data={messageActivityData || []}
             xAxisKey="date"
             lines={[
               { dataKey: "outbound", stroke: "#8884d8", name: "Outbound" },
@@ -114,7 +119,7 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
         </CardHeader>
         <CardContent>
           <SentimentChart 
-            sentimentData={sentimentData} 
+            sentimentData={sentimentData || []} 
             emptyMessage="No response sentiment data available yet"
           />
         </CardContent>
@@ -130,7 +135,7 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
         </CardHeader>
         <CardContent>
           <TimeSeriesChart 
-            data={sentimentOverTimeData}
+            data={sentimentOverTimeData || []}
             xAxisKey="date"
             lines={[
               { dataKey: "positive", stroke: "#4ade80", name: "Positive" },
@@ -152,7 +157,7 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
         </CardHeader>
         <CardContent>
           <TimeDistributionChart 
-            data={timeOfDayData} 
+            data={timeOfDayData || []} 
             xAxisKey="hour" 
             barKey="count" 
             barColor="#8884d8"
@@ -176,7 +181,7 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
         </CardHeader>
         <CardContent>
           <TimeDistributionChart 
-            data={dayOfWeekData} 
+            data={dayOfWeekData || []} 
             xAxisKey="day" 
             barKey="count" 
             barColor="#8884d8"

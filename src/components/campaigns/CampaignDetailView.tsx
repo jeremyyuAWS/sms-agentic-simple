@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-// Import our new component files
+// Import our component files
 import { CampaignHeader } from './detail/CampaignHeader';
 import { CampaignOverviewTab } from './detail/CampaignOverviewTab';
 import { AnalyticsTab } from './detail/AnalyticsTab';
