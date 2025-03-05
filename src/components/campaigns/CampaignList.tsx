@@ -1,4 +1,3 @@
-
 import React, { useCallback, memo } from 'react';
 import { Campaign } from '@/lib/types';
 import AnimatedCard from '@/components/ui/AnimatedCard';
@@ -50,12 +49,12 @@ const CampaignCard = memo(({
 
   const handleEdit = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    if (onEdit) {
+    if (onEdit && campaign.status !== 'completed') {
       onEdit(campaign.id);
     } else {
       onSelect(campaign.id);
     }
-  }, [campaign.id, onEdit, onSelect]);
+  }, [campaign.id, campaign.status, onEdit, onSelect]);
 
   const handleDelete = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -185,7 +184,7 @@ const CampaignCard = memo(({
       default:
         return (
           <>
-            {onEdit && (
+            {onEdit && campaign.status !== 'completed' && (
               <Button
                 variant="ghost"
                 size="sm"

@@ -55,10 +55,13 @@ export const CampaignHeader: React.FC<CampaignHeaderProps> = ({
       </div>
       
       <div className="flex items-center gap-2">
-        <Button variant="outline" size="sm" onClick={() => onEdit(campaign.id)}>
-          <Edit className="h-4 w-4 mr-1" />
-          Edit
-        </Button>
+        {/* Only show Edit button if campaign is not completed */}
+        {campaign.status !== 'completed' && (
+          <Button variant="outline" size="sm" onClick={() => onEdit(campaign.id)}>
+            <Edit className="h-4 w-4 mr-1" />
+            Edit
+          </Button>
+        )}
         
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

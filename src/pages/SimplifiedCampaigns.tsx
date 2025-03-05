@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
@@ -10,7 +9,6 @@ import CampaignDetailView from '@/components/campaigns/CampaignDetailView';
 import CampaignList from '@/components/campaigns/CampaignList';
 import { CampaignType } from '@/components/campaigns/types/campaignTypes';
 
-// Create a simple PageLayout component since it couldn't be found
 const PageLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="min-h-screen bg-background">
@@ -19,7 +17,6 @@ const PageLayout = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-// Create a simple PageTitle component since it couldn't be found
 const PageTitle = ({ title, subtitle }: { title: string; subtitle: string }) => {
   return (
     <div>
@@ -43,7 +40,6 @@ export default function SimplifiedCampaigns() {
     setIsCreatingCampaign(true);
   };
   
-  // Fix #1: Add the defaultTab parameter with a default value to match the expected signature
   const handleCampaignSelect = (campaignId: string, defaultTab: string = 'overview') => {
     setSelectedCampaignId(campaignId);
   };
@@ -53,8 +49,11 @@ export default function SimplifiedCampaigns() {
   };
   
   const handleEdit = (campaignId: string) => {
-    setSelectedCampaignId(campaignId);
-    setIsEditing(true);
+    const campaign = campaigns.find(c => c.id === campaignId);
+    if (campaign && campaign.status !== 'completed') {
+      setSelectedCampaignId(campaignId);
+      setIsEditing(true);
+    }
   };
   
   const handleClose = () => {
@@ -62,14 +61,12 @@ export default function SimplifiedCampaigns() {
     setIsEditing(false);
   };
   
-  // Update to match the expected signature from SimplifiedCampaignCreator
   const handleComplete = () => {
     setIsCreatingCampaign(false);
     setIsEditing(false);
     setSelectedCampaignId(null);
   };
   
-  // This function will be used to actually save the campaign data
   const handleSaveCampaign = (campaign: Campaign) => {
     if (selectedCampaignId) {
       updateCampaign(campaign);
@@ -99,7 +96,6 @@ export default function SimplifiedCampaigns() {
         
         <Dialog open={isCreatingCampaign} onOpenChange={setIsCreatingCampaign}>
           <DialogContent className="max-w-3xl">
-            {/* Fix the props to match the SimplifiedCampaignCreator component interface */}
             <SimplifiedCampaignCreator 
               onComplete={handleComplete} 
               onCancel={() => setIsCreatingCampaign(false)} 
@@ -114,17 +110,16 @@ export default function SimplifiedCampaigns() {
                 campaign={selectedCampaign}
                 onClose={handleClose}
                 onStatusChange={handleStatusChange}
-                onEdit={() => setIsEditing(true)}
+                onEdit={handleEdit}
                 defaultTab={selectedCampaign.status === 'completed' ? 'analytics' : undefined}
               />
             </DialogContent>
           </Dialog>
         )}
         
-        {selectedCampaign && isEditing && (
+        {selectedCampaign && isEditing && selectedCampaign.status !== 'completed' && (
           <Dialog open={isEditing} onOpenChange={(open) => !open && handleClose()}>
             <DialogContent className="max-w-3xl">
-              {/* Fix #2: Use a proper CampaignType value instead of a string literal */}
               <SimplifiedCampaignCreator 
                 initialCampaignType="sales-outreach" 
                 onComplete={handleComplete}

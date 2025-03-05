@@ -1,6 +1,8 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Message } from '@/lib/types';
+import { Button } from '@/components/ui/button';
+import { Zap } from 'lucide-react';
 import { AnalyticsOverviewCards } from './AnalyticsOverviewCards';
 import { MessageActivityChart } from './MessageActivityChart';
 import { SentimentAnalysisCharts } from './SentimentAnalysisCharts';
@@ -37,8 +39,13 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
   messageActivityData,
   positiveSentimentPercentage
 }) => {
-  // Always use demo data when showing analytics
-  const useDemoData = true;
+  // Add state to control demo data visibility
+  const [useDemoData, setUseDemoData] = useState(campaignMessages.length === 0 || isCompleted);
+  
+  // Function to toggle demo data
+  const handleSimulateData = () => {
+    setUseDemoData(true);
+  };
   
   // Calculate totals for demo or real data
   const totalMessages = useDemoData && messageActivityData
@@ -68,8 +75,26 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
   const displayResponseRate = useDemoData ? '42.5%' : (responseRate ? `${(responseRate * 100).toFixed(1)}%` : `${calculatedResponseRate}%`);
   const displayPositiveSentiment = useDemoData ? '68.4%' : (positiveSentimentPercentage ? `${positiveSentimentPercentage}%` : '0.0%');
 
+  // Check if we should show the Simulate Data button
+  const shouldShowSimulateButton = !useDemoData || campaignMessages.length === 0;
+
   return (
     <div className="space-y-8">
+      {/* Simulate Data button */}
+      {shouldShowSimulateButton && (
+        <div className="flex justify-end">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleSimulateData}
+            className="mb-4"
+          >
+            <Zap className="h-4 w-4 mr-2" />
+            Simulate Data
+          </Button>
+        </div>
+      )}
+      
       {/* Top analytics overview cards */}
       <AnalyticsOverviewCards 
         totalMessages={totalMessages}
