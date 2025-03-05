@@ -2,6 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import FollowUpItem from '../FollowUpItem';
+import { PlusCircle } from 'lucide-react';
 
 interface FollowUpListProps {
   followUps: any[];
@@ -32,13 +33,14 @@ const FollowUpList: React.FC<FollowUpListProps> = ({
         />
       ))}
       
-      {/* Add follow-up button */}
+      {/* Add follow-up button with enhanced styling */}
       <Button 
         variant="outline" 
-        className="w-full mt-4 border-dashed"
+        className="w-full mt-6 py-6 border-dashed border-2 text-primary bg-primary/5 hover:bg-primary/10 hover:text-primary hover:border-primary transition-all duration-300"
         onClick={onAddFollowUp}
       >
-        Add Follow-up Message
+        <PlusCircle className="mr-2 h-5 w-5" />
+        <span className="font-medium">Add Follow-up Message</span>
       </Button>
     </div>
   );
