@@ -31,6 +31,7 @@ export default function SimplifiedCampaigns() {
   const [isCreatingCampaign, setIsCreatingCampaign] = useState(false);
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [defaultTab, setDefaultTab] = useState<string | undefined>(undefined);
   
   const selectedCampaign = selectedCampaignId 
     ? campaigns.find(c => c.id === selectedCampaignId) 
@@ -40,8 +41,9 @@ export default function SimplifiedCampaigns() {
     setIsCreatingCampaign(true);
   };
   
-  const handleCampaignSelect = (campaignId: string, defaultTab?: string) => {
+  const handleCampaignSelect = (campaignId: string, defaultTabValue?: string) => {
     setSelectedCampaignId(campaignId);
+    setDefaultTab(defaultTabValue);
   };
   
   const handleStatusChange = (campaignId: string, status: Campaign['status']) => {
@@ -59,12 +61,14 @@ export default function SimplifiedCampaigns() {
   const handleClose = () => {
     setSelectedCampaignId(null);
     setIsEditing(false);
+    setDefaultTab(undefined);
   };
   
   const handleComplete = () => {
     setIsCreatingCampaign(false);
     setIsEditing(false);
     setSelectedCampaignId(null);
+    setDefaultTab(undefined);
   };
   
   const handleSaveCampaign = (campaign: Campaign) => {
@@ -112,7 +116,7 @@ export default function SimplifiedCampaigns() {
                 onClose={handleClose}
                 onStatusChange={handleStatusChange}
                 onEdit={handleEdit}
-                defaultTab={selectedCampaign.status === 'completed' ? 'analytics' : undefined}
+                defaultTab={defaultTab}
               />
             </DialogContent>
           </Dialog>
