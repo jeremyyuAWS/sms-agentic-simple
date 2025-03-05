@@ -1,4 +1,3 @@
-
 import React, { useCallback, memo } from 'react';
 import { Campaign } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -25,7 +24,6 @@ const CampaignCard = memo(({
   onEdit,
   onDelete
 }: CampaignCardProps) => {
-  // Use callbacks to prevent recreation of these functions on every render
   const handleStatusChange = useCallback((e: React.MouseEvent, status: Campaign['status']) => {
     e.stopPropagation();
     onUpdateStatus(campaign.id, status);
@@ -36,7 +34,7 @@ const CampaignCard = memo(({
     if (onEdit && campaign.status !== 'completed') {
       onEdit(campaign.id);
     } else {
-      onSelect(campaign.id);
+      onSelect(campaign.id, 'overview');
     }
   }, [campaign.id, campaign.status, onEdit, onSelect]);
 
@@ -49,7 +47,6 @@ const CampaignCard = memo(({
   
   const handleView = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    // For completed campaigns, navigate directly to analytics tab
     onSelect(campaign.id, 'analytics');
   }, [campaign.id, onSelect]);
 
