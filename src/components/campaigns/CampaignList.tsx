@@ -30,6 +30,7 @@ const CampaignList: React.FC<CampaignListProps> = ({
   // Updated wrapper function to ensure both arguments are always passed
   const handleEdit = (campaignId: string) => {
     if (onEdit) {
+      // Always pass both campaignId and type as "sales-outreach"
       onEdit(campaignId, "sales-outreach");
     }
   };
