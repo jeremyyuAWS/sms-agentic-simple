@@ -148,19 +148,20 @@ const TimeWindowSelector: React.FC<TimeWindowSelectorProps> = ({
           
           <div className="space-y-2">
             <Label>Days of Week</Label>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2">
+            <div className="grid grid-cols-7 gap-x-1 gap-y-2 mt-2">
               {days.map(day => (
-                <div key={day.value} className="flex items-center space-x-2">
+                <div key={day.value} className="flex flex-col items-center space-y-1">
                   <Checkbox 
                     id={`day-${day.value}`} 
                     checked={selectedDays.includes(day.value)}
                     onCheckedChange={() => toggleDay(day.value)}
+                    className="mx-auto"
                   />
                   <Label 
                     htmlFor={`day-${day.value}`}
-                    className="text-sm"
+                    className="text-xs text-center cursor-pointer"
                   >
-                    {day.label}
+                    {day.label.substring(0, 3)}
                   </Label>
                 </div>
               ))}
