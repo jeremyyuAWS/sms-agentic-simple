@@ -1,10 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { FollowUpCondition, Template } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Brain, Sparkles, CheckCircle, X, Lightbulb } from 'lucide-react';
+import { Brain, Sparkles, CheckCircle, X, Lightbulb, ListOrdered } from 'lucide-react';
 
 // Import our components and hooks
 import FollowUpList from './follow-ups/components/FollowUpList';
@@ -12,6 +13,7 @@ import IntroductionSection from './follow-ups/components/IntroductionSection';
 import SequenceSummary from './follow-ups/SequenceSummary';
 import ApprovalSection from './follow-ups/ApprovalSection';
 import { useFollowUpManagement } from './follow-ups/useFollowUpManagement';
+import { useFollowUpConfiguration } from '@/hooks/campaign-type/useFollowUpConfiguration';
 
 interface CampaignFollowupsTabProps {
   isFollowUpsEnabled: boolean;
@@ -101,30 +103,6 @@ const AISequenceSuggestions = ({
                 name: "Action Prompt", 
                 delayDays: 3,
                 message: "{{first_name}}, based on our analysis, {{company}} could potentially {{specific_benefit}} by implementing our solution. I have a few openings this week for a quick 15-minute demo. Would Tuesday at 10am or Thursday at a 2pm work better for you?"
-              }
-            ]
-          };
-          break;
-          
-        case 'follow-up-reminder':
-          suggestion = {
-            title: "Persistent Value Sequence",
-            description: "A 3-message sequence focused on providing value with each touchpoint",
-            messages: [
-              { 
-                name: "Value-First Reminder", 
-                delayDays: 0,
-                message: "Hi {{first_name}}, I wanted to follow up on {{topic}} and share this resource I thought you might find valuable: {{resource_link}}. It addresses the {{pain_point}} we discussed. Would you like to reconnect this week?"
-              },
-              { 
-                name: "New Information Share", 
-                delayDays: 4,
-                message: "{{first_name}}, since we last spoke about {{topic}}, we've developed a new approach to {{specific_challenge}}. Companies like {{similar_company}} have seen {{specific_result}} using this method. I'd be happy to share more details if you're interested."
-              },
-              { 
-                name: "Final Check-in", 
-                delayDays: 5,
-                message: "Hi {{first_name}}, I understand you're busy, so this will be my last outreach for now. If addressing {{pain_point}} becomes a priority for {{company}} in the future, I'm here to help. Feel free to reach out anytime at {{contact_info}}."
               }
             ]
           };
@@ -278,37 +256,39 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
 }) => {
   const { toast } = useToast();
   const [approved, setApproved] = useState(false);
+  const { getDefaultFollowUps } = useFollowUpConfiguration();
 
   // Use our custom hooks
   const { updateFollowUp, getMessageTitle } = useFollowUpManagement(followUps, onFollowUpsChange);
 
-  // Generate follow-ups if none exist (but don't require templateId)
+  // Generate follow-ups if none exist
   useEffect(() => {
-    if (followUps.length === 0) {
-      // Create default follow-up sequence, template ID is now optional
-      const defaultFollowUps = [
-        {
-          id: `followup-${Date.now()}-1`,
-          templateId: selectedTemplateId || '', // Make template ID optional
-          delayDays: 0, // Initial message has no delay
-          enabled: true,
-          condition: 'no-response',
-          name: 'Initial Message',
-          conditions: [{ type: 'no-response' as FollowUpCondition['type'] }]
-        }
-      ];
-      
-      onFollowUpsChange(defaultFollowUps);
-    } else if (followUps.length > 0 && selectedTemplateId && !followUps[0].templateId) {
-      // If follow-ups exist and a template is selected, update first follow-up with templateId
-      const updatedFollowUps = [...followUps];
-      updatedFollowUps[0] = {
-        ...updatedFollowUps[0],
-        templateId: selectedTemplateId
+    if (followUps.length === 0 && selectedTemplateId) {
+      // Create a default initial message (always required)
+      const initialMessage = {
+        id: `followup-${Date.now()}-1`,
+        templateId: selectedTemplateId,
+        delayDays: 0, // Initial message has no delay
+        enabled: true,
+        condition: 'no-response',
+        name: 'Initial Message',
+        conditions: [{ type: 'no-response' as FollowUpCondition['type'] }]
       };
-      onFollowUpsChange(updatedFollowUps);
+      
+      // If campaign type is provided, get recommended sequence
+      if (campaignType && campaignType !== 'event-invitation') {
+        // Get default follow-ups for this campaign type
+        const defaultSequence = getDefaultFollowUps(campaignType as any, selectedTemplateId);
+        if (defaultSequence.length > 0) {
+          onFollowUpsChange([initialMessage, ...defaultSequence.slice(1)]);
+          return;
+        }
+      }
+      
+      // Fallback to just the initial message
+      onFollowUpsChange([initialMessage]);
     }
-  }, [followUps.length, selectedTemplateId, onFollowUpsChange]);
+  }, [followUps.length, selectedTemplateId, campaignType, onFollowUpsChange, getDefaultFollowUps]);
 
   // Call onComplete when approved changes
   useEffect(() => {
@@ -332,10 +312,10 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
   const handleAddFollowUp = () => {
     const newFollowUp = {
       id: `followup-${Date.now()}-${followUps.length + 1}`,
-      templateId: selectedTemplateId || '', // Make template ID optional
-      delayDays: followUps.length > 0 ? followUps[followUps.length - 1].delayDays + 4 : 3,
+      templateId: selectedTemplateId || '', 
+      delayDays: followUps.length > 0 ? 3 : 0, // Default to 3 days for follow-ups
       enabled: true,
-      name: `Follow-up Message ${followUps.length}`,
+      name: `Follow-up #${followUps.length}`,
       conditions: [{ type: 'no-response' as FollowUpCondition['type'] }]
     };
     
@@ -343,6 +323,7 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
   };
 
   const handleApplyAISequence = (messages: any[]) => {
+    // Create new follow-ups with the AI-suggested messages
     const newFollowUps = messages.map((msg, index) => ({
       id: `followup-${Date.now()}-${index + 1}`,
       templateId: selectedTemplateId || '',
@@ -366,8 +347,19 @@ const CampaignFollowupsTab: React.FC<CampaignFollowupsTabProps> = ({
         onApplySuggestion={handleApplyAISequence}
       />
 
-      {/* Visual Sequence Builder - Now the main and only view */}
+      {/* Message Sequence Builder */}
       <div className="border rounded-lg p-4">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="font-medium">Message Sequence</h3>
+          <Button 
+            variant="outline" 
+            onClick={handleAddFollowUp}
+            size="sm"
+          >
+            Add Message
+          </Button>
+        </div>
+        
         <FollowUpList
           followUps={followUps}
           selectedTemplateId={selectedTemplateId}

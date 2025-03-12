@@ -9,14 +9,14 @@ import { useCampaignTemplates } from '@/hooks/campaign-type/useCampaignTemplates
 
 interface SimplifiedCampaignCreatorProps {
   initialCampaignType?: CampaignType | null;
-  campaign?: Campaign; // Added this line to accept a campaign for editing
+  campaign?: Campaign; // For editing an existing campaign
   onCancel: () => void;
   onComplete: () => void;
 }
 
 const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({ 
   initialCampaignType = null,
-  campaign, // Added this parameter
+  campaign, 
   onCancel, 
   onComplete 
 }) => {
@@ -35,12 +35,13 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
   
   const { getCampaignTemplate } = useCampaignTemplates(templates);
 
+  // If editing an existing campaign or initial type is provided, skip to campaign creation
   useEffect(() => {
-    if (initialCampaignType) {
-      setSelectedType(initialCampaignType);
+    if (campaign || initialCampaignType) {
+      setSelectedType(initialCampaignType || 'sales-outreach');
       setStep('campaign-creation');
     }
-  }, [initialCampaignType]);
+  }, [campaign, initialCampaignType]);
 
   const handleTypeSelect = (type: CampaignType) => {
     setSelectedType(type);
@@ -72,7 +73,7 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
   };
 
   const handleBack = () => {
-    if (step === 'campaign-creation') {
+    if (step === 'campaign-creation' && !campaign) {
       setStep('type-selection');
     } else {
       onCancel();
@@ -100,7 +101,7 @@ const SimplifiedCampaignCreator: React.FC<SimplifiedCampaignCreatorProps> = ({
       onUpdateCampaign={handleUpdateCampaign}
       onCancel={handleBack}
       isSubmitting={isSubmitting}
-      campaignType={selectedType || undefined}
+      campaignType={selectedType}
     />
   );
 };
