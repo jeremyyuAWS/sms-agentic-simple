@@ -2,6 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import FollowUpList from './FollowUpList';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface MessageSequenceBuilderProps {
   followUps: any[];
@@ -33,14 +34,16 @@ const MessageSequenceBuilder: React.FC<MessageSequenceBuilderProps> = ({
         </Button>
       </div>
       
-      <FollowUpList
-        followUps={followUps}
-        selectedTemplateId={selectedTemplateId}
-        getMessageTitle={getMessageTitle}
-        updateFollowUp={updateFollowUp}
-        onAddFollowUp={onAddFollowUp}
-        campaignType={campaignType}
-      />
+      <ScrollArea className="h-[400px] pr-4">
+        <FollowUpList
+          followUps={followUps}
+          selectedTemplateId={selectedTemplateId}
+          getMessageTitle={getMessageTitle}
+          updateFollowUp={updateFollowUp}
+          onAddFollowUp={onAddFollowUp}
+          campaignType={campaignType}
+        />
+      </ScrollArea>
     </div>
   );
 };

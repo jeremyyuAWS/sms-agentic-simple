@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
@@ -50,7 +49,6 @@ export default function SimplifiedCampaigns() {
     updateCampaignStatus(campaignId, status);
   };
   
-  // Updated to properly handle both required arguments
   const handleEdit = (campaignId: string, campaignType: string) => {
     const campaign = campaigns.find(c => c.id === campaignId);
     if (campaign && campaign.status !== 'completed') {
@@ -102,7 +100,7 @@ export default function SimplifiedCampaigns() {
         />
         
         <Dialog open={isCreatingCampaign} onOpenChange={setIsCreatingCampaign}>
-          <DialogContent className="max-w-3xl">
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-auto">
             <SimplifiedCampaignCreator 
               initialCampaignType="sales-outreach"
               onComplete={handleComplete} 
@@ -113,7 +111,7 @@ export default function SimplifiedCampaigns() {
         
         {selectedCampaign && !isEditing && (
           <Dialog open={!!selectedCampaign} onOpenChange={(open) => !open && handleClose()}>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
               <CampaignDetailView 
                 campaign={selectedCampaign}
                 onClose={handleClose}
@@ -127,7 +125,7 @@ export default function SimplifiedCampaigns() {
         
         {selectedCampaign && isEditing && selectedCampaign.status !== 'completed' && (
           <Dialog open={isEditing} onOpenChange={(open) => !open && handleClose()}>
-            <DialogContent className="max-w-3xl">
+            <DialogContent className="max-w-3xl max-h-[90vh] overflow-auto">
               <SimplifiedCampaignCreator 
                 initialCampaignType="sales-outreach"
                 campaign={selectedCampaign}
